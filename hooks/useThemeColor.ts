@@ -1,10 +1,8 @@
-import { Platform, useColorScheme } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
-/** On web we lock to light mode to match the Vuexy design system. */
+/** App is locked to light mode — Vuexy design system. */
 function useScheme() {
-  const system = useColorScheme() ?? 'light';
-  return Platform.OS === 'web' ? 'light' : system;
+  return 'light' as const;
 }
 
 export function useThemeColor(colorName: keyof typeof Colors.light) {

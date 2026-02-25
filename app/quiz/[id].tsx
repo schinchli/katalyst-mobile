@@ -169,9 +169,9 @@ export default function QuizScreen() {
 
   if (!quiz || questions.length === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-app-bg dark:bg-app-bg-dark justify-center items-center">
+      <SafeAreaView className="flex-1 bg-app-bg justify-center items-center">
         <Feather name="alert-circle" size={48} color={colors.textSecondary} />
-        <Text className="text-lg text-app-text dark:text-app-text-dark mt-4">Quiz not found</Text>
+        <Text className="text-lg text-app-text mt-4">Quiz not found</Text>
         <Button title="Go Back" onPress={() => router.back()} variant="outline" style={{ marginTop: 24, paddingHorizontal: 32 }} />
       </SafeAreaView>
     );
@@ -180,11 +180,17 @@ export default function QuizScreen() {
   // ── INTRO ────────────────────────────────────────────────────────────────────
   if (phase === 'intro') {
     return (
-      <SafeAreaView className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-        <View className="flex-1 p-6 justify-center">
-          <Pressable onPress={() => router.back()} className="absolute top-4 left-5">
-            <Feather name="x" size={24} color={colors.text} />
-          </Pressable>
+      <SafeAreaView className="flex-1 bg-app-bg">
+        {/* Back header */}
+        <Pressable
+          onPress={() => router.back()}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 12 }}
+          hitSlop={8}
+        >
+          <Feather name="arrow-left" size={22} color={colors.text} />
+          <Text style={{ fontSize: 15, color: colors.textSecondary, fontWeight: '500' }}>Back</Text>
+        </Pressable>
+        <View className="flex-1 px-6 pb-6 justify-center">
 
           <View className="items-center">
             <View className="w-20 h-20 rounded-3xl bg-app-primary-faint dark:bg-app-primary-faint-dark items-center justify-center mb-5">
@@ -253,6 +259,7 @@ export default function QuizScreen() {
             style={{ marginTop: 20 }}
           />
         </View>
+        </View>
       </SafeAreaView>
     );
   }
@@ -265,13 +272,18 @@ export default function QuizScreen() {
     const unanswered = questions.length - answeredCount;
 
     return (
-      <SafeAreaView className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-        <View className="flex-row items-center p-4">
-          <Pressable onPress={exitAndReset}>
-            <Feather name="x" size={24} color={colors.text} />
+      <SafeAreaView className="flex-1 bg-app-bg">
+        <View className="flex-row items-center px-4 py-3">
+          <Pressable
+            onPress={exitAndReset}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+            hitSlop={8}
+          >
+            <Feather name="arrow-left" size={22} color={colors.text} />
+            <Text style={{ fontSize: 15, color: colors.textSecondary, fontWeight: '500' }}>Back</Text>
           </Pressable>
-          <Text className="flex-1 text-center text-[17px] font-semibold text-app-text dark:text-app-text-dark">Scoreboard</Text>
-          <View className="w-6" />
+          <Text className="flex-1 text-center text-[17px] font-semibold text-app-text">Scoreboard</Text>
+          <View style={{ width: 60 }} />
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 8 }}>
@@ -344,11 +356,18 @@ export default function QuizScreen() {
   const bookmarked = currentQuestion ? isBookmarked(currentQuestion.id) : false;
 
   return (
-    <SafeAreaView className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+    <SafeAreaView className="flex-1 bg-app-bg">
       {/* Header row */}
       <View className="flex-row items-center px-4 pt-2 pb-1 gap-3">
-        <Pressable onPress={isReview ? exitAndReset : handleExit}>
-          <Feather name="x" size={24} color={colors.text} />
+        <Pressable
+          onPress={isReview ? () => setPhase('results') : handleExit}
+          hitSlop={8}
+          style={isReview ? { flexDirection: 'row', alignItems: 'center', gap: 4 } : {}}
+        >
+          <Feather name={isReview ? 'arrow-left' : 'x'} size={isReview ? 22 : 24} color={colors.text} />
+          {isReview && (
+            <Text style={{ fontSize: 14, color: colors.textSecondary, fontWeight: '500' }}>Results</Text>
+          )}
         </Pressable>
         <View className="flex-1">
           <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} height={6} />

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import { Platform, useColorScheme } from 'react-native';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -19,9 +18,6 @@ const queryClient = new QueryClient({
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const systemScheme = useColorScheme();
-  // Lock web to light mode — dark mode is mobile-only
-  const colorScheme = Platform.OS === 'web' ? 'light' : systemScheme;
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -38,8 +34,8 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <StatusBar style="auto" hidden={false} />
+      <ThemeProvider value={DefaultTheme}>
+        <StatusBar style="dark" hidden={false} />
         <Stack>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

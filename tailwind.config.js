@@ -18,7 +18,7 @@ module.exports = {
     './components/**/*.{js,jsx,ts,tsx}',
   ],
   presets: [require('nativewind/preset')],
-  darkMode: 'media', // follows system prefers-color-scheme
+  darkMode: 'class', // disabled — app is locked to light mode
 
   theme: {
     extend: {

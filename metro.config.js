@@ -7,13 +7,23 @@ const workspaceRoot = path.resolve(projectRoot, "..");
 
 const config = getDefaultConfig(projectRoot, { isCSSEnabled: true });
 
-// Watch both the mobile app and the workspace root (hoisted node_modules live there)
+// ── Workspace: watch both mobile and hoisted node_modules ────────────────────
 config.watchFolders = [projectRoot, workspaceRoot];
-
-// Tell Metro to resolve modules from both mobile/node_modules AND lms/node_modules
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
   path.resolve(workspaceRoot, "node_modules"),
 ];
+
+// ── Performance: inline requires for faster JS startup ───────────────────────
+// Defers module evaluation until first use — cuts initial parse time significantly
+config.transformer.getTransformOptions = async () => ({
+  transform: {
+    experimentalImportSupport: false,
+    inlineRequires: true,
+  },
+});
+
+// ── Performance: reduce image transformation overhead ───────────────────────
+config.transformer.assetPlugins = [];
 
 module.exports = withNativeWind(config, { input: "./global.css" });
