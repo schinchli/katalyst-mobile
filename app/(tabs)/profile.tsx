@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: {
+    fontFamily: F.bold,
     fontSize: 30,
-    fontWeight: '700',
   },
   headerBody: {
     width: '100%',
@@ -285,8 +285,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionLabel: {
+    fontFamily: F.semiBold,
     fontSize: 11,
-    fontWeight: '600',
     letterSpacing: 0.8,
     marginBottom: 6,
     marginLeft: 4,
@@ -348,8 +348,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   devText: {
+    fontFamily: F.medium,
     fontSize: 13,
-    fontWeight: '500',
   },
   devBadge: {
     borderRadius: 99,
@@ -359,8 +359,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   devBadgeText: {
+    fontFamily: F.bold,
     fontSize: 10,
-    fontWeight: '700',
   },
 
   /* ── Version ── */

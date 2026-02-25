@@ -347,20 +347,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bestScoreLabel: {
+    fontFamily: F.medium,
     fontSize: 12,
     color: T.muted,
-    fontWeight: '500',
     marginBottom: 2,
   },
   bestScoreQuiz: {
+    fontFamily: F.semiBold,
     fontSize: 15,
-    fontWeight: '600',
     color: T.text,
     maxWidth: 180,
   },
   bestScorePct: {
+    fontFamily: F.bold,
     fontSize: 28,
-    fontWeight: '700',
     color: T.warning,
   },
 
@@ -434,13 +434,14 @@ const styles = StyleSheet.create({
     color: T.text,
   },
   categoryCount: {
+    fontFamily: F.regular,
     fontSize: 13,
     color: T.muted,
     marginRight: 4,
   },
   categoryPct: {
+    fontFamily: F.bold,
     fontSize: 13,
-    fontWeight: '700',
     minWidth: 36,
     textAlign: 'right',
   },
@@ -468,9 +469,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   resultTitle: {
+    fontFamily: F.semiBold,
     flex: 1,
     fontSize: 15,
-    fontWeight: '600',
     color: T.text,
   },
   resultBadge: {
@@ -485,8 +486,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFEBEB',
   },
   resultBadgeText: {
+    fontFamily: F.bold,
     fontSize: 12,
-    fontWeight: '700',
   },
   resultBarRow: {
     flexDirection: 'row',
@@ -498,12 +499,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resultPct: {
+    fontFamily: F.bold,
     fontSize: 15,
-    fontWeight: '700',
     minWidth: 40,
     textAlign: 'right',
   },
   resultSubtitle: {
+    fontFamily: F.regular,
     fontSize: 12,
     color: T.muted,
   },
