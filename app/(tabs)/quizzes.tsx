@@ -13,6 +13,7 @@ import { useThemeColors } from '@/hooks/useThemeColor';
 import { quizzes } from '@/data/quizzes';
 import type { Quiz, QuizCategory } from '@/types';
 import { useWebLayout } from '@/hooks/useWebLayout';
+import { F } from '@/constants/Typography';
 
 // ─── Vuexy design tokens ──────────────────────────────────────────────────────
 const T = {
@@ -248,12 +249,13 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   screenTitle: {
+    fontFamily: F.bold,
     fontSize: 26,
-    fontWeight: '700',
     color: T.text,
     marginBottom: 2,
   },
   screenSubtitle: {
+    fontFamily: F.regular,
     fontSize: 13,
     color: T.muted,
     marginBottom: 12,
@@ -285,8 +287,8 @@ const styles = StyleSheet.create({
     borderColor: T.border,
   },
   pillText: {
+    fontFamily: F.semiBold,
     fontSize: 13,
-    fontWeight: '600',
   },
   pillTextActive: {
     color: '#FFFFFF',
@@ -345,8 +347,8 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     flex: 1,
+    fontFamily: F.semiBold,
     fontSize: 15,
-    fontWeight: '600',
     color: T.text,
   },
   premiumBadge: {
@@ -364,6 +366,7 @@ const styles = StyleSheet.create({
     color: '#D97706',
   },
   cardDesc: {
+    fontFamily: F.regular,
     fontSize: 13,
     color: T.muted,
     lineHeight: 18,

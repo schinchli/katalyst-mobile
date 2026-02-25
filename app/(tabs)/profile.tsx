@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { getMissingCount } from '@/config/appConfig';
 import { useWebLayout } from '@/hooks/useWebLayout';
+import { F } from '@/constants/Typography';
 
 const BANNER_H = 100;
 const AVATAR_SIZE = 80;
@@ -232,11 +233,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   userName: {
+    fontFamily: F.bold,
     fontSize: 20,
-    fontWeight: '700',
     marginBottom: 2,
   },
   userEmail: {
+    fontFamily: F.regular,
     fontSize: 13,
   },
   badgeWrap: {
@@ -267,11 +269,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statNumber: {
+    fontFamily: F.bold,
     fontSize: 20,
-    fontWeight: '700',
     lineHeight: 24,
   },
   statLabel: {
+    fontFamily: F.medium,
     fontSize: 11,
     marginTop: 2,
   },
@@ -307,6 +310,7 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     flex: 1,
+    fontFamily: F.medium,
     fontSize: 15,
   },
   divider: {
@@ -330,8 +334,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   signOutText: {
+    fontFamily: F.semiBold,
     fontSize: 15,
-    fontWeight: '600',
   },
 
   /* ── Dev row ── */

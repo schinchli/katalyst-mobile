@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { F } from '@/constants/Typography';
 import type { Question } from '@/types';
 
 // Fixed tint backgrounds (light mode locked)
@@ -129,8 +130,8 @@ const s = StyleSheet.create({
     elevation: 1,
   },
   questionText: {
+    fontFamily: F.semiBold,
     fontSize: 17,
-    fontWeight: '600',
     lineHeight: 27,
   },
 
@@ -159,8 +160,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  bubbleLetter: { fontSize: 13, fontWeight: '700' },
-  optionText:   { flex: 1, fontSize: 15, lineHeight: 22 },
+  bubbleLetter: { fontFamily: F.bold,     fontSize: 13 },
+  optionText:   { fontFamily: F.medium,   flex: 1, fontSize: 15, lineHeight: 22 },
 
   // Explanation
   explanationBox: {
@@ -187,6 +188,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  explanationLabel: { fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
-  explanationText:  { fontSize: 14, lineHeight: 22 },
+  explanationLabel: { fontFamily: F.bold,    fontSize: 13, letterSpacing: 0.2 },
+  explanationText:  { fontFamily: F.regular, fontSize: 14, lineHeight: 22 },
 });

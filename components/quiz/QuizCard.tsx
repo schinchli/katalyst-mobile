@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Badge } from '@/components/ui/Badge';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { F } from '@/constants/Typography';
 import type { Quiz } from '@/types';
 
 const DIFF_COLOR: Record<string, string> = {
@@ -128,12 +129,13 @@ const s = StyleSheet.create({
   },
   title: {
     flex: 1,
+    fontFamily: F.semiBold,
     fontSize: 15,
-    fontWeight: '600',
     lineHeight: 20,
   },
 
   desc: {
+    fontFamily: F.regular,
     fontSize: 12,
     lineHeight: 17,
     marginBottom: 7,
@@ -150,8 +152,8 @@ const s = StyleSheet.create({
     borderRadius: 5,
   },
   diffText: {
+    fontFamily: F.semiBold,
     fontSize: 11,
-    fontWeight: '600',
   },
   meta: {
     flexDirection: 'row',
@@ -159,6 +161,7 @@ const s = StyleSheet.create({
     gap: 3,
   },
   metaText: {
+    fontFamily: F.regular,
     fontSize: 11,
   },
 

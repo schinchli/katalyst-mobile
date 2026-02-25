@@ -5,6 +5,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
 import { useWebLayout } from '@/hooks/useWebLayout';
+import { F } from '@/constants/Typography';
 
 // ─── Vuexy design tokens ──────────────────────────────────────────────────────
 const T = {
@@ -294,16 +295,16 @@ const styles = StyleSheet.create({
 
   // Page title
   screenTitle: {
+    fontFamily: F.bold,
     fontSize: 26,
-    fontWeight: '700',
     color: T.text,
     marginBottom: 16,
   },
 
   // Section headers
   sectionHeader: {
+    fontFamily: F.bold,
     fontSize: 18,
-    fontWeight: '700',
     color: T.text,
     marginTop: 24,
     marginBottom: 12,
@@ -390,15 +391,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   statValue: {
+    fontFamily: F.bold,
     fontSize: 24,
-    fontWeight: '700',
     color: T.text,
     marginBottom: 2,
   },
   statLabel: {
+    fontFamily: F.medium,
     fontSize: 12,
     color: T.muted,
-    fontWeight: '500',
   },
 
   // ── Category breakdown ─────────────────────────────────────────────────────
@@ -428,8 +429,8 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     flex: 1,
+    fontFamily: F.semiBold,
     fontSize: 15,
-    fontWeight: '600',
     color: T.text,
   },
   categoryCount: {

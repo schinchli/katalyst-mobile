@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
 import { useWebLayout } from '@/hooks/useWebLayout';
+import { F } from '@/constants/Typography';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CARD_SHADOW = {
@@ -404,22 +405,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greetingSubtext: {
+    fontFamily: F.regular,
     fontSize: 13,
     lineHeight: 18,
   },
   greetingName: {
+    fontFamily: F.bold,
     fontSize: 24,
-    fontWeight: '700',
     lineHeight: 32,
     marginTop: 1,
   },
   greetingDate: {
+    fontFamily: F.regular,
     fontSize: 13,
     marginTop: 3,
     lineHeight: 18,
   },
 
-  // ── CTA button (purple gradient via layered views) ─────────────────────────
+  // ── CTA button ─────────────────────────────────────────────────────────────
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -427,7 +430,7 @@ const styles = StyleSheet.create({
     backgroundColor: T.primary,
     paddingHorizontal: 18,
     paddingVertical: 11,
-    borderRadius: 10,
+    borderRadius: 8,
     shadowColor: '#5E50EE',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.45,
@@ -435,9 +438,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   ctaButtonText: {
+    fontFamily: F.semiBold,
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
     letterSpacing: 0.1,
   },
 
@@ -452,7 +455,7 @@ const styles = StyleSheet.create({
     width: '47.5%',
   },
   statCard: {
-    borderRadius: 12,
+    borderRadius: 10,
     padding: 16,
   },
   statIconContainer: {
@@ -464,11 +467,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statValue: {
+    fontFamily: F.bold,
     fontSize: 26,
-    fontWeight: '700',
     lineHeight: 32,
   },
   statLabel: {
+    fontFamily: F.medium,
     fontSize: 12,
     marginTop: 2,
     lineHeight: 16,
@@ -476,7 +480,7 @@ const styles = StyleSheet.create({
 
   // ── Progress card ──────────────────────────────────────────────────────────
   progressCard: {
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   progressAccentStrip: {
@@ -493,18 +497,19 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   progressTitle: {
+    fontFamily: F.semiBold,
     fontSize: 16,
-    fontWeight: '600',
     lineHeight: 22,
   },
   progressSubtitle: {
+    fontFamily: F.regular,
     fontSize: 13,
     marginTop: 2,
     lineHeight: 18,
   },
   progressPercent: {
+    fontFamily: F.bold,
     fontSize: 32,
-    fontWeight: '700',
     lineHeight: 38,
     letterSpacing: -0.5,
   },
@@ -512,6 +517,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   progressFooterText: {
+    fontFamily: F.regular,
     fontSize: 12,
     lineHeight: 17,
   },
@@ -527,12 +533,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
+    fontFamily: F.bold,
     fontSize: 18,
-    fontWeight: '700',
   },
   sectionViewAll: {
+    fontFamily: F.semiBold,
     fontSize: 13,
-    fontWeight: '600',
     color: T.primary,
   },
 
@@ -565,17 +571,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dailyLabel: {
+    fontFamily: F.bold,
     fontSize: 11,
-    fontWeight: '700',
     letterSpacing: 0.4,
     marginBottom: 2,
   },
   dailyTitle: {
+    fontFamily: F.bold,
     fontSize: 16,
-    fontWeight: '700',
     lineHeight: 22,
   },
   dailyMeta: {
+    fontFamily: F.regular,
     fontSize: 12,
     marginTop: 2,
   },
@@ -586,9 +593,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   dailyStartText: {
+    fontFamily: F.semiBold,
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '600',
   },
 
   // ── Desktop layout ─────────────────────────────────────────────────────────
