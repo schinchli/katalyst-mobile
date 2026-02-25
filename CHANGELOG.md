@@ -26,7 +26,7 @@
 - Added Commandment 13 — Full Store Deployment (10 sections)
 - Added Pre-Store Submission Checklist
 
-#### M4 — Fill missing quiz content (IN PROGRESS)
+#### M4 — Quiz features + data audit (DONE 2026-02-25)
 - [ ] guardrails-safety (10 questions)
 - [ ] multi-llm-routing (10 questions)
 - [ ] orchestration-step-functions (10 questions)

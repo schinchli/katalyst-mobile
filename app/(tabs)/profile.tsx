@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Alert, Pressable } from 'react-native';
+import { View, Text, ScrollView, Alert, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -11,13 +11,52 @@ import { useProgressStore } from '@/stores/progressStore';
 import { getMissingCount } from '@/config/appConfig';
 import { useWebLayout } from '@/hooks/useWebLayout';
 
-const menuItems = [
-  { icon: 'bell',         label: 'Notifications',   route: null },
-  { icon: 'moon',         label: 'Appearance',       route: null },
-  { icon: 'download',     label: 'Downloads',        route: null },
-  { icon: 'help-circle',  label: 'Help & Support',   route: null },
-  { icon: 'info',         label: 'About',            route: null },
+const ACCOUNT_ITEMS = [
+  { icon: 'bell',        label: 'Notifications', route: null },
+  { icon: 'moon',        label: 'Appearance',    route: null },
+  { icon: 'download',    label: 'Downloads',     route: null },
 ] as const;
+
+const SUPPORT_ITEMS = [
+  { icon: 'help-circle', label: 'Help & Support', route: null },
+  { icon: 'info',        label: 'About',          route: null },
+] as const;
+
+function MenuSection({
+  title,
+  items,
+  colors,
+}: {
+  title: string;
+  items: readonly { icon: string; label: string; route: null }[];
+  colors: ReturnType<typeof useThemeColors>;
+}) {
+  return (
+    <View style={styles.menuSection}>
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{title}</Text>
+      <Card padding={0} style={styles.menuCard}>
+        {items.map((item, idx) => (
+          <View key={item.label}>
+            <Card
+              onPress={() => {}}
+              padding={16}
+              style={styles.menuRow}
+            >
+              <View style={[styles.menuIconWrap, { backgroundColor: '#7367F014' }]}>
+                <Feather name={item.icon as any} size={17} color="#7367F0" />
+              </View>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
+              <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+            </Card>
+            {idx < items.length - 1 && (
+              <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
+            )}
+          </View>
+        ))}
+      </Card>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const colors   = useThemeColors();
@@ -36,91 +75,109 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const initials = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
+  const isPremium = user?.subscription === 'premium';
+
   return (
-    <SafeAreaView className="flex-1 bg-app-bg dark:bg-app-bg-dark" edges={isDesktop ? [] : ['top']}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, ...contentContainerWeb }}>
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
+      <ScrollView contentContainerStyle={[styles.scroll, contentContainerWeb as any]}>
 
-        <Text className="text-[26px] font-bold text-app-text dark:text-app-text-dark mb-6">
-          Profile
-        </Text>
+        {/* ── Profile Header ────────────────────────────── */}
+        <View style={styles.headerCard}>
+          {/* Purple banner */}
+          <View style={styles.headerBanner} />
 
-        {/* User Card */}
-        <Card style={{ marginBottom: 24, alignItems: 'center', paddingVertical: 24 }}>
-          <View className="w-[72px] h-[72px] rounded-full bg-app-primary-faint dark:bg-app-primary-faint-dark items-center justify-center mb-3">
-            <Text className="text-[28px] font-bold text-app-primary">
-              {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
+          {/* Avatar straddling the boundary */}
+          <View style={[styles.avatarRing, { backgroundColor: colors.surface }]}>
+            <View style={styles.avatarInner}>
+              <Text style={styles.avatarInitial}>{initials}</Text>
+            </View>
+          </View>
+
+          {/* White body */}
+          <View style={[styles.headerBody, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.userName, { color: colors.text }]}>
+              {user?.name ?? 'User'}
             </Text>
+            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
+              {user?.email ?? ''}
+            </Text>
+            <View style={styles.badgeWrap}>
+              <Badge
+                label={isPremium ? 'Premium' : 'Free Plan'}
+                color={isPremium ? colors.aws : undefined}
+                size="md"
+              />
+            </View>
           </View>
-          <Text className="text-xl font-bold text-app-text dark:text-app-text-dark">
-            {user?.name ?? 'User'}
-          </Text>
-          <Text className="text-sm text-app-muted dark:text-app-muted-dark mt-0.5">
-            {user?.email ?? ''}
-          </Text>
-          <View className="mt-2">
-            <Badge
-              label={user?.subscription === 'premium' ? 'Premium' : 'Free Plan'}
-              color={user?.subscription === 'premium' ? colors.aws : undefined}
-              size="md"
-            />
-          </View>
-        </Card>
-
-        {/* Quick Stats */}
-        <View className="flex-row gap-3 mb-6">
-          <Card className="flex-1 items-center">
-            <Text className="text-[22px] font-bold text-app-primary">{progress.completedQuizzes}</Text>
-            <Text className="text-xs text-app-muted dark:text-app-muted-dark">Quizzes</Text>
-          </Card>
-          <Card className="flex-1 items-center">
-            <Text className="text-[22px] font-bold text-app-success">{progress.averageScore}%</Text>
-            <Text className="text-xs text-app-muted dark:text-app-muted-dark">Avg Score</Text>
-          </Card>
-          <Card className="flex-1 items-center">
-            <Text className="text-[22px] font-bold text-app-aws">{progress.badges.length}</Text>
-            <Text className="text-xs text-app-muted dark:text-app-muted-dark">Badges</Text>
-          </Card>
         </View>
 
-        {/* Menu */}
-        <Card padding={0} style={{ marginBottom: 24 }}>
-          {menuItems.map((item, idx) => (
-            <View key={item.label}>
-              <Card
-                onPress={() => {}}
-                padding={16}
-                style={{ borderRadius: 0, borderWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 14 }}
-              >
-                <Feather name={item.icon as any} size={20} color={colors.textSecondary} />
-                <Text className="flex-1 text-[15px] text-app-text dark:text-app-text-dark">{item.label}</Text>
-                <Feather name="chevron-right" size={18} color={colors.textSecondary} />
-              </Card>
-              {idx < menuItems.length - 1 && (
-                <View className="h-px bg-app-border dark:bg-app-border-dark ml-[50px]" />
-              )}
+        {/* ── Quick Stats ───────────────────────────────── */}
+        <View style={styles.statsRow}>
+          {/* Quizzes */}
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={[styles.statIconWrap, { backgroundColor: '#7367F014' }]}>
+              <Feather name="check-square" size={18} color="#7367F0" />
             </View>
-          ))}
-        </Card>
+            <Text style={[styles.statNumber, { color: '#7367F0' }]}>{progress.completedQuizzes}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Quizzes</Text>
+          </View>
 
-        <Button title="Sign Out" variant="outline" onPress={handleSignOut} />
+          {/* Avg Score */}
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={[styles.statIconWrap, { backgroundColor: '#28C76F14' }]}>
+              <Feather name="trending-up" size={18} color="#28C76F" />
+            </View>
+            <Text style={[styles.statNumber, { color: '#28C76F' }]}>{progress.averageScore}%</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Score</Text>
+          </View>
 
-        {/* Developer Settings — visible in dev builds only */}
+          {/* Badges */}
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={[styles.statIconWrap, { backgroundColor: '#FF9F4314' }]}>
+              <Feather name="award" size={18} color="#FF9F43" />
+            </View>
+            <Text style={[styles.statNumber, { color: '#FF9F43' }]}>{progress.badges.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Badges</Text>
+          </View>
+        </View>
+
+        {/* ── Account Menu ──────────────────────────────── */}
+        <MenuSection title="ACCOUNT" items={ACCOUNT_ITEMS} colors={colors} />
+        <MenuSection title="APP SETTINGS" items={SUPPORT_ITEMS} colors={colors} />
+
+        {/* ── Sign Out ──────────────────────────────────── */}
+        <View style={styles.signOutWrap}>
+          <Pressable
+            onPress={handleSignOut}
+            style={({ pressed }) => [
+              styles.signOutBtn,
+              { borderColor: '#FF4C51', opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Feather name="log-out" size={16} color="#FF4C51" />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </Pressable>
+        </View>
+
+        {/* ── Developer Settings (DEV only) ─────────────── */}
         {__DEV__ && (
           <Pressable
             onPress={() => router.push('/dev-config' as any)}
-            className="mt-4 flex-row items-center justify-center gap-2 py-3 active:opacity-60"
+            style={({ pressed }) => [styles.devRow, { opacity: pressed ? 0.6 : 1 }]}
           >
             <Feather name="settings" size={15} color="#7367F0" />
-            <Text className="text-[13px] text-app-primary font-medium">Developer Settings</Text>
+            <Text style={styles.devText}>Developer Settings</Text>
             {getMissingCount() > 0 && (
-              <View className="bg-app-error-tint rounded-full w-5 h-5 items-center justify-center">
-                <Text className="text-[10px] font-bold text-app-error">{getMissingCount()}</Text>
+              <View style={styles.devBadge}>
+                <Text style={styles.devBadgeText}>{getMissingCount()}</Text>
               </View>
             )}
           </Pressable>
         )}
 
-        <Text className="text-xs text-app-muted dark:text-app-muted-dark text-center mt-3">
+        {/* ── Version ───────────────────────────────────── */}
+        <Text style={[styles.version, { color: colors.textSecondary }]}>
           Katalyst v1.0.0 · KataHQ
         </Text>
 
@@ -128,3 +185,197 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
+const BANNER_H = 100;
+const AVATAR_SIZE = 80;
+const AVATAR_RING = AVATAR_SIZE + 8; // 4px ring each side
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  scroll: { paddingBottom: 48 },
+
+  /* ── Header card ── */
+  headerCard: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  headerBanner: {
+    width: '100%',
+    height: BANNER_H,
+    backgroundColor: '#7367F0',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  avatarRing: {
+    width: AVATAR_RING,
+    height: AVATAR_RING,
+    borderRadius: AVATAR_RING / 2,
+    marginTop: -(AVATAR_RING / 2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  avatarInner: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    backgroundColor: '#EDE9FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 30,
+    fontWeight: '700',
+    color: '#7367F0',
+  },
+  headerBody: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    borderWidth: 1,
+    borderTopWidth: 0,
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 13,
+  },
+  badgeWrap: {
+    marginTop: 8,
+  },
+
+  /* ── Stats ── */
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginHorizontal: 20,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  statIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  statLabel: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+
+  /* ── Menu ── */
+  menuSection: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  menuCard: {
+    overflow: 'hidden',
+  },
+  menuRow: {
+    borderRadius: 0,
+    borderWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  menuIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuLabel: {
+    flex: 1,
+    fontSize: 15,
+  },
+  divider: {
+    height: 1,
+    marginLeft: 62,
+  },
+
+  /* ── Sign out ── */
+  signOutWrap: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  signOutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  signOutText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FF4C51',
+  },
+
+  /* ── Dev row ── */
+  devRow: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+  },
+  devText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#7367F0',
+  },
+  devBadge: {
+    backgroundColor: '#FF4C511A',
+    borderRadius: 99,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FF4C51',
+  },
+
+  /* ── Version ── */
+  version: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+});
