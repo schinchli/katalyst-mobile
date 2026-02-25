@@ -43,8 +43,8 @@ export function QuestionView({
           const isHidden   = hiddenOptionIds.includes(option.id);
 
           // Option container style
-          let optBg     = colors.surface;
-          let optBorder = colors.surfaceBorder;
+          let optBg:    string = colors.surface;
+          let optBorder: string = colors.surfaceBorder;
           if (showResult) {
             if (isCorrect)              { optBg = SUCCESS_BG; optBorder = colors.success; }
             else if (isSelected)        { optBg = ERROR_BG;   optBorder = colors.error; }
@@ -53,9 +53,9 @@ export function QuestionView({
           }
 
           // Bubble style
-          let bubBg      = 'transparent';
-          let bubBorder  = colors.surfaceBorder;
-          let bubText    = colors.textSecondary;
+          let bubBg:    string = 'transparent';
+          let bubBorder: string = colors.surfaceBorder;
+          let bubText:  string = colors.textSecondary;
           if (showResult && isCorrect)               { bubBg = colors.success; bubBorder = colors.success; bubText = '#fff'; }
           else if (showResult && isSelected)         { bubBg = colors.error;   bubBorder = colors.error;   bubText = '#fff'; }
           else if (!showResult && isSelected)        { bubBg = colors.primary; bubBorder = colors.primary; bubText = '#fff'; }
