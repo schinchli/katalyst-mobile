@@ -14,6 +14,7 @@ import { Feather } from '@expo/vector-icons';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/authStore';
+import { F } from '@/constants/Typography';
 
 export default function SignupScreen() {
   const setUser = useAuthStore((s) => s.setUser);
@@ -196,12 +197,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   logoTitle: {
+    fontFamily: F.bold,
     fontSize: 28,
-    fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.3,
   },
   logoSubtitle: {
+    fontFamily: F.regular,
     fontSize: 13,
     color: 'rgba(255,255,255,0.75)',
     marginTop: 4,
@@ -223,12 +225,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   formHeading: {
+    fontFamily: F.bold,
     fontSize: 20,
-    fontWeight: '700',
     color: '#2F2B3D',
     marginBottom: 2,
   },
   formSubheading: {
+    fontFamily: F.regular,
     fontSize: 14,
     color: '#A5A3AE',
     marginBottom: 20,
@@ -247,6 +250,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   errorText: {
+    fontFamily: F.regular,
     fontSize: 13,
     color: '#FF4C51',
     flex: 1,
@@ -258,6 +262,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   hintText: {
+    fontFamily: F.regular,
     fontSize: 12,
     color: '#A5A3AE',
   },
@@ -272,12 +277,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   signInPrompt: {
+    fontFamily: F.regular,
     fontSize: 14,
     color: '#A5A3AE',
   },
   signInLink: {
+    fontFamily: F.semiBold,
     fontSize: 14,
-    fontWeight: '600',
     color: '#7367F0',
   },
 
@@ -294,9 +300,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#DBDADE',
   },
   separatorText: {
+    fontFamily: F.medium,
     fontSize: 13,
     color: '#A5A3AE',
-    fontWeight: '500',
   },
 
   /* ── Guest ── */
@@ -305,8 +311,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   guestText: {
+    fontFamily: F.medium,
     fontSize: 14,
     color: '#A5A3AE',
-    fontWeight: '500',
   },
 });

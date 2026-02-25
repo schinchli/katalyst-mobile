@@ -1,28 +1,32 @@
 import { View } from 'react-native';
+import { useThemeColors } from '@/hooks/useThemeColor';
 
 interface ProgressBarProps {
   progress: number; // 0 to 1
-  /** Height in pixels. Passed as inline style (truly dynamic). */
   height?: number;
-  /** Override fill color. When omitted, uses app-primary via className. */
   color?: string;
 }
 
 export function ProgressBar({ progress, height = 8, color }: ProgressBarProps) {
-  const clampedProgress = Math.min(1, Math.max(0, progress));
+  const colors = useThemeColors();
+  const clamped = Math.min(1, Math.max(0, progress));
 
   return (
     <View
-      className="bg-app-border dark:bg-app-border-dark overflow-hidden w-full"
-      style={{ height, borderRadius: height / 2 }}
+      style={{
+        height,
+        borderRadius: height / 2,
+        backgroundColor: colors.surfaceBorder,
+        overflow: 'hidden',
+        width: '100%',
+      }}
     >
       <View
-        className={color ? '' : 'bg-app-primary'}
         style={{
           height: '100%',
-          width: `${clampedProgress * 100}%`,
+          width: `${clamped * 100}%`,
           borderRadius: height / 2,
-          ...(color ? { backgroundColor: color } : {}),
+          backgroundColor: color ?? colors.primary,
         }}
       />
     </View>

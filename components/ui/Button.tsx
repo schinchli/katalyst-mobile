@@ -1,4 +1,6 @@
-import { Pressable, Text, ActivityIndicator, type ViewStyle } from 'react-native';
+import { Pressable, Text, ActivityIndicator, StyleSheet, type ViewStyle } from 'react-native';
+import { useThemeColors } from '@/hooks/useThemeColor';
+import { F } from '@/constants/Typography';
 
 interface ButtonProps {
   title: string;
@@ -8,45 +10,72 @@ interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
-  className?: string;
 }
 
-const sizeH:   Record<string, string> = { sm: 'h-10', md: 'h-12', lg: 'h-14' };
-const sizeText: Record<string, string> = { sm: 'text-sm', md: 'text-base', lg: 'text-[18px]' };
-
-const variantContainer: Record<string, string> = {
-  primary:   'bg-app-primary border-0',
-  secondary: 'bg-app-primary-faint dark:bg-app-primary-faint-dark border-0',
-  outline:   'bg-transparent border-[1.5px] border-app-primary',
-};
-
-const variantText: Record<string, string> = {
-  primary:   'text-white',
-  secondary: 'text-app-primary',
-  outline:   'text-app-primary',
-};
+const HEIGHT:    Record<string, number> = { sm: 40, md: 48, lg: 52 };
+const FONT_SIZE: Record<string, number> = { sm: 13, md: 15, lg: 16 };
 
 export function Button({
   title,
   onPress,
-  variant = 'primary',
-  size = 'md',
-  loading = false,
+  variant  = 'primary',
+  size     = 'md',
+  loading  = false,
   disabled = false,
   style,
-  className = '',
 }: ButtonProps) {
+  const colors = useThemeColors();
+
+  const containerStyle = (() => {
+    switch (variant) {
+      case 'secondary': return { backgroundColor: colors.primaryLight };
+      case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary };
+      default:          return {
+        backgroundColor: colors.primary,
+        shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.4, shadowRadius: 6, elevation: 4,
+      };
+    }
+  })();
+
+  const textColor = variant === 'primary' ? '#fff' : colors.primary;
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [{ opacity: disabled ? 0.5 : pressed ? 0.9 : 1 }, style]}
-      className={`rounded-xl items-center justify-center flex-row gap-2 ${sizeH[size]} ${variantContainer[variant]} ${className}`}
+      style={({ pressed }) => [
+        s.base,
+        { height: HEIGHT[size] },
+        containerStyle,
+        disabled && s.disabled,
+        pressed && s.pressed,
+        style,
+      ]}
     >
-      {loading && <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#7367F0'} size="small" />}
-      <Text className={`font-semibold ${sizeText[size]} ${variantText[variant]}`}>
+      {loading && (
+        <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primary} size="small" />
+      )}
+      <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]}>
         {title}
       </Text>
     </Pressable>
   );
 }
+
+const s = StyleSheet.create({
+  base: {
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 20,
+  },
+  label: {
+    fontFamily: F.semiBold,
+    letterSpacing: 0.1,
+  },
+  disabled: { opacity: 0.5 },
+  pressed:  { opacity: 0.88 },
+});
