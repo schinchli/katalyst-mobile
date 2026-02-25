@@ -34,10 +34,11 @@
         "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
       },
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "image": "macos-15-xcode-26"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       }
     }
   },

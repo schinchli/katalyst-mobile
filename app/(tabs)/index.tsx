@@ -296,6 +296,39 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        {/* Daily Quiz Card */}
+        <View style={styles.sectionGap}>
+          <SectionHeader title="Daily Quiz" />
+          {(() => {
+            const dailyQuiz = quizzes[new Date().getDate() % quizzes.length];
+            return (
+              <Pressable
+                onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
+                style={({ pressed }) => [
+                  styles.dailyCard,
+                  { backgroundColor: colors.surface, opacity: pressed ? 0.92 : 1 },
+                  CARD_SHADOW,
+                ]}
+              >
+                <View style={styles.dailyAccent} />
+                <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#EBE9FD', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name={dailyQuiz.icon as any} size={22} color="#7367F0" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, color: '#7367F0', fontWeight: '600', marginBottom: 2 }}>TODAY'S CHALLENGE</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{dailyQuiz.title}</Text>
+                    <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>{dailyQuiz.questionCount} questions · {dailyQuiz.duration} min</Text>
+                  </View>
+                  <View style={{ backgroundColor: '#7367F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
+                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Start</Text>
+                  </View>
+                </View>
+              </Pressable>
+            );
+          })()}
+        </View>
+
         {/* Overall Progress */}
         <View style={styles.sectionGap}>
           <ProgressCard
@@ -488,6 +521,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#7367F0',
+  },
+
+  // ── Daily Quiz card ────────────────────────────────────────────────────────
+  dailyCard: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  dailyAccent: {
+    height: 3,
+    backgroundColor: '#FF9F43',
   },
 
   // ── Desktop layout ─────────────────────────────────────────────────────────

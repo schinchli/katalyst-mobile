@@ -8,6 +8,7 @@ interface QuestionViewProps {
   selectedOptionId: string | undefined;
   onSelectOption: (optionId: string) => void;
   showResult?: boolean;
+  hiddenOptionIds?: string[];
 }
 
 export function QuestionView({
@@ -15,6 +16,7 @@ export function QuestionView({
   selectedOptionId,
   onSelectOption,
   showResult = false,
+  hiddenOptionIds = [],
 }: QuestionViewProps) {
   const colors = useThemeColors(); // kept for Feather icon colors
 
@@ -69,11 +71,14 @@ export function QuestionView({
 
       {/* Options */}
       <View className="gap-2.5">
-        {question.options.map((option) => (
+        {question.options.map((option) => {
+          const isHidden = hiddenOptionIds.includes(option.id);
+          return (
           <Pressable
             key={option.id}
-            onPress={() => !showResult && onSelectOption(option.id)}
-            disabled={showResult}
+            onPress={() => !showResult && !isHidden && onSelectOption(option.id)}
+            disabled={showResult || isHidden}
+            style={{ opacity: isHidden ? 0.3 : 1 }}
             className={`flex-row items-center p-4 rounded-xl border-[1.5px] gap-3 ${getOptionClass(option.id)}`}
           >
             {/* Letter bubble */}
@@ -89,7 +94,8 @@ export function QuestionView({
 
             {getResultIcon(option.id)}
           </Pressable>
-        ))}
+          );
+        })}
       </View>
 
       {/* Explanation box */}

@@ -3,16 +3,17 @@ const { withNativeWind } = require("nativewind/metro");
 const path = require("path");
 
 const projectRoot = __dirname;
-// When the monorepo root packages aren't installed yet, restrict
-// Metro's file watcher to this app only. Once `npm install` is
-// run at the repo root, add the shared packages here:
-//   watchFolders: [projectRoot, path.resolve(projectRoot, '../packages')]
-const config = getDefaultConfig(projectRoot, {
-  // Prevent Metro from auto-detecting and watching the workspace root
-  // before root node_modules exists.
-  isCSSEnabled: true,
-});
+const workspaceRoot = path.resolve(projectRoot, "..");
 
-config.watchFolders = [projectRoot];
+const config = getDefaultConfig(projectRoot, { isCSSEnabled: true });
+
+// Watch both the mobile app and the workspace root (hoisted node_modules live there)
+config.watchFolders = [projectRoot, workspaceRoot];
+
+// Tell Metro to resolve modules from both mobile/node_modules AND lms/node_modules
+config.resolver.nodeModulesPaths = [
+  path.resolve(projectRoot, "node_modules"),
+  path.resolve(workspaceRoot, "node_modules"),
+];
 
 module.exports = withNativeWind(config, { input: "./global.css" });
