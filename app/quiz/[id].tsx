@@ -14,6 +14,7 @@ import { useQuizStore } from '@/stores/quizStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { quizzes, quizQuestions } from '@/data/quizzes';
+import { F } from '@/constants/Typography';
 
 const QUESTION_TIME = 30;
 
@@ -181,71 +182,82 @@ export default function QuizScreen() {
 
   // ── INTRO ─────────────────────────────────────────────────────────────────
   if (phase === 'intro') {
+    const diffColor = { beginner: colors.success, intermediate: colors.warning, advanced: colors.error }[quiz.difficulty] ?? colors.primary;
+
     return (
       <SafeAreaView style={[s.flex, { backgroundColor: colors.background }]}>
         {/* Back header */}
-        <Pressable
-          onPress={() => router.back()}
-          style={s.backBtn}
-          hitSlop={8}
-        >
+        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={8}>
           <Feather name="arrow-left" size={22} color={colors.text} />
           <Text style={[s.backLabel, { color: colors.textSecondary }]}>Back</Text>
         </Pressable>
 
         <ScrollView contentContainerStyle={s.introPad} showsVerticalScrollIndicator={false}>
-          {/* Icon + title */}
-          <View style={s.introCenter}>
-            <View style={[s.introIconWrap, { backgroundColor: colors.primaryLight }]}>
-              <Feather name={quiz.icon as any} size={36} color={colors.primary} />
+
+          {/* ── Course header card ── */}
+          <View style={[s.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={[s.courseStrip, { backgroundColor: colors.primary }]} />
+            <View style={s.courseCardBody}>
+              <View style={[s.courseIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Feather name={quiz.icon as any} size={32} color={colors.primary} />
+              </View>
+              <View style={s.courseTextBlock}>
+                <Text style={[s.courseTitle, { color: colors.text }]}>{quiz.title}</Text>
+                <Text style={[s.courseDesc, { color: colors.textSecondary }]}>{quiz.description}</Text>
+                <View style={[s.diffChip, { backgroundColor: diffColor + '18' }]}>
+                  <Text style={[s.diffChipText, { color: diffColor }]}>
+                    {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
+                  </Text>
+                </View>
+              </View>
             </View>
-            <Text style={[s.introTitle, { color: colors.text }]}>{quiz.title}</Text>
-            <Text style={[s.introDesc, { color: colors.textSecondary }]}>{quiz.description}</Text>
           </View>
 
-          {/* Info chips */}
-          <View style={s.infoRow}>
+          {/* ── Metadata boxes ── */}
+          <View style={s.metaRow}>
             {[
-              { icon: 'help-circle', val: String(questions.length), label: 'Questions' },
-              { icon: 'clock',       val: `${quiz.duration} min`,   label: 'Duration' },
-              { icon: 'bar-chart',   val: quiz.difficulty,          label: 'Level' },
-            ].map((chip) => (
-              <View key={chip.label} style={s.infoChip}>
-                <Feather name={chip.icon as any} size={22} color={colors.primary} />
-                <Text style={[s.infoVal, { color: colors.text }]}>{chip.val}</Text>
-                <Text style={[s.infoLabel, { color: colors.textSecondary }]}>{chip.label}</Text>
+              { icon: 'bar-chart-2', label: 'Level',     val: quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1) },
+              { icon: 'help-circle', label: 'Questions', val: String(questions.length) },
+              { icon: 'clock',       label: 'Duration',  val: `${quiz.duration}m` },
+            ].map((item) => (
+              <View key={item.label} style={[s.metaBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <View style={[s.metaIconWrap, { backgroundColor: colors.primaryLight }]}>
+                  <Feather name={item.icon as any} size={18} color={colors.primary} />
+                </View>
+                <Text style={[s.metaVal, { color: colors.text }]}>{item.val}</Text>
+                <Text style={[s.metaLabel, { color: colors.textSecondary }]}>{item.label}</Text>
               </View>
             ))}
           </View>
 
-          {/* Lifelines strip */}
-          <View style={[s.lifelineStrip, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={s.lifelineItem}>
-              <Text style={[s.lifelineSymbol, { color: colors.warning }]}>½</Text>
-              <Text style={[s.lifelineText, { color: colors.textSecondary }]}>50/50 × 1</Text>
-            </View>
-            <View style={[s.lifelineDivider, { backgroundColor: colors.surfaceBorder }]} />
-            <View style={s.lifelineItem}>
-              <Feather name="skip-forward" size={14} color={colors.textSecondary} />
-              <Text style={[s.lifelineText, { color: colors.textSecondary }]}>Skip × 3</Text>
-            </View>
-            <View style={[s.lifelineDivider, { backgroundColor: colors.surfaceBorder }]} />
-            <View style={s.lifelineItem}>
-              <Feather name="clock" size={14} color={colors.textSecondary} />
-              <Text style={[s.lifelineText, { color: colors.textSecondary }]}>30s / Q</Text>
-            </View>
+          {/* ── What's included ── */}
+          <View style={[s.featuresCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[s.featuresHeader, { color: colors.text }]}>What's Included</Text>
+            {[
+              { icon: 'percent',      color: colors.warning, text: '50/50 Lifeline — eliminate 2 wrong answers' },
+              { icon: 'skip-forward', color: colors.primary, text: '3 Question skips available' },
+              { icon: 'clock',        color: colors.info,    text: '30 seconds per question timer' },
+              { icon: 'eye',          color: colors.success, text: 'Instant feedback & explanations' },
+            ].map((f) => (
+              <View key={f.text} style={s.featureRow}>
+                <View style={[s.featureIconWrap, { backgroundColor: f.color + '18' }]}>
+                  <Feather name={f.icon as any} size={15} color={f.color} />
+                </View>
+                <Text style={[s.featureText, { color: colors.textSecondary }]}>{f.text}</Text>
+              </View>
+            ))}
           </View>
 
-          {/* Practice mode note */}
+          {/* ── Practice note ── */}
           <View style={[s.practiceNote, { backgroundColor: colors.primaryLight }]}>
-            <Feather name="eye" size={16} color={colors.primary} />
+            <Feather name="book-open" size={16} color={colors.primary} />
             <Text style={[s.practiceText, { color: colors.primary }]}>
-              Practice Mode — answers &amp; explanations shown instantly
+              Practice Mode — correct answers shown after each choice
             </Text>
           </View>
 
-          <Button
-            title="Start Practice"
+          {/* ── Start button ── */}
+          <Pressable
             onPress={() => {
               reset();
               setShowFeedback(false);
@@ -256,9 +268,12 @@ export default function QuizScreen() {
               resetTimer();
               setPhase('quiz');
             }}
-            size="lg"
-            style={{ marginTop: 20 }}
-          />
+            style={({ pressed }) => [s.startBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
+          >
+            <Feather name="play-circle" size={20} color="#fff" />
+            <Text style={s.startBtnText}>Start Practice</Text>
+          </Pressable>
+
         </ScrollView>
       </SafeAreaView>
     );
@@ -487,83 +502,120 @@ const s = StyleSheet.create({
 
   // Back button
   backBtn:   { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 12 },
-  backLabel: { fontSize: 15, fontWeight: '500' },
+  backLabel: { fontFamily: F.medium, fontSize: 15 },
 
   // Not found
-  notFoundText: { fontSize: 18, marginTop: 16 },
+  notFoundText: { fontFamily: F.semiBold, fontSize: 18, marginTop: 16 },
 
   // ── Intro ──
-  introPad:    { padding: 24, paddingTop: 8 },
-  introCenter: { alignItems: 'center', marginBottom: 24 },
-  introIconWrap: {
-    width: 80, height: 80, borderRadius: 24,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 20,
+  introPad: { padding: 20, paddingTop: 8, paddingBottom: 40 },
+
+  // Course header card (Vuexy card style)
+  courseCard: {
+    borderRadius: 12, borderWidth: 1, marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  introTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', marginBottom: 8 },
-  introDesc:  { fontSize: 15, textAlign: 'center', lineHeight: 22, paddingHorizontal: 16 },
-
-  infoRow:   { flexDirection: 'row', justifyContent: 'center', gap: 32, marginBottom: 20 },
-  infoChip:  { alignItems: 'center', gap: 4 },
-  infoVal:   { fontSize: 15, fontWeight: '600', marginTop: 4 },
-  infoLabel: { fontSize: 12 },
-
-  lifelineStrip: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 16, padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 12,
+  courseStrip: { height: 4 },
+  courseCardBody: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 16,
   },
-  lifelineItem:    { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  lifelineDivider: { width: 1, height: 16 },
-  lifelineSymbol:  { fontSize: 15, fontWeight: '700' },
-  lifelineText:    { fontSize: 12 },
+  courseIconWrap: {
+    width: 64, height: 64, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  courseTextBlock: { flex: 1 },
+  courseTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 25, marginBottom: 6 },
+  courseDesc:  { fontFamily: F.regular, fontSize: 13, lineHeight: 19, marginBottom: 10 },
+  diffChip: {
+    alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
+  },
+  diffChipText: { fontFamily: F.semiBold, fontSize: 11 },
 
+  // Metadata boxes
+  metaRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  metaBox: {
+    flex: 1, alignItems: 'center', padding: 14, borderRadius: 10, borderWidth: 1,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 }, elevation: 1,
+  },
+  metaIconWrap: {
+    width: 36, height: 36, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+  },
+  metaVal:   { fontFamily: F.bold,    fontSize: 14, marginBottom: 2, textAlign: 'center' },
+  metaLabel: { fontFamily: F.regular, fontSize: 11, textAlign: 'center' },
+
+  // What's included card
+  featuresCard: {
+    borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 14,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 1,
+  },
+  featuresHeader: { fontFamily: F.semiBold, fontSize: 15, marginBottom: 12 },
+  featureRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+  featureIconWrap: { width: 34, height: 34, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  featureText:    { fontFamily: F.regular, fontSize: 13, lineHeight: 19, flex: 1 },
+
+  // Practice note
   practiceNote: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, padding: 12, borderRadius: 12, marginBottom: 4,
+    gap: 8, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 10, marginBottom: 16,
   },
-  practiceText: { fontSize: 13, fontWeight: '600', flexShrink: 1 },
+  practiceText: { fontFamily: F.semiBold, fontSize: 13, flexShrink: 1 },
+
+  // Start button (Vuexy primary button style)
+  startBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10, height: 52, borderRadius: 10,
+    shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 8, elevation: 4,
+  },
+  startBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 16 },
 
   // ── Results ──
   resultsHeader: {
     flexDirection: 'row', alignItems: 'center',
     borderBottomWidth: 1, paddingRight: 16,
   },
-  resultsTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '600' },
-  resultsPad:   { padding: 24, paddingTop: 16 },
+  resultsTitle: { flex: 1, textAlign: 'center', fontFamily: F.semiBold, fontSize: 17 },
+  resultsPad:   { padding: 20, paddingTop: 16 },
 
   scoreCenter: { alignItems: 'center', marginBottom: 24 },
   scoreCircle: {
-    width: 110, height: 110, borderRadius: 55,
+    width: 116, height: 116, borderRadius: 58,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 3, marginBottom: 16,
+    borderWidth: 4, marginBottom: 14,
   },
-  scorePct:     { fontSize: 34, fontWeight: '800' },
-  scoreHeading: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  scoreSubtitle:{ fontSize: 14 },
+  scorePct:      { fontFamily: F.bold, fontSize: 34 },
+  scoreHeading:  { fontFamily: F.bold, fontSize: 22, marginBottom: 4 },
+  scoreSubtitle: { fontFamily: F.regular, fontSize: 14 },
 
-  statRow:       { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  statCardResult: { flex: 1, alignItems: 'center', paddingVertical: 14 },
-  statVal:        { fontSize: 22, fontWeight: '700', marginTop: 6, marginBottom: 2 },
-  statLbl:        { fontSize: 11 },
+  statRow:        { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  statCardResult: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+  statVal:        { fontFamily: F.bold, fontSize: 22, marginTop: 6, marginBottom: 2 },
+  statLbl:        { fontFamily: F.medium, fontSize: 11 },
 
-  breakdownTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  breakdownTitle: { fontFamily: F.bold, fontSize: 16, marginBottom: 12 },
   breakdownCard:  { marginBottom: 8, paddingVertical: 12, paddingHorizontal: 14 },
   breakdownRow:   { flexDirection: 'row', alignItems: 'center', gap: 12 },
   breakdownDot:   { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  breakdownNum:   { fontSize: 13, fontWeight: '600' },
-  breakdownQ:     { flex: 1, fontSize: 14, lineHeight: 20 },
+  breakdownNum:   { fontFamily: F.semiBold, fontSize: 13 },
+  breakdownQ:     { fontFamily: F.regular, flex: 1, fontSize: 14, lineHeight: 20 },
 
   resultsActions: { gap: 12, marginTop: 16 },
 
   // ── Quiz / Review header ──
-  quizHeader:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 },
-  quizProgressWrap:{ flex: 1 },
-  quizCount:       { fontSize: 13, fontWeight: '600', minWidth: 36, textAlign: 'right' },
+  quizHeader:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 },
+  quizProgressWrap: { flex: 1 },
+  quizCount:        { fontFamily: F.semiBold, fontSize: 13, minWidth: 36, textAlign: 'right' },
 
   // ── Timer ──
-  timerRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 6 },
-  timerTrack:{ flex: 1, height: 4, borderRadius: 2, overflow: 'hidden' },
-  timerFill: { height: '100%', borderRadius: 2 },
-  timerText: { fontSize: 13, fontWeight: '700', minWidth: 30, textAlign: 'right' },
+  timerRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 6 },
+  timerTrack: { flex: 1, height: 5, borderRadius: 3, overflow: 'hidden' },
+  timerFill:  { height: '100%', borderRadius: 3 },
+  timerText:  { fontFamily: F.bold, fontSize: 13, minWidth: 30, textAlign: 'right' },
 
   // ── Lifeline bar ──
   lifelineRow: {
@@ -572,11 +624,11 @@ const s = StyleSheet.create({
   },
   lifelineBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+    borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8,
   },
-  lifelineBtnText: { fontSize: 12 },
+  lifelineBtnText: { fontFamily: F.medium, fontSize: 12 },
   runningScore:    { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 },
-  runningScoreText:{ fontSize: 12, fontWeight: '600' },
+  runningScoreText:{ fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Question area ──
   questionPad: { padding: 20, paddingBottom: 120 },
@@ -586,6 +638,6 @@ const s = StyleSheet.create({
     flexDirection: 'row', padding: 16, gap: 12,
     borderTopWidth: 1, paddingBottom: 32,
   },
-  promptWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  promptText: { fontSize: 14 },
+  promptWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
+  promptText: { fontFamily: F.medium, fontSize: 14 },
 });

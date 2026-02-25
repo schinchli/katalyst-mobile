@@ -72,6 +72,20 @@ const STAT_DEFS: StatDef[] = [
   },
 ];
 
+// Category icon + accent color maps (matches quizzes.tsx)
+const CAT_ICON: Record<string, string> = {
+  bedrock: 'cpu', rag: 'database', agents: 'users', guardrails: 'shield',
+  'prompt-eng': 'edit-3', routing: 'shuffle', security: 'lock',
+  monitoring: 'activity', orchestration: 'git-branch', evaluation: 'bar-chart-2',
+  general: 'book',
+};
+const CAT_COLOR: Record<string, string> = {
+  bedrock: T.primary, rag: T.success, agents: T.warning, guardrails: T.error,
+  'prompt-eng': T.primary, routing: T.success, security: T.error,
+  monitoring: T.warning, orchestration: T.primary, evaluation: T.success,
+  general: T.primary,
+};
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function GreetingHeader({ userName }: { userName: string }) {
@@ -217,6 +231,38 @@ function SectionHeader({
   );
 }
 
+function CategoryCoverage({
+  quizList,
+}: {
+  quizList: typeof quizzes;
+}) {
+  const colors = useThemeColors();
+
+  // Build category totals from quiz list
+  const catMap: Record<string, number> = {};
+  quizList.forEach((q) => { catMap[q.category] = (catMap[q.category] ?? 0) + 1; });
+  const entries = Object.entries(catMap).slice(0, 6); // top 6
+
+  return (
+    <View style={[styles.catCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      {entries.map(([cat, total]) => {
+        const accent = CAT_COLOR[cat] ?? T.primary;
+        const icon   = CAT_ICON[cat]  ?? 'book';
+        const label  = cat.charAt(0).toUpperCase() + cat.slice(1).replace('-', ' ');
+        return (
+          <View key={cat} style={styles.catRow}>
+            <View style={[styles.catIconWrap, { backgroundColor: accent + '18' }]}>
+              <Feather name={icon as any} size={14} color={accent} />
+            </View>
+            <Text style={[styles.catLabel, { color: colors.text }]}>{label}</Text>
+            <Text style={[styles.catCount, { color: colors.textSecondary }]}>{total} quizzes</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
@@ -256,15 +302,19 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {/* Progress + Continue Learning: side by side on wide screens */}
+          {/* Progress + Topics + Quiz list: side by side on wide screens */}
           <View style={styles.desktopBodyRow}>
-            {/* Left col: progress card */}
+            {/* Left col: progress + topics */}
             <View style={styles.desktopLeftCol}>
               <ProgressCard
                 completionRate={completionRate}
                 completed={progress.completedQuizzes}
                 total={quizzes.length}
               />
+              <View style={{ marginTop: 20 }}>
+                <SectionHeader title="Topics Available" />
+                <CategoryCoverage quizList={quizzes} />
+              </View>
             </View>
 
             {/* Right col: quiz list */}
@@ -273,7 +323,7 @@ export default function HomeScreen() {
                 title="Continue Learning"
                 onViewAll={() => router.push('/(tabs)/quizzes')}
               />
-              {quizzes.slice(0, 3).map((quiz) => (
+              {quizzes.slice(0, 5).map((quiz) => (
                 <QuizCard
                   key={quiz.id}
                   quiz={quiz}
@@ -351,6 +401,12 @@ export default function HomeScreen() {
             completed={progress.completedQuizzes}
             total={quizzes.length}
           />
+        </View>
+
+        {/* Topic Coverage */}
+        <View style={styles.sectionGap}>
+          <SectionHeader title="Topics Available" onViewAll={() => router.push('/(tabs)/quizzes')} />
+          <CategoryCoverage quizList={quizzes} />
         </View>
 
         {/* Continue Learning */}
@@ -596,6 +652,41 @@ const styles = StyleSheet.create({
     fontFamily: F.semiBold,
     color: '#FFFFFF',
     fontSize: 13,
+  },
+
+  // ── Category coverage card ─────────────────────────────────────────────────
+  catCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 7,
+  },
+  catIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  catLabel: {
+    fontFamily: F.medium,
+    flex: 1,
+    fontSize: 13,
+  },
+  catCount: {
+    fontFamily: F.regular,
+    fontSize: 12,
   },
 
   // ── Desktop layout ─────────────────────────────────────────────────────────
