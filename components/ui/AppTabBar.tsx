@@ -1,6 +1,7 @@
 import { View, Text, Pressable, Platform, useWindowDimensions, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { F } from '@/constants/Typography';
 
 // ─── Vuexy v10.11.1 exact token values (light mode) ─────────────────────────
 const VX = {
@@ -72,10 +73,10 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
             <Feather name="zap" size={18} color="#FFFFFF" />
           </View>
           <View>
-            <Text style={{ fontSize: 15, fontWeight: '700', color: '#2F2B3D', letterSpacing: -0.2 }}>
+            <Text style={{ fontFamily: F.bold, fontSize: 15, color: '#2F2B3D', letterSpacing: -0.2 }}>
               Katalyst
             </Text>
-            <Text style={{ fontSize: 10, fontWeight: '500', color: VX.muted, marginTop: -1 }}>
+            <Text style={{ fontFamily: F.medium, fontSize: 10, color: VX.muted, marginTop: -1 }}>
               KataHQ Platform
             </Text>
           </View>
@@ -89,8 +90,8 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
           {/* Section label */}
           <Text
             style={{
+              fontFamily: F.semiBold,
               fontSize: 11,
-              fontWeight: '600',
               color: VX.muted,
               letterSpacing: 0.9,
               textTransform: 'uppercase',
@@ -139,8 +140,8 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
                 />
                 <Text
                   style={{
+                    fontFamily: isFocused ? F.semiBold : F.regular,
                     fontSize: 14,
-                    fontWeight: isFocused ? '600' : '400',
                     color: isFocused ? VX.activeText : VX.text,
                     flex: 1,
                   }}
@@ -160,7 +161,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
             padding: 16,
           }}
         >
-          <Text style={{ fontSize: 11, color: VX.muted, textAlign: 'center' }}>
+          <Text style={{ fontFamily: F.regular, fontSize: 11, color: VX.muted, textAlign: 'center' }}>
             v1.0.0 · KataHQ
           </Text>
         </View>
@@ -197,8 +198,8 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
             />
             <Text
               style={{
+                fontFamily: F.semiBold,
                 fontSize: 10,
-                fontWeight: '600',
                 color: isFocused ? VX.primary : VX.muted,
               }}
             >

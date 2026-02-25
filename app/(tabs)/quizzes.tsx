@@ -361,8 +361,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   premiumText: {
+    fontFamily: F.bold,
     fontSize: 10,
-    fontWeight: '700',
     color: '#D97706',
   },
   cardDesc: {
@@ -384,8 +384,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   diffBadgeText: {
+    fontFamily: F.semiBold,
     fontSize: 11,
-    fontWeight: '600',
   },
   metaItem: {
     flexDirection: 'row',
@@ -393,6 +393,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   metaText: {
+    fontFamily: F.regular,
     fontSize: 12,
     color: T.muted,
   },
@@ -419,12 +420,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyTitle: {
+    fontFamily: F.semiBold,
     fontSize: 16,
-    fontWeight: '600',
     color: T.textSecondary,
     marginBottom: 6,
   },
   emptySubtitle: {
+    fontFamily: F.regular,
     fontSize: 13,
     color: T.muted,
   },

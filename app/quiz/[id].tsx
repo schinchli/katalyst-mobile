@@ -626,9 +626,10 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 4,
     borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8,
   },
-  lifelineBtnText: { fontFamily: F.medium, fontSize: 12 },
-  runningScore:    { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 },
-  runningScoreText:{ fontFamily: F.semiBold, fontSize: 12 },
+  lifelineBtnText:  { fontFamily: F.medium,   fontSize: 12 },
+  lifelineSymbol:   { fontFamily: F.bold,     fontSize: 14 },
+  runningScore:     { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 },
+  runningScoreText: { fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Question area ──
   questionPad: { padding: 20, paddingBottom: 120 },
