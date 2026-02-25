@@ -3,7 +3,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useAuthStore } from '@/stores/authStore';
@@ -11,16 +10,22 @@ import { useProgressStore } from '@/stores/progressStore';
 import { getMissingCount } from '@/config/appConfig';
 import { useWebLayout } from '@/hooks/useWebLayout';
 
+const BANNER_H = 100;
+const AVATAR_SIZE = 80;
+const AVATAR_RING = AVATAR_SIZE + 8;
+
 const ACCOUNT_ITEMS = [
-  { icon: 'bell',        label: 'Notifications', route: null },
-  { icon: 'moon',        label: 'Appearance',    route: null },
-  { icon: 'download',    label: 'Downloads',     route: null },
+  { icon: 'bell',        label: 'Notifications' },
+  { icon: 'moon',        label: 'Appearance' },
+  { icon: 'download',    label: 'Downloads' },
 ] as const;
 
 const SUPPORT_ITEMS = [
-  { icon: 'help-circle', label: 'Help & Support', route: null },
-  { icon: 'info',        label: 'About',          route: null },
+  { icon: 'help-circle', label: 'Help & Support' },
+  { icon: 'info',        label: 'About' },
 ] as const;
+
+type Colors = ReturnType<typeof useThemeColors>;
 
 function MenuSection({
   title,
@@ -28,8 +33,8 @@ function MenuSection({
   colors,
 }: {
   title: string;
-  items: readonly { icon: string; label: string; route: null }[];
-  colors: ReturnType<typeof useThemeColors>;
+  items: readonly { icon: string; label: string }[];
+  colors: Colors;
 }) {
   return (
     <View style={styles.menuSection}>
@@ -37,13 +42,9 @@ function MenuSection({
       <Card padding={0} style={styles.menuCard}>
         {items.map((item, idx) => (
           <View key={item.label}>
-            <Card
-              onPress={() => {}}
-              padding={16}
-              style={styles.menuRow}
-            >
-              <View style={[styles.menuIconWrap, { backgroundColor: '#7367F014' }]}>
-                <Feather name={item.icon as any} size={17} color="#7367F0" />
+            <Card onPress={() => {}} padding={16} style={styles.menuRow}>
+              <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Feather name={item.icon as any} size={17} color={colors.primary} />
               </View>
               <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
               <Feather name="chevron-right" size={16} color={colors.textSecondary} />
@@ -75,33 +76,50 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const initials = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
+  const initials  = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
   const isPremium = user?.subscription === 'premium';
+
+  const stats = [
+    {
+      icon: 'check-square', label: 'Quizzes',
+      value: progress.completedQuizzes,
+      color: colors.primary,
+      bg: colors.primaryLight,
+    },
+    {
+      icon: 'trending-up', label: 'Avg Score',
+      value: `${progress.averageScore}%`,
+      color: colors.success,
+      bg: colors.success + '22',
+    },
+    {
+      icon: 'award', label: 'Badges',
+      value: progress.badges.length,
+      color: colors.warning,
+      bg: colors.warning + '22',
+    },
+  ];
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
       <ScrollView contentContainerStyle={[styles.scroll, contentContainerWeb as any]}>
 
-        {/* ── Profile Header ────────────────────────────── */}
+        {/* ── Profile Header ── */}
         <View style={styles.headerCard}>
-          {/* Purple banner */}
-          <View style={styles.headerBanner} />
+          {/* Banner */}
+          <View style={[styles.headerBanner, { backgroundColor: colors.primary }]} />
 
-          {/* Avatar straddling the boundary */}
-          <View style={[styles.avatarRing, { backgroundColor: colors.surface }]}>
-            <View style={styles.avatarInner}>
-              <Text style={styles.avatarInitial}>{initials}</Text>
+          {/* Avatar */}
+          <View style={[styles.avatarRing, { backgroundColor: colors.background }]}>
+            <View style={[styles.avatarInner, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.avatarInitial, { color: colors.primary }]}>{initials}</Text>
             </View>
           </View>
 
-          {/* White body */}
+          {/* Body */}
           <View style={[styles.headerBody, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[styles.userName, { color: colors.text }]}>
-              {user?.name ?? 'User'}
-            </Text>
-            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
-              {user?.email ?? ''}
-            </Text>
+            <Text style={[styles.userName, { color: colors.text }]}>{user?.name ?? 'User'}</Text>
+            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email ?? ''}</Text>
             <View style={styles.badgeWrap}>
               <Badge
                 label={isPremium ? 'Premium' : 'Free Plan'}
@@ -112,89 +130,66 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* ── Quick Stats ───────────────────────────────── */}
+        {/* ── Quick Stats ── */}
         <View style={styles.statsRow}>
-          {/* Quizzes */}
-          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[styles.statIconWrap, { backgroundColor: '#7367F014' }]}>
-              <Feather name="check-square" size={18} color="#7367F0" />
+          {stats.map((s) => (
+            <View key={s.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
+                <Feather name={s.icon as any} size={18} color={s.color} />
+              </View>
+              <Text style={[styles.statNumber, { color: s.color }]}>{s.value}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{s.label}</Text>
             </View>
-            <Text style={[styles.statNumber, { color: '#7367F0' }]}>{progress.completedQuizzes}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Quizzes</Text>
-          </View>
-
-          {/* Avg Score */}
-          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[styles.statIconWrap, { backgroundColor: '#28C76F14' }]}>
-              <Feather name="trending-up" size={18} color="#28C76F" />
-            </View>
-            <Text style={[styles.statNumber, { color: '#28C76F' }]}>{progress.averageScore}%</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Score</Text>
-          </View>
-
-          {/* Badges */}
-          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[styles.statIconWrap, { backgroundColor: '#FF9F4314' }]}>
-              <Feather name="award" size={18} color="#FF9F43" />
-            </View>
-            <Text style={[styles.statNumber, { color: '#FF9F43' }]}>{progress.badges.length}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Badges</Text>
-          </View>
+          ))}
         </View>
 
-        {/* ── Account Menu ──────────────────────────────── */}
-        <MenuSection title="ACCOUNT" items={ACCOUNT_ITEMS} colors={colors} />
+        {/* ── Menus ── */}
+        <MenuSection title="ACCOUNT"      items={ACCOUNT_ITEMS} colors={colors} />
         <MenuSection title="APP SETTINGS" items={SUPPORT_ITEMS} colors={colors} />
 
-        {/* ── Sign Out ──────────────────────────────────── */}
+        {/* ── Sign Out ── */}
         <View style={styles.signOutWrap}>
           <Pressable
             onPress={handleSignOut}
             style={({ pressed }) => [
               styles.signOutBtn,
-              { borderColor: '#FF4C51', opacity: pressed ? 0.8 : 1 },
+              { borderColor: colors.error, opacity: pressed ? 0.8 : 1 },
             ]}
           >
-            <Feather name="log-out" size={16} color="#FF4C51" />
-            <Text style={styles.signOutText}>Sign Out</Text>
+            <Feather name="log-out" size={16} color={colors.error} />
+            <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
           </Pressable>
         </View>
 
-        {/* ── Developer Settings (DEV only) ─────────────── */}
+        {/* ── Developer Settings (DEV only) ── */}
         {__DEV__ && (
           <Pressable
             onPress={() => router.push('/dev-config' as any)}
             style={({ pressed }) => [styles.devRow, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <Feather name="settings" size={15} color="#7367F0" />
-            <Text style={styles.devText}>Developer Settings</Text>
+            <Feather name="settings" size={15} color={colors.primary} />
+            <Text style={[styles.devText, { color: colors.primary }]}>Developer Settings</Text>
             {getMissingCount() > 0 && (
-              <View style={styles.devBadge}>
-                <Text style={styles.devBadgeText}>{getMissingCount()}</Text>
+              <View style={[styles.devBadge, { backgroundColor: colors.error + '1A' }]}>
+                <Text style={[styles.devBadgeText, { color: colors.error }]}>{getMissingCount()}</Text>
               </View>
             )}
           </Pressable>
         )}
 
-        {/* ── Version ───────────────────────────────────── */}
-        <Text style={[styles.version, { color: colors.textSecondary }]}>
-          Katalyst v1.0.0 · KataHQ
-        </Text>
+        {/* ── Version ── */}
+        <Text style={[styles.version, { color: colors.textSecondary }]}>Katalyst v1.0.0 · KataHQ</Text>
 
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const BANNER_H = 100;
-const AVATAR_SIZE = 80;
-const AVATAR_RING = AVATAR_SIZE + 8; // 4px ring each side
-
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root:   { flex: 1 },
   scroll: { paddingBottom: 48 },
 
-  /* ── Header card ── */
+  /* ── Header ── */
   headerCard: {
     marginBottom: 24,
     alignItems: 'center',
@@ -202,7 +197,6 @@ const styles = StyleSheet.create({
   headerBanner: {
     width: '100%',
     height: BANNER_H,
-    backgroundColor: '#7367F0',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
   },
@@ -219,14 +213,12 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    backgroundColor: '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
     fontSize: 30,
     fontWeight: '700',
-    color: '#7367F0',
   },
   headerBody: {
     width: '100%',
@@ -340,7 +332,6 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FF4C51',
   },
 
   /* ── Dev row ── */
@@ -355,10 +346,8 @@ const styles = StyleSheet.create({
   devText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#7367F0',
   },
   devBadge: {
-    backgroundColor: '#FF4C511A',
     borderRadius: 99,
     width: 20,
     height: 20,
@@ -368,7 +357,6 @@ const styles = StyleSheet.create({
   devBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#FF4C51',
   },
 
   /* ── Version ── */
