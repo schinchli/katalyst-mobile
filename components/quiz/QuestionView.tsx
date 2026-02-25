@@ -1,13 +1,19 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import type { Question } from '@/types';
 
+// Fixed tint backgrounds (light mode locked)
+const SUCCESS_BG = '#D1F7E2';
+const ERROR_BG   = '#FFE5E6';
+const PRIMARY_BG = '#EBE9FD';
+const LETTERS    = ['A', 'B', 'C', 'D', 'E'];
+
 interface QuestionViewProps {
-  question: Question;
+  question:         Question;
   selectedOptionId: string | undefined;
-  onSelectOption: (optionId: string) => void;
-  showResult?: boolean;
+  onSelectOption:   (optionId: string) => void;
+  showResult?:      boolean;
   hiddenOptionIds?: string[];
 }
 
@@ -15,98 +21,172 @@ export function QuestionView({
   question,
   selectedOptionId,
   onSelectOption,
-  showResult = false,
+  showResult      = false,
   hiddenOptionIds = [],
 }: QuestionViewProps) {
-  const colors = useThemeColors(); // kept for Feather icon colors
-
-  /** Returns Tailwind classes for the option row based on answer state */
-  const getOptionClass = (optionId: string): string => {
-    const isSelected = selectedOptionId === optionId;
-    const isCorrect  = optionId === question.correctOptionId;
-
-    if (showResult) {
-      if (isCorrect)                  return 'border-app-success bg-app-success-tint';
-      if (isSelected && !isCorrect)   return 'border-app-error bg-app-error-tint';
-    }
-    if (isSelected) {
-      return 'border-app-primary bg-app-primary-faint dark:bg-app-primary-faint-dark';
-    }
-    return 'border-app-border dark:border-app-border-dark bg-app-surface dark:bg-app-surface-dark';
-  };
-
-  /** Returns Tailwind classes for the letter bubble inside the option */
-  const getBubbleClass = (optionId: string): string => {
-    const isSelected = selectedOptionId === optionId;
-    const isCorrect  = optionId === question.correctOptionId;
-
-    if (showResult && isCorrect)           return 'bg-app-success border-app-success';
-    if (showResult && isSelected)          return 'bg-app-error border-app-error';
-    if (isSelected)                        return 'bg-app-primary border-app-primary';
-    return 'bg-transparent border-app-border dark:border-app-border-dark';
-  };
-
-  const getBubbleTextClass = (optionId: string): string => {
-    const isSelected = selectedOptionId === optionId;
-    const isCorrect  = optionId === question.correctOptionId;
-    if ((showResult && isCorrect) || (showResult && isSelected) || isSelected) return 'text-white';
-    return 'text-app-muted dark:text-app-muted-dark';
-  };
-
-  const getResultIcon = (optionId: string): React.ReactNode => {
-    if (!showResult) return null;
-    if (optionId === question.correctOptionId)
-      return <Feather name="check-circle" size={20} color={colors.success} />;
-    if (selectedOptionId === optionId)
-      return <Feather name="x-circle" size={20} color={colors.error} />;
-    return null;
-  };
+  const colors = useThemeColors();
 
   return (
-    <View className="gap-4">
-      {/* Question text */}
-      <Text className="text-lg font-semibold text-app-text dark:text-app-text-dark leading-[26px]">
-        {question.text}
-      </Text>
+    <View style={s.container}>
 
-      {/* Options */}
-      <View className="gap-2.5">
-        {question.options.map((option) => {
-          const isHidden = hiddenOptionIds.includes(option.id);
+      {/* ── Question card ─────────────────────────────────────────── */}
+      <View style={[s.questionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderLeftColor: colors.primary }]}>
+        <Text style={[s.questionText, { color: colors.text }]}>{question.text}</Text>
+      </View>
+
+      {/* ── Options ───────────────────────────────────────────────── */}
+      <View style={s.optionsList}>
+        {question.options.map((option, idx) => {
+          const isSelected = selectedOptionId === option.id;
+          const isCorrect  = option.id === question.correctOptionId;
+          const isHidden   = hiddenOptionIds.includes(option.id);
+
+          // Option container style
+          let optBg     = colors.surface;
+          let optBorder = colors.surfaceBorder;
+          if (showResult) {
+            if (isCorrect)              { optBg = SUCCESS_BG; optBorder = colors.success; }
+            else if (isSelected)        { optBg = ERROR_BG;   optBorder = colors.error; }
+          } else if (isSelected) {
+            optBg = PRIMARY_BG; optBorder = colors.primary;
+          }
+
+          // Bubble style
+          let bubBg      = 'transparent';
+          let bubBorder  = colors.surfaceBorder;
+          let bubText    = colors.textSecondary;
+          if (showResult && isCorrect)               { bubBg = colors.success; bubBorder = colors.success; bubText = '#fff'; }
+          else if (showResult && isSelected)         { bubBg = colors.error;   bubBorder = colors.error;   bubText = '#fff'; }
+          else if (!showResult && isSelected)        { bubBg = colors.primary; bubBorder = colors.primary; bubText = '#fff'; }
+
           return (
-          <Pressable
-            key={option.id}
-            onPress={() => !showResult && !isHidden && onSelectOption(option.id)}
-            disabled={showResult || isHidden}
-            style={{ opacity: isHidden ? 0.3 : 1 }}
-            className={`flex-row items-center p-4 rounded-xl border-[1.5px] gap-3 ${getOptionClass(option.id)}`}
-          >
-            {/* Letter bubble */}
-            <View className={`w-7 h-7 rounded-full border-[1.5px] items-center justify-center ${getBubbleClass(option.id)}`}>
-              <Text className={`text-[13px] font-semibold ${getBubbleTextClass(option.id)}`}>
-                {option.id.toUpperCase()}
-              </Text>
-            </View>
+            <Pressable
+              key={option.id}
+              onPress={() => !showResult && !isHidden && onSelectOption(option.id)}
+              disabled={showResult || isHidden}
+              style={[
+                s.option,
+                { backgroundColor: optBg, borderColor: optBorder, opacity: isHidden ? 0.28 : 1 },
+              ]}
+              accessibilityRole="button"
+            >
+              {/* Letter bubble */}
+              <View style={[s.bubble, { backgroundColor: bubBg, borderColor: bubBorder }]}>
+                <Text style={[s.bubbleLetter, { color: bubText }]}>
+                  {LETTERS[idx] ?? option.id.toUpperCase()}
+                </Text>
+              </View>
 
-            <Text className="flex-1 text-[15px] text-app-text dark:text-app-text-dark leading-[22px]">
-              {option.text}
-            </Text>
+              {/* Option text */}
+              <Text style={[s.optionText, { color: colors.text }]}>{option.text}</Text>
 
-            {getResultIcon(option.id)}
-          </Pressable>
+              {/* Result icon */}
+              {showResult && isCorrect && (
+                <Feather name="check-circle" size={20} color={colors.success} />
+              )}
+              {showResult && isSelected && !isCorrect && (
+                <Feather name="x-circle" size={20} color={colors.error} />
+              )}
+            </Pressable>
           );
         })}
       </View>
 
-      {/* Explanation box */}
-      {showResult && (
-        <View className="bg-app-primary-faint dark:bg-app-primary-faint-dark p-3.5 rounded-xl border-l-[3px] border-l-app-primary">
-          <Text className="text-[13px] font-semibold text-app-primary mb-1">Explanation</Text>
-          <Text className="text-sm text-app-text dark:text-app-text-dark leading-5">
-            {question.explanation}
-          </Text>
+      {/* ── Explanation ───────────────────────────────────────────── */}
+      {showResult && question.explanation ? (
+        <View style={[s.explanationBox, { backgroundColor: PRIMARY_BG, borderLeftColor: colors.primary }]}>
+          <View style={s.explanationHeader}>
+            <View style={[s.explanationIconWrap, { backgroundColor: colors.primary }]}>
+              <Feather name="info" size={12} color="#fff" />
+            </View>
+            <Text style={[s.explanationLabel, { color: colors.primary }]}>Explanation</Text>
+          </View>
+          <Text style={[s.explanationText, { color: colors.text }]}>{question.explanation}</Text>
         </View>
-      )}
+      ) : showResult ? (
+        <View style={[s.explanationBox, { backgroundColor: colors.surface, borderLeftColor: colors.surfaceBorder }]}>
+          <Text style={[s.explanationText, { color: colors.textSecondary }]}>No explanation available.</Text>
+        </View>
+      ) : null}
+
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  container: { gap: 12 },
+
+  // Question card
+  questionCard: {
+    padding: 18,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  questionText: {
+    fontSize: 17,
+    fontWeight: '600',
+    lineHeight: 27,
+  },
+
+  // Options
+  optionsList: { gap: 10 },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  bubble: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  bubbleLetter: { fontSize: 13, fontWeight: '700' },
+  optionText:   { flex: 1, fontSize: 15, lineHeight: 22 },
+
+  // Explanation
+  explanationBox: {
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  explanationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  explanationIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  explanationLabel: { fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
+  explanationText:  { fontSize: 14, lineHeight: 22 },
+});

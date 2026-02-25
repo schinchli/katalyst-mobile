@@ -1,73 +1,169 @@
-import { View, Text } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import type { Quiz } from '@/types';
+
+const DIFF_COLOR: Record<string, string> = {
+  beginner:     '#28C76F',
+  intermediate: '#FF9F43',
+  advanced:     '#FF4C51',
+};
+const DIFF_BG: Record<string, string> = {
+  beginner:     '#E8FAF0',
+  intermediate: '#FFF3E8',
+  advanced:     '#FFE5E6',
+};
 
 interface QuizCardProps {
   quiz: Quiz;
   onPress: () => void;
 }
 
-// Difficulty colors — Vuexy status tokens
-const difficultyColor: Record<string, string> = {
-  beginner:     '#28C76F',  // app-success
-  intermediate: '#FF9F43',  // app-warning
-  advanced:     '#FF4C51',  // app-error
-};
-
 export function QuizCard({ quiz, onPress }: QuizCardProps) {
-  const colors = useThemeColors(); // kept for Feather icon colors (not NativeWind)
+  const colors  = useThemeColors();
+  const accent  = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
+  const badgeBg = DIFF_BG[quiz.difficulty]   ?? colors.primaryLight;
 
   return (
-    <Card onPress={onPress} style={{ marginBottom: 12 }}>
-      <View className="flex-row items-center gap-3.5">
-        {/* Icon container */}
-        <View className="w-12 h-12 rounded-xl bg-app-primary-faint dark:bg-app-primary-faint-dark items-center justify-center">
-          <Feather name={quiz.icon as any} size={22} color={colors.primary} />
-        </View>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        s.card,
+        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+        pressed && s.cardPressed,
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={`Start ${quiz.title} quiz`}
+    >
+      {/* Difficulty accent bar */}
+      <View style={[s.accentBar, { backgroundColor: accent }]} />
 
-        {/* Content */}
-        <View className="flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text
-              className="text-base font-semibold text-app-text dark:text-app-text-dark flex-1"
-              numberOfLines={1}
-            >
-              {quiz.title}
-            </Text>
-            {quiz.isPremium && <Badge label="PRO" color={colors.aws} size="sm" />}
-          </View>
-
-          <Text
-            className="text-[13px] text-app-muted dark:text-app-muted-dark mt-0.5"
-            numberOfLines={1}
-          >
-            {quiz.description}
-          </Text>
-
-          <View className="flex-row items-center gap-3 mt-2">
-            <Badge label={quiz.difficulty} color={difficultyColor[quiz.difficulty]} size="sm" />
-
-            <View className="flex-row items-center gap-1">
-              <Feather name="help-circle" size={13} color={colors.textSecondary} />
-              <Text className="text-xs text-app-muted dark:text-app-muted-dark">
-                {quiz.questionCount} questions
-              </Text>
-            </View>
-
-            <View className="flex-row items-center gap-1">
-              <Feather name="clock" size={13} color={colors.textSecondary} />
-              <Text className="text-xs text-app-muted dark:text-app-muted-dark">
-                {quiz.duration} min
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+      {/* Icon */}
+      <View style={[s.iconWrap, { backgroundColor: colors.primaryLight }]}>
+        <Feather name={quiz.icon as any} size={20} color={colors.primary} />
       </View>
-    </Card>
+
+      {/* Content */}
+      <View style={s.content}>
+        <View style={s.titleRow}>
+          <Text style={[s.title, { color: colors.text }]} numberOfLines={1}>
+            {quiz.title}
+          </Text>
+          {quiz.isPremium && <Badge label="PRO" color={colors.aws} size="sm" />}
+        </View>
+
+        <Text style={[s.desc, { color: colors.textSecondary }]} numberOfLines={1}>
+          {quiz.description}
+        </Text>
+
+        <View style={s.footer}>
+          <View style={[s.diffBadge, { backgroundColor: badgeBg }]}>
+            <Text style={[s.diffText, { color: accent }]}>
+              {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
+            </Text>
+          </View>
+          <View style={s.meta}>
+            <Feather name="help-circle" size={11} color={colors.textSecondary} />
+            <Text style={[s.metaText, { color: colors.textSecondary }]}>
+              {quiz.questionCount}q
+            </Text>
+          </View>
+          <View style={s.meta}>
+            <Feather name="clock" size={11} color={colors.textSecondary} />
+            <Text style={[s.metaText, { color: colors.textSecondary }]}>
+              {quiz.duration}m
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <Feather name="chevron-right" size={18} color={colors.textSecondary} style={s.chevron} />
+    </Pressable>
   );
 }
+
+const s = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  cardPressed: { opacity: 0.9 },
+
+  accentBar: {
+    width: 4,
+    alignSelf: 'stretch',
+  },
+
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+    flexShrink: 0,
+  },
+
+  content: {
+    flex: 1,
+    paddingVertical: 13,
+    paddingHorizontal: 12,
+  },
+
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 3,
+  },
+  title: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+
+  desc: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 7,
+  },
+
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  diffBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  diffText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  meta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  metaText: {
+    fontSize: 11,
+  },
+
+  chevron: {
+    marginRight: 12,
+    flexShrink: 0,
+  },
+});

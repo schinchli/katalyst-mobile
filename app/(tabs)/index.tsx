@@ -19,6 +19,18 @@ const CARD_SHADOW = {
   elevation: 2,
 };
 
+// Vuexy light-mode design tokens (app is locked to light)
+const T = {
+  primary:      '#7367F0',
+  success:      '#28C76F',
+  warning:      '#FF9F43',
+  error:        '#FF4C51',
+  primaryLight: '#EBE9FD',
+  successLight: '#D1F7E2',
+  warningLight: '#FFF3E8',
+  errorLight:   '#FFE5E6',
+} as const;
+
 // ─── Stat card definition ─────────────────────────────────────────────────────
 interface StatDef {
   icon: string;
@@ -31,29 +43,29 @@ interface StatDef {
 const STAT_DEFS: StatDef[] = [
   {
     icon: 'zap',
-    iconBg: '#EBE9FD',
-    iconColor: '#7367F0',
+    iconBg: T.primaryLight,
+    iconColor: T.primary,
     label: 'Day Streak',
     getValue: (p) => String(p.currentStreak),
   },
   {
     icon: 'check-circle',
-    iconBg: '#D1F7E2',
-    iconColor: '#28C76F',
+    iconBg: T.successLight,
+    iconColor: T.success,
     label: 'Completed',
     getValue: (p) => String(p.completedQuizzes),
   },
   {
     icon: 'trending-up',
-    iconBg: '#FEF3C7',
-    iconColor: '#FF9F43',
+    iconBg: T.warningLight,
+    iconColor: T.warning,
     label: 'Avg Score',
     getValue: (p) => `${p.averageScore}%`,
   },
   {
     icon: 'award',
-    iconBg: '#FFE5E6',
-    iconColor: '#FF4C51',
+    iconBg: T.errorLight,
+    iconColor: T.error,
     label: 'Badges',
     getValue: (p) => String(p.badges?.length ?? 0),
   },
@@ -167,7 +179,7 @@ function ProgressCard({
               {completed} of {total} quizzes done
             </Text>
           </View>
-          <Text style={[styles.progressPercent, { color: '#7367F0' }]}>
+          <Text style={[styles.progressPercent, { color: colors.primary }]}>
             {pct}%
           </Text>
         </View>
@@ -311,17 +323,19 @@ export default function HomeScreen() {
                 ]}
               >
                 <View style={styles.dailyAccent} />
-                <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                  <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#EBE9FD', alignItems: 'center', justifyContent: 'center' }}>
-                    <Feather name={dailyQuiz.icon as any} size={22} color="#7367F0" />
+                <View style={styles.dailyBody}>
+                  <View style={[styles.dailyIconWrap, { backgroundColor: colors.primaryLight }]}>
+                    <Feather name={dailyQuiz.icon as any} size={22} color={colors.primary} />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 13, color: '#7367F0', fontWeight: '600', marginBottom: 2 }}>TODAY'S CHALLENGE</Text>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{dailyQuiz.title}</Text>
-                    <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>{dailyQuiz.questionCount} questions · {dailyQuiz.duration} min</Text>
+                  <View style={styles.dailyInfo}>
+                    <Text style={[styles.dailyLabel, { color: colors.primary }]}>TODAY'S CHALLENGE</Text>
+                    <Text style={[styles.dailyTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
+                    <Text style={[styles.dailyMeta, { color: colors.textSecondary }]}>
+                      {dailyQuiz.questionCount} questions · {dailyQuiz.duration} min
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: '#7367F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Start</Text>
+                  <View style={[styles.dailyStartBtn, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.dailyStartText}>Start</Text>
                   </View>
                 </View>
               </Pressable>
@@ -377,7 +391,7 @@ const styles = StyleSheet.create({
   },
   headerAccentStrip: {
     height: 4,
-    backgroundColor: '#7367F0',
+    backgroundColor: T.primary,
   },
   headerInner: {
     padding: 20,
@@ -410,11 +424,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    backgroundColor: '#7367F0',
+    backgroundColor: T.primary,
     paddingHorizontal: 18,
     paddingVertical: 11,
     borderRadius: 10,
-    // Subtle inner shadow by slightly darker bottom border-like edge
     shadowColor: '#5E50EE',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.45,
@@ -468,7 +481,7 @@ const styles = StyleSheet.create({
   },
   progressAccentStrip: {
     height: 4,
-    backgroundColor: '#7367F0',
+    backgroundColor: T.primary,
   },
   progressInner: {
     padding: 20,
@@ -520,7 +533,7 @@ const styles = StyleSheet.create({
   sectionViewAll: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#7367F0',
+    color: T.primary,
   },
 
   // ── Daily Quiz card ────────────────────────────────────────────────────────
@@ -530,7 +543,52 @@ const styles = StyleSheet.create({
   },
   dailyAccent: {
     height: 3,
-    backgroundColor: '#FF9F43',
+    backgroundColor: T.warning,
+  },
+
+  // Daily card internals
+  dailyBody: {
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  dailyIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  dailyInfo: {
+    flex: 1,
+  },
+  dailyLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  dailyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  dailyMeta: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  dailyStartBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    flexShrink: 0,
+  },
+  dailyStartText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   // ── Desktop layout ─────────────────────────────────────────────────────────
