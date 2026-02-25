@@ -1,0 +1,57 @@
+{
+  "cli": {
+    "version": ">= 14.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_API_URL": "https://dev.api.awslearn.app",
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://dev.cdn.awslearn.app"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "env": {
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_API_URL": "https://staging.api.awslearn.app",
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://staging.cdn.awslearn.app"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://api.awslearn.app",
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "TODO: your@apple.id",
+        "ascAppId": "TODO: 1234567890",
+        "appleTeamId": "TODO: XXXXXXXXXX"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}

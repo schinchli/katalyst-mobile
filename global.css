@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Force light mode on web (Vuexy design system) ──────────────────────── */
+@media screen {
+  :root {
+    color-scheme: light;
+  }
+
+  html, body {
+    background-color: #F8F7FA;   /* Vuexy $body-bg */
+    color: #2F2B3D;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Override any system dark-mode preference on web */
+    color-scheme: light;
+  }
+
+  /* ── Vuexy-style thin scrollbars ─────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #DBDADE; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #A5A3AE; }
+
+  /* ── Focus rings ─────────────────────────────────────────────────────── */
+  [role="button"]:focus-visible { outline: 2px solid #7367F0; outline-offset: 2px; border-radius: 6px; }
+
+  /* ── Vuexy sidebar: active item gradient (React Native `style` can't do CSS
+        gradient on native, so we use a web-only CSS override on the element
+        that React Navigation renders as a div on web) ─────────────────── */
+  /* Applied via inline style + boxShadow in AppTabBar — no extra CSS needed */
+}
+
+/**
+ * Vuexy v10.11.1 Design Token CSS Variables — always light on web
+ */
+:root {
+  /* Primary */
+  --vx-primary:        #7367F0;
+  --vx-primary-rgb:    115, 103, 240;
+
+  /* Backgrounds */
+  --vx-bg:             #F8F7FA;
+  --vx-surface:        #FFFFFF;
+
+  /* Borders */
+  --vx-border:         #DBDADE;
+
+  /* Text */
+  --vx-text:           #2F2B3D;
+  --vx-muted:          #A5A3AE;
+
+  /* Primary light */
+  --vx-primary-faint:  #EBE9FD;
+
+  /* Status */
+  --vx-success:        #28C76F;
+  --vx-warning:        #FF9F43;
+  --vx-error:          #FF4C51;
+  --vx-info:           #00BAD1;
+
+  /* Brand */
+  --vx-aws:            #FF9900;
+}
