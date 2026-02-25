@@ -259,7 +259,6 @@ export default function QuizScreen() {
             style={{ marginTop: 20 }}
           />
         </View>
-        </View>
       </SafeAreaView>
     );
   }
