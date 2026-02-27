@@ -120,3 +120,29 @@ export async function submitQuiz(
 export async function fetchProgress(): Promise<ProgressResponse | null> {
   return apiFetch<ProgressResponse>('/progress');
 }
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  avatarInitial: string;
+  score: number;
+  coins: number;
+  xp: number;
+  isCurrentUser?: boolean;
+}
+
+export interface LeaderboardResponse {
+  period: 'daily' | 'monthly' | 'alltime';
+  entries: LeaderboardEntry[];
+  userRank: number | null;
+}
+
+/** GET /leaderboard?period=... — returns null if not authenticated or API unavailable */
+export async function fetchLeaderboard(
+  period: 'daily' | 'monthly' | 'alltime' = 'alltime',
+): Promise<LeaderboardResponse | null> {
+  return apiFetch<LeaderboardResponse>(`/leaderboard?period=${period}`);
+}

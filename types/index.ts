@@ -23,8 +23,11 @@ export interface Question {
   id: string;
   text: string;
   options: Option[];
-  explanation: string;
+  explanation?: string;
   correctOptionId: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  category?: string;
+  quizId?: string;
 }
 
 export interface Option {
@@ -47,12 +50,60 @@ export interface Progress {
   averageScore: number;
   currentStreak: number;
   longestStreak: number;
+  lastPlayedDate: string | null;
   badges: Badge[];
   recentResults: QuizResult[];
+  // Coin economy + level system (Elite Quiz parity)
+  coins: number;
+  totalCoinsEarned: number;
+  xp: number;
+  level: number;
 }
 
-export interface Badge {
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  avatarInitial: string;
+  score: number;       // total score points
+  coins: number;
+  streak: number;
+  quizzesCompleted: number;
+  isCurrentUser?: boolean;
+}
+
+export type ContestStatus = 'live' | 'upcoming' | 'past';
+
+export interface Contest {
   id: string;
+  title: string;
+  description: string;
+  status: ContestStatus;
+  quizId: string;
+  quizTitle: string;
+  category: string;
+  icon: string;
+  entryFee: number;    // coins
+  prizeCoins: number;
+  startTime: string;   // ISO
+  endTime: string;     // ISO
+  participants: number;
+  maxParticipants: number;
+  topScore?: number;
+  winner?: string;
+}
+
+export type BadgeId =
+  | 'first-quiz'
+  | 'perfect-score'
+  | 'seven-day-streak'
+  | 'speed-demon'
+  | 'category-master'
+  | 'half-way'
+  | 'quiz-marathon';
+
+export interface Badge {
+  id: BadgeId;
   name: string;
   description: string;
   icon: string;
@@ -71,4 +122,5 @@ export type QuizCategory =
   | 'orchestration'
   | 'mlops'
   | 'evaluation'
+  | 'cost'
   | 'general';

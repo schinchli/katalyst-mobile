@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Progress, QuizResult, Badge, BadgeId } from '@/types';
 import { quizzes } from '@/data/quizzes';
-import { submitQuiz } from '@/services/apiService';
+import { submitQuiz, type ProgressResponse } from '@/services/apiService';
 
 // ─── Badge definitions ────────────────────────────────────────────────────────
 const BADGE_DEFS: Record<BadgeId, Omit<Badge, 'id' | 'earnedAt'>> = {
@@ -57,6 +57,7 @@ interface ProgressState {
   pendingCoins: number;   // Coins just earned (shown in results, not persisted)
   setHydrated: () => void;
   addResult: (result: QuizResult) => void;
+  syncProgress: (data: ProgressResponse) => void;
   clearPendingBadges: () => void;
   clearPendingCoins: () => void;
   reset: () => void;
@@ -200,6 +201,24 @@ export const useProgressStore = create<ProgressState>()(
           };
         });
       },
+
+      syncProgress: (data) =>
+        set((state) => {
+          const remote = data.statistics;
+          const prev   = state.progress;
+          // Merge: take the higher value for numeric fields to avoid regressing
+          return {
+            progress: {
+              ...prev,
+              totalQuizzes:     Math.max(prev.completedQuizzes, remote.totalQuizzes),
+              completedQuizzes: Math.max(prev.completedQuizzes, remote.totalQuizzes),
+              coins:            Math.max(prev.coins ?? 0, remote.totalCoins ?? 0),
+              totalCoinsEarned: Math.max(prev.totalCoinsEarned ?? 0, remote.totalCoins ?? 0),
+              xp:               Math.max(prev.xp ?? 0, remote.totalXP ?? 0),
+              level:            calculateLevel(Math.max(prev.xp ?? 0, remote.totalXP ?? 0)),
+            },
+          };
+        }),
 
       clearPendingBadges: () => set({ pendingBadges: [] }),
       clearPendingCoins:  () => set({ pendingCoins: 0 }),
