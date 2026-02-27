@@ -14,15 +14,18 @@ import { Feather } from '@expo/vector-icons';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/authStore';
+import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 
 export default function SignupScreen() {
-  const setUser = useAuthStore((s) => s.setUser);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const colors       = useThemeColors();
+  const signUpUser   = useAuthStore((s) => s.signUpUser);
+  const setGuestUser = useAuthStore((s) => s.setGuestUser);
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
 
   const handleSignup = async () => {
     if (!name || !email || !password) {
@@ -35,23 +38,19 @@ export default function SignupScreen() {
     }
     setLoading(true);
     setError('');
-
-    // TODO: Replace with Amplify Auth.signUp
-    setTimeout(() => {
-      setUser({
-        id: '1',
-        email,
-        name,
-        subscription: 'free',
-        createdAt: new Date().toISOString(),
-      });
+    try {
+      await signUpUser(name.trim(), email.trim().toLowerCase(), password);
+      // After signUp, step becomes 'confirm_signup' → navigate to verify screen
+      router.push({ pathname: '/(auth)/verify', params: { email: email.trim().toLowerCase() } });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign up failed');
+    } finally {
       setLoading(false);
-      router.replace('/(tabs)');
-    }, 1000);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -73,9 +72,9 @@ export default function SignupScreen() {
           </View>
 
           {/* ── Form card ───────────────────────────────── */}
-          <View style={styles.formCard}>
-            <Text style={styles.formHeading}>Create Account</Text>
-            <Text style={styles.formSubheading}>Join thousands of AWS learners</Text>
+          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.formHeading, { color: colors.text }]}>Create Account</Text>
+            <Text style={[styles.formSubheading, { color: colors.textSecondary }]}>Join thousands of AWS learners</Text>
 
             <View style={styles.fields}>
               <Input
@@ -106,15 +105,17 @@ export default function SignupScreen() {
 
             {error ? (
               <View style={styles.errorWrap}>
-                <Feather name="alert-circle" size={14} color="#FF4C51" />
+                <Feather name="alert-circle" size={14} color="#EA5455" />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
 
             {/* Password hint */}
             <View style={styles.hintRow}>
-              <Feather name="info" size={12} color="#A5A3AE" />
-              <Text style={styles.hintText}>Must be at least 8 characters</Text>
+              <Feather name="info" size={12} color="#A3A0B3" />
+              <Text style={styles.hintText}>
+                Min 8 characters · uppercase · lowercase · digit
+              </Text>
             </View>
 
             <Button
@@ -126,35 +127,26 @@ export default function SignupScreen() {
             />
 
             <View style={styles.signInRow}>
-              <Text style={styles.signInPrompt}>Already have an account?</Text>
+              <Text style={[styles.signInPrompt, { color: colors.textSecondary }]}>Already have an account?</Text>
               <Pressable onPress={() => router.back()}>
-                <Text style={styles.signInLink}>Sign In</Text>
+                <Text style={[styles.signInLink, { color: colors.primary }]}>Sign In</Text>
               </Pressable>
             </View>
           </View>
 
           {/* ── Separator ───────────────────────────────── */}
           <View style={styles.separatorRow}>
-            <View style={styles.separatorLine} />
-            <Text style={styles.separatorText}>or</Text>
-            <View style={styles.separatorLine} />
+            <View style={[styles.separatorLine, { backgroundColor: colors.surfaceBorder }]} />
+            <Text style={[styles.separatorText, { color: colors.textSecondary }]}>or</Text>
+            <View style={[styles.separatorLine, { backgroundColor: colors.surfaceBorder }]} />
           </View>
 
           {/* ── Guest skip ──────────────────────────────── */}
           <Pressable
-            onPress={() => {
-              setUser({
-                id: 'demo',
-                email: 'demo@awslearn.app',
-                name: 'Demo User',
-                subscription: 'free',
-                createdAt: new Date().toISOString(),
-              });
-              router.replace('/(tabs)');
-            }}
+            onPress={() => setGuestUser()}
             style={({ pressed }) => [styles.guestBtn, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <Text style={styles.guestText}>Skip — Continue as Guest</Text>
+            <Text style={[styles.guestText, { color: colors.textSecondary }]}>Skip — Continue as Guest</Text>
           </Pressable>
 
         </ScrollView>
@@ -164,7 +156,7 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: '#F8F7FA' },
+  root:   { flex: 1 },
   flex:   { flex: 1 },
   scroll: {
     flexGrow: 1,
@@ -196,12 +188,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 14,
   },
-  logoTitle: {
-    fontFamily: F.bold,
-    fontSize: 28,
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
+  logoTitle: { fontFamily: F.bold, fontSize: 28, color: '#FFFFFF', letterSpacing: 0.3 },
   logoSubtitle: {
     fontFamily: F.regular,
     fontSize: 13,
@@ -213,62 +200,32 @@ const styles = StyleSheet.create({
 
   /* ── Form card ── */
   formCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#DBDADE',
-    shadowColor: '#2F2B3D',
+    shadowColor: '#4B465C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
   },
-  formHeading: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    color: '#2F2B3D',
-    marginBottom: 2,
-  },
-  formSubheading: {
-    fontFamily: F.regular,
-    fontSize: 14,
-    color: '#A5A3AE',
-    marginBottom: 20,
-  },
-  fields: {
-    gap: 14,
-  },
+  formHeading:    { fontFamily: F.bold,    fontSize: 20, marginBottom: 2 },
+  formSubheading: { fontFamily: F.regular, fontSize: 14, marginBottom: 20 },
+  fields: { gap: 14 },
   errorWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginTop: 12,
-    backgroundColor: '#FF4C511A',
+    backgroundColor: '#EA545520',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  errorText: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    color: '#FF4C51',
-    flex: 1,
-  },
-  hintRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 8,
-  },
-  hintText: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    color: '#A5A3AE',
-  },
-  createBtn: {
-    marginTop: 20,
-  },
+  errorText: { fontFamily: F.regular, fontSize: 13, color: '#EA5455', flex: 1 },
+  hintRow:   { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 8 },
+  hintText:  { fontFamily: F.regular, fontSize: 12, color: '#A3A0B3' },
+  createBtn: { marginTop: 20 },
   signInRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -276,43 +233,15 @@ const styles = StyleSheet.create({
     gap: 4,
     marginTop: 16,
   },
-  signInPrompt: {
-    fontFamily: F.regular,
-    fontSize: 14,
-    color: '#A5A3AE',
-  },
-  signInLink: {
-    fontFamily: F.semiBold,
-    fontSize: 14,
-    color: '#7367F0',
-  },
+  signInPrompt: { fontFamily: F.regular,  fontSize: 14 },
+  signInLink:   { fontFamily: F.semiBold, fontSize: 14 },
 
   /* ── Separator ── */
-  separatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    gap: 10,
-  },
-  separatorLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#DBDADE',
-  },
-  separatorText: {
-    fontFamily: F.medium,
-    fontSize: 13,
-    color: '#A5A3AE',
-  },
+  separatorRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 20, gap: 10 },
+  separatorLine: { flex: 1, height: 1 },
+  separatorText: { fontFamily: F.medium, fontSize: 13 },
 
   /* ── Guest ── */
-  guestBtn: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  guestText: {
-    fontFamily: F.medium,
-    fontSize: 14,
-    color: '#A5A3AE',
-  },
+  guestBtn:  { alignItems: 'center', paddingVertical: 12 },
+  guestText: { fontFamily: F.medium, fontSize: 14 },
 });

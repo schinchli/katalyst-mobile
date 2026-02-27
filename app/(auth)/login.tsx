@@ -6,15 +6,18 @@ import { Feather } from '@expo/vector-icons';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/authStore';
+import { useThemeColors } from '@/hooks/useThemeColor';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
 
 export default function LoginScreen() {
-  const setUser = useAuthStore((s) => s.setUser);
-  const [email, setEmail] = useState('');
+  const colors          = useThemeColors();
+  const signInUser      = useAuthStore((s) => s.signInUser);
+  const setGuestUser    = useAuthStore((s) => s.setGuestUser);
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
   const { isDesktop } = useWebLayout();
 
   const handleLogin = async () => {
@@ -24,29 +27,27 @@ export default function LoginScreen() {
     }
     setLoading(true);
     setError('');
-
-    // TODO: Replace with Amplify Auth.signIn(email, password)
-    setTimeout(() => {
-      setUser({
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        subscription: 'free',
-        createdAt: new Date().toISOString(),
-      });
+    try {
+      await signInUser(email.trim().toLowerCase(), password);
+      // AuthGuard in _layout.tsx handles the redirect once isAuthenticated flips
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Sign in failed';
+      // If user needs to verify email, navigate to verify screen
+      if (msg.toLowerCase().includes('verify') || msg.toLowerCase().includes('confirm')) {
+        router.push({ pathname: '/(auth)/verify', params: { email: email.trim().toLowerCase() } });
+      } else {
+        setError(msg);
+      }
+    } finally {
       setLoading(false);
-      router.replace('/(tabs)');
-    }, 1000);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            isDesktop && styles.scrollDesktop,
-          ]}
+          contentContainerStyle={[styles.scroll, isDesktop && styles.scrollDesktop]}
           keyboardShouldPersistTaps="handled"
         >
 
@@ -62,9 +63,9 @@ export default function LoginScreen() {
           </View>
 
           {/* ── Form ────────────────────────────────────── */}
-          <View style={styles.formCard}>
-            <Text style={styles.formHeading}>Welcome back</Text>
-            <Text style={styles.formSubheading}>Sign in to continue</Text>
+          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.formHeading, { color: colors.text }]}>Welcome back</Text>
+            <Text style={[styles.formSubheading, { color: colors.textSecondary }]}>Sign in to continue</Text>
 
             <View style={styles.fields}>
               <Input
@@ -86,9 +87,17 @@ export default function LoginScreen() {
               />
             </View>
 
+            {/* Forgot password */}
+            <Pressable
+              onPress={() => router.push('/(auth)/forgot-password')}
+              style={styles.forgotRow}
+            >
+              <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot password?</Text>
+            </Pressable>
+
             {error ? (
               <View style={styles.errorWrap}>
-                <Feather name="alert-circle" size={14} color="#FF4C51" />
+                <Feather name="alert-circle" size={14} color="#EA5455" />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
@@ -96,35 +105,26 @@ export default function LoginScreen() {
             <Button title="Sign In" onPress={handleLogin} loading={loading} size="lg" style={styles.signInBtn} />
 
             <View style={styles.signUpRow}>
-              <Text style={styles.signUpPrompt}>Don't have an account?</Text>
+              <Text style={[styles.signUpPrompt, { color: colors.textSecondary }]}>Don't have an account?</Text>
               <Pressable onPress={() => router.push('/(auth)/signup')}>
-                <Text style={styles.signUpLink}>Sign Up</Text>
+                <Text style={[styles.signUpLink, { color: colors.primary }]}>Sign Up</Text>
               </Pressable>
             </View>
           </View>
 
           {/* ── Separator ───────────────────────────────── */}
           <View style={styles.separatorRow}>
-            <View style={styles.separatorLine} />
-            <Text style={styles.separatorText}>or</Text>
-            <View style={styles.separatorLine} />
+            <View style={[styles.separatorLine, { backgroundColor: colors.surfaceBorder }]} />
+            <Text style={[styles.separatorText, { color: colors.textSecondary }]}>or</Text>
+            <View style={[styles.separatorLine, { backgroundColor: colors.surfaceBorder }]} />
           </View>
 
           {/* ── Guest skip ──────────────────────────────── */}
           <Pressable
-            onPress={() => {
-              setUser({
-                id: 'demo',
-                email: 'demo@awslearn.app',
-                name: 'Demo User',
-                subscription: 'free',
-                createdAt: new Date().toISOString(),
-              });
-              router.replace('/(tabs)');
-            }}
+            onPress={() => setGuestUser()}
             style={({ pressed }) => [styles.guestBtn, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <Text style={styles.guestText}>Skip — Continue as Guest</Text>
+            <Text style={[styles.guestText, { color: colors.textSecondary }]}>Skip — Continue as Guest</Text>
           </Pressable>
 
         </ScrollView>
@@ -134,7 +134,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: '#F8F7FA' },
+  root:   { flex: 1 },
   flex:   { flex: 1 },
   scroll: {
     flexGrow: 1,
@@ -188,12 +188,10 @@ const styles = StyleSheet.create({
 
   /* ── Form card ── */
   formCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#DBDADE',
-    shadowColor: '#2F2B3D',
+    shadowColor: '#4B465C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -202,24 +200,30 @@ const styles = StyleSheet.create({
   formHeading: {
     fontFamily: F.bold,
     fontSize: 20,
-    color: '#2F2B3D',
     marginBottom: 2,
   },
   formSubheading: {
     fontFamily: F.regular,
     fontSize: 14,
-    color: '#A5A3AE',
     marginBottom: 20,
   },
   fields: {
     gap: 14,
+  },
+  forgotRow: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+  },
+  forgotText: {
+    fontFamily: F.medium,
+    fontSize: 13,
   },
   errorWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginTop: 12,
-    backgroundColor: '#FF4C511A',
+    backgroundColor: '#EA545520',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -227,7 +231,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: F.regular,
     fontSize: 13,
-    color: '#FF4C51',
+    color: '#EA5455',
     flex: 1,
   },
   signInBtn: {
@@ -240,16 +244,8 @@ const styles = StyleSheet.create({
     gap: 4,
     marginTop: 16,
   },
-  signUpPrompt: {
-    fontFamily: F.regular,
-    fontSize: 14,
-    color: '#A5A3AE',
-  },
-  signUpLink: {
-    fontFamily: F.semiBold,
-    fontSize: 14,
-    color: '#7367F0',
-  },
+  signUpPrompt: { fontFamily: F.regular, fontSize: 14 },
+  signUpLink:   { fontFamily: F.semiBold, fontSize: 14 },
 
   /* ── Separator ── */
   separatorRow: {
@@ -258,25 +254,10 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     gap: 10,
   },
-  separatorLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#DBDADE',
-  },
-  separatorText: {
-    fontFamily: F.medium,
-    fontSize: 13,
-    color: '#A5A3AE',
-  },
+  separatorLine: { flex: 1, height: 1 },
+  separatorText: { fontFamily: F.medium, fontSize: 13 },
 
   /* ── Guest ── */
-  guestBtn: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  guestText: {
-    fontFamily: F.medium,
-    fontSize: 14,
-    color: '#A5A3AE',
-  },
+  guestBtn: { alignItems: 'center', paddingVertical: 12 },
+  guestText: { fontFamily: F.medium, fontSize: 14 },
 });
