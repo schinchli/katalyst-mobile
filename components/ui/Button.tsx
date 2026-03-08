@@ -29,7 +29,7 @@ export function Button({
   const containerStyle = (() => {
     switch (variant) {
       case 'secondary': return { backgroundColor: colors.primaryLight };
-      case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary };
+      case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primaryText };
       default:          return {
         backgroundColor: colors.primary,
         shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
@@ -38,7 +38,7 @@ export function Button({
     }
   })();
 
-  const textColor = variant === 'primary' ? '#fff' : colors.primary;
+  const textColor = variant === 'primary' ? '#fff' : colors.primaryText;
 
   return (
     <Pressable
@@ -54,7 +54,7 @@ export function Button({
       ]}
     >
       {loading && (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primary} size="small" />
+        <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primaryText} size="small" />
       )}
       <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]}>
         {title}

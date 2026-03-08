@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Progress, QuizResult, Badge, BadgeId } from '@/types';
 import { quizzes } from '@/data/quizzes';
 import { submitQuiz, type ProgressResponse } from '@/services/apiService';
+import { saveQuizResult, getQuizResults } from '@/config/db';
+import { supabase } from '@/config/supabase';
 
 // ─── Badge definitions ────────────────────────────────────────────────────────
 const BADGE_DEFS: Record<BadgeId, Omit<Badge, 'id' | 'earnedAt'>> = {
@@ -62,6 +64,7 @@ interface ProgressState {
   clearPendingCoins: () => void;
   reset: () => void;
   loadDemoData: () => void;
+  initFromSupabase: (userId: string) => Promise<void>;
 }
 
 const initialProgress: Progress = {
@@ -90,6 +93,9 @@ export const useProgressStore = create<ProgressState>()(
       setHydrated: () => set({ hydrated: true }),
 
       addResult: (result) => {
+        // Look up quiz metadata for difficulty (needed for server-side reward calc)
+        const quizMeta = quizzes.find((q) => q.id === result.quizId);
+
         // Fire-and-forget: sync to AWS DynamoDB in the background.
         // Works only when Amplify is configured and the user is authenticated.
         submitQuiz({
@@ -98,7 +104,13 @@ export const useProgressStore = create<ProgressState>()(
           timeTaken:      result.timeTaken,
           score:          result.score,
           totalQuestions: result.totalQuestions,
+          difficulty:     quizMeta?.difficulty,
         }).catch(() => { /* swallow — offline or guest mode */ });
+
+        // Fire-and-forget: persist to Supabase quiz_results table.
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user) saveQuizResult(user.id, result).catch(() => {});
+        }).catch(() => {});
 
         set((state) => {
           const prev = state.progress;
@@ -146,39 +158,37 @@ export const useProgressStore = create<ProgressState>()(
             if (!earned.has(id)) { newBadges.push(makeBadge(id)); earned.add(id); }
           }
 
-          // Milestone/mastery badges require passing (≥ 70%)
-          if (completed === 1 && passed)                                 award('first-quiz');
+          // Completion badges — awarded regardless of pass/fail
+          if (completed === 1)                                           award('first-quiz');
           if (result.score === result.totalQuestions)                    award('perfect-score');
-          if (streak >= 7)                                               award('seven-day-streak'); // streak: no pass needed
-          if (result.timeTaken > 0 && result.timeTaken < 60 && passed)  award('speed-demon');
-          if (completed >= 6 && passed)                                  award('half-way');
-          if (completed >= quizzes.length && passed)                     award('quiz-marathon');
+          if (streak >= 7)                                               award('seven-day-streak');
+          if (result.timeTaken > 0 && result.timeTaken < 60)            award('speed-demon');
+          if (completed >= 6)                                            award('half-way');
+          if (completed >= quizzes.length)                               award('quiz-marathon');
 
           // Category master: all quizzes in same category completed
           // Use all historical results (not just the recent-20 window) to avoid
           // missing older completions that were pushed out of the rolling slice.
           const completedIds = new Set([result, ...prev.recentResults].map((r) => r.quizId));
-          const currentQuiz = quizzes.find((q) => q.id === result.quizId);
-          if (currentQuiz) {
+          if (quizMeta) {
             const catQuizIds = quizzes
-              .filter((q) => q.category === currentQuiz.category)
+              .filter((q) => q.category === quizMeta.category)
               .map((q) => q.id);
-            if (catQuizIds.every((qid) => completedIds.has(qid)) && passed) {
+            if (catQuizIds.every((qid) => completedIds.has(qid))) {
               award('category-master');
             }
           }
 
-          // ── Coin & XP calculation — zero rewards on fail ──────────────────
-          // No coins, no XP unless you pass (≥ 70%)
-          const totalNewCoins = passed
-            ? result.score * 10                                           // 10 per correct
-              + 20                                                        // completion bonus
-              + (result.score === result.totalQuestions ? 50 : 0)        // perfect score bonus
-              + newBadges.length * 100                                    // badge rewards
-            : 0;
+          // ── Coin & XP calculation ─────────────────────────────────────────
+          // Coins awarded for every completion; XP only on pass (≥ 70%)
+          const totalNewCoins =
+            result.score * 10                                             // 10 per correct answer
+            + 20                                                          // completion bonus
+            + (result.score === result.totalQuestions ? 50 : 0)          // perfect score bonus
+            + newBadges.length * 100;                                     // badge rewards
 
-          const diffMult = currentQuiz?.difficulty === 'advanced' ? 2
-            : currentQuiz?.difficulty === 'intermediate' ? 1.5 : 1;
+          const diffMult = quizMeta?.difficulty === 'advanced' ? 2
+            : quizMeta?.difficulty === 'intermediate' ? 1.5 : 1;
           const xpEarned = passed
             ? Math.round((result.score / result.totalQuestions) * 100 * diffMult)
             : 0;
@@ -222,6 +232,18 @@ export const useProgressStore = create<ProgressState>()(
 
       clearPendingBadges: () => set({ pendingBadges: [] }),
       clearPendingCoins:  () => set({ pendingCoins: 0 }),
+
+      initFromSupabase: async (userId: string) => {
+        const results = await getQuizResults(userId).catch(() => [] as QuizResult[]);
+        if (results.length === 0) return;
+        set((state) => ({
+          progress: {
+            ...state.progress,
+            recentResults:    results.slice(0, 20),
+            completedQuizzes: Math.max(state.progress.completedQuizzes, results.length),
+          },
+        }));
+      },
 
       reset: () => set({ progress: initialProgress, pendingBadges: [], pendingCoins: 0 }),
 

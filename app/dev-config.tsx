@@ -18,7 +18,7 @@ function statusIcon(item: ConfigItem) {
 
 function statusColor(item: ConfigItem) {
   if (!item.required) return '#9EA1BA';   // muted grey for optional
-  return isSet(item.value) ? '#28C76F' : '#FF4C51';
+  return isSet(item.value) ? '#28C76F' : '#EA5455';
 }
 
 function displayValue(item: ConfigItem) {

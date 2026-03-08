@@ -16,10 +16,11 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
-      <Tabs.Screen name="index"    options={{ title: 'Home' }} />
-      <Tabs.Screen name="quizzes"  options={{ title: 'Quizzes' }} />
-      <Tabs.Screen name="progress" options={{ title: 'Progress' }} />
-      <Tabs.Screen name="profile"  options={{ title: 'Profile' }} />
+      <Tabs.Screen name="index"     options={{ title: 'Home' }} />
+      <Tabs.Screen name="quizzes"   options={{ title: 'Quizzes' }} />
+      <Tabs.Screen name="search"    options={{ title: 'Search' }} />
+      <Tabs.Screen name="bookmarks" options={{ title: 'Bookmarks' }} />
+      <Tabs.Screen name="profile"   options={{ title: 'Profile' }} />
     </Tabs>
   );
 }

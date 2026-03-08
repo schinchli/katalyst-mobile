@@ -9,18 +9,19 @@ const VX = {
   primaryRgb:    '115, 103, 240',
   bg:            '#F8F7FA',
   surface:       '#FFFFFF',
-  border:        '#DBDADE',
+  border:        '#EBE9F1',
   text:          '#444050',   // menu item color (Vuexy --bs-menu-color)
-  muted:         '#A5A3AE',   // section header color
+  muted:         '#A3A0B3',   // section header color
   activeText:    '#FFFFFF',   // white text on gradient
   menuWidth:     260,
 };
 
 const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: string }> = {
-  index:    { icon: 'home',        label: 'Home' },
-  quizzes:  { icon: 'book-open',   label: 'Quizzes' },
-  progress: { icon: 'bar-chart-2', label: 'Progress' },
-  profile:  { icon: 'user',        label: 'Profile' },
+  index:     { icon: 'home',      label: 'Home' },
+  quizzes:   { icon: 'book-open', label: 'Quizzes' },
+  search:    { icon: 'search',    label: 'Search' },
+  bookmarks: { icon: 'bookmark',  label: 'Bookmarks' },
+  profile:   { icon: 'user',      label: 'Profile' },
 };
 
 export function AppTabBar({ state, navigation }: BottomTabBarProps) {
@@ -50,7 +51,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         {/* ── App brand ─────────────────────────────────────────────────── */}
         <View
           style={{
-            height: 64,
+            height: 68,
             paddingHorizontal: 20,
             flexDirection: 'row',
             alignItems: 'center',
@@ -59,25 +60,29 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
             borderBottomColor: VX.border,
           }}
         >
-          {/* Vuexy-style logo mark */}
+          {/* Gradient logo mark */}
           <View
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
+              width: 36,
+              height: 36,
+              borderRadius: 10,
               backgroundColor: VX.primary,
               alignItems: 'center',
               justifyContent: 'center',
+              shadowColor: VX.primary,
+              shadowOpacity: 0.4,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 3 },
             }}
           >
-            <Feather name="zap" size={18} color="#FFFFFF" />
+            <Feather name="zap" size={19} color="#FFFFFF" />
           </View>
           <View>
-            <Text style={{ fontFamily: F.bold, fontSize: 15, color: '#2F2B3D', letterSpacing: -0.2 }}>
+            <Text style={{ fontFamily: F.bold, fontSize: 16, color: '#4B465C', letterSpacing: -0.3 }}>
               Katalyst
             </Text>
-            <Text style={{ fontFamily: F.medium, fontSize: 10, color: VX.muted, marginTop: -1 }}>
-              KataHQ Platform
+            <Text style={{ fontFamily: F.medium, fontSize: 10, color: VX.muted }}>
+              AWS GenAI Prep
             </Text>
           </View>
         </View>
@@ -169,7 +174,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
     );
   }
 
-  // ── Mobile: Vuexy-coloured bottom tab bar ─────────────────────────────────
+  // ── Mobile: Premium bottom tab bar with pill indicator ───────────────────
   return (
     <View
       style={{
@@ -177,9 +182,13 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         backgroundColor: VX.surface,
         borderTopWidth: 1,
         borderTopColor: VX.border,
-        height: 88,
-        paddingBottom: 28,
-        paddingTop: 8,
+        height: 90,
+        paddingBottom: 26,
+        paddingTop: 6,
+        shadowColor: '#4B465C',
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: -3 },
       }}
     >
       {state.routes.map((route, idx) => {
@@ -189,18 +198,41 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
           <Pressable
             key={route.key}
             onPress={() => navigate(route, isFocused)}
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 }}
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 6 }}
           >
-            <Feather
-              name={cfg.icon}
-              size={22}
-              color={isFocused ? VX.primary : VX.muted}
-            />
+            {/* Active indicator dot */}
+            {isFocused && (
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                width: 20,
+                height: 3,
+                borderBottomLeftRadius: 4,
+                borderBottomRightRadius: 4,
+                backgroundColor: VX.primary,
+              }} />
+            )}
+            {/* Icon with pill background when active */}
+            <View style={{
+              width: 40,
+              height: 30,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isFocused ? `rgba(115,103,240,0.12)` : 'transparent',
+            }}>
+              <Feather
+                name={cfg.icon}
+                size={21}
+                color={isFocused ? VX.primary : VX.muted}
+              />
+            </View>
             <Text
               style={{
-                fontFamily: F.semiBold,
+                fontFamily: isFocused ? F.semiBold : F.regular,
                 fontSize: 10,
                 color: isFocused ? VX.primary : VX.muted,
+                marginTop: 1,
               }}
             >
               {cfg.label}

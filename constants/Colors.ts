@@ -1,71 +1,85 @@
 /**
- * Vuexy v10.11.1 design token values for React Native
+ * Design tokens — aligned with Elite Quiz Admin Panel (Vuexy semi-dark).
  *
- * Used by:
- *  - useThemeColors() hook — for props that can't use NativeWind (icon colors, etc.)
- *  - React Navigation tabBarStyle / headerStyle
- *
- * All values must stay in sync with:
- *  - tailwind.config.js (app-* color keys)
- *  - global.css (--vx-* CSS variables)
- *  - packages/theme/src/tokens.ts (single source of truth)
- *
- * When Vuexy updates: change values in packages/theme/src/tokens.ts FIRST,
- * then copy updated hex values here and into tailwind.config.js.
+ * Palette rules (mirror admin panel vuexy.css):
+ *  - Primary accent : #7367F0 (Vuexy purple) — overridable via themeStore
+ *  - Text           : ONE dark shade (#4B465C light / #E3E7FA dark)
+ *  - Muted text     : ONE muted shade (#A3A0B3) — same value in both modes
+ *  - Semantic status: success / danger / warning only — no separate info/cyan
+ *  - Dark bg        : #283046 — exact match to admin sidebar (semi-dark)
  */
 
-export const Colors = {
+export interface ThemeColors {
+  // Text
+  text:            string;
+  textSecondary:   string;
+  // Backgrounds
+  background:      string;
+  surface:         string;
+  surfaceBorder:   string;
+  // Primary (overridable via themeStore accent presets)
+  primary:         string;
+  primaryLight:    string;
+  primaryText:     string;  // WCAG AA accessible on surface
+  // Navigation aliases
+  tint:            string;
+  tabIconDefault:  string;
+  tabIconSelected: string;
+  // Status — functional only (no cyan info)
+  success:         string;
+  warning:         string;
+  error:           string;
+  info:            string;  // alias → primary (cyan removed)
+  // Brand
+  aws:             string;
+}
+
+export const Colors: { light: ThemeColors; dark: ThemeColors } = {
+  /**
+   * Light mode — matches admin panel content area
+   * body-bg: #F8F7FA, card: #FFFFFF, border: #EBE9F1
+   */
   light: {
-    // ── Text ──────────────────────────────────────────────────────────────
-    text:            '#23212A',  // Vuexy $headings-color
-    textSecondary:   '#6A6B76',  // Vuexy $text-muted
-
-    // ── Backgrounds ───────────────────────────────────────────────────────
-    background:      '#F8F7FA',  // Vuexy $body-bg
-    surface:         '#FFFFFF',  // Vuexy $card-bg
-    surfaceBorder:   '#DBDADE',  // Vuexy $border-color
-
-    // ── Primary (Vuexy purple) ─────────────────────────────────────────────
-    primary:         '#7367F0',  // Vuexy $primary
-    primaryLight:    '#EBE9FD',  // primary 10% tint
-
-    // ── Aliases ───────────────────────────────────────────────────────────
+    text:            '#4B465C',   // admin --vx-text (unified heading + body)
+    textSecondary:   '#A3A0B3',   // admin --vx-text-muted (placeholders, hints)
+    background:      '#F8F7FA',   // admin --vx-body-bg ✓
+    surface:         '#FFFFFF',   // admin --vx-card-bg ✓
+    surfaceBorder:   '#EBE9F1',   // admin --vx-border
+    primary:         '#7367F0',   // admin --vx-primary ✓
+    primaryLight:    '#EBE9FD',   // admin --vx-primary-light (opaque for RN)
+    primaryText:     '#5E53E0',   // WCAG AA on white surface
     tint:            '#7367F0',
-    tabIconDefault:  '#9EA1BA',
+    tabIconDefault:  '#A3A0B3',   // matches textSecondary
     tabIconSelected: '#7367F0',
-
-    // ── Status ────────────────────────────────────────────────────────────
-    success:         '#28C76F',  // Vuexy $success
-    warning:         '#FF9F43',  // Vuexy $warning
-    error:           '#FF4C51',  // Vuexy $danger
-    info:            '#00BAD1',  // Vuexy $info
-
-    // ── Brand ─────────────────────────────────────────────────────────────
+    success:         '#28C76F',   // admin --vx-success ✓
+    warning:         '#FF9F43',   // admin --vx-warning ✓
+    error:           '#EA5455',   // admin --vx-danger
+    info:            '#7367F0',   // cyan removed — use primary (same as admin)
     aws:             '#FF9900',
   },
+
+  /**
+   * Dark mode — semi-dark palette matching admin sidebar aesthetic
+   * bg: #283046 (admin sidebar), surface: #2F3349 (one shade lighter)
+   */
   dark: {
-    text:            '#E3E7FA',  // Vuexy $dark-headings-color
-    textSecondary:   '#9EA1BA',  // Vuexy $dark-text-muted
-
-    background:      '#25293C',  // Vuexy $dark-body-bg
-    surface:         '#2F3349',  // Vuexy $dark-card-bg
-    surfaceBorder:   '#4B4F66',  // Vuexy $dark-border-color
-
-    primary:         '#7367F0',  // primary same in dark
-    primaryLight:    '#43406B',  // primary-light in dark context
-
+    text:            '#E3E7FA',   // Vuexy dark headings — high contrast on #283046
+    textSecondary:   '#A3A0B3',   // same muted shade as light mode — consistent
+    background:      '#283046',   // admin --vx-sidebar-bg (semi-dark navy)
+    surface:         '#2F3349',   // one step lighter — card/sheet bg
+    surfaceBorder:   '#3B4059',   // subtle border on dark surface
+    primary:         '#7367F0',   // same accent both modes ✓
+    primaryLight:    '#352E6B',   // primary tint on dark bg
+    primaryText:     '#C4BFFF',   // WCAG AA on dark surface
     tint:            '#7367F0',
-    tabIconDefault:  '#6A6B76',
+    tabIconDefault:  '#A3A0B3',   // same muted shade — consistent
     tabIconSelected: '#7367F0',
-
-    success:         '#28C76F',
-    warning:         '#FF9F43',
-    error:           '#FF4C51',
-    info:            '#00BAD1',
-
+    success:         '#28C76F',   // same both modes ✓
+    warning:         '#FF9F43',   // same both modes ✓
+    error:           '#EA5455',   // same both modes (admin --vx-danger)
+    info:            '#7367F0',   // same both modes
     aws:             '#FF9900',
   },
-} as const;
+};
 
 export type ColorScheme = keyof typeof Colors;
-export type ThemeColors = typeof Colors.light;

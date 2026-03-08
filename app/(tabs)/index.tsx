@@ -2,93 +2,47 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { QuizCard } from '@/components/quiz/QuizCard';
+import { BadgeCelebrationModal } from '@/components/ui/BadgeCelebrationModal';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
+import { LEVEL_NAMES } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
+import { getContests } from '@/data/contests';
+import { getDailyQuiz } from '@/utils/dailyChallenge';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CARD_SHADOW = {
-  shadowColor: '#2F2B3D',
+  shadowColor: '#4B465C',
   shadowOpacity: 0.08,
   shadowRadius: 8,
   shadowOffset: { width: 0, height: 2 },
   elevation: 2,
 };
 
-// Vuexy light-mode design tokens (app is locked to light)
-const T = {
-  primary:      '#7367F0',
-  success:      '#28C76F',
-  warning:      '#FF9F43',
-  error:        '#FF4C51',
-  primaryLight: '#EBE9FD',
-  successLight: '#D1F7E2',
-  warningLight: '#FFF3E8',
-  errorLight:   '#FFE5E6',
-} as const;
-
 // ─── Stat card definition ─────────────────────────────────────────────────────
+type StatColorType = 'primary' | 'success' | 'warning' | 'error';
+
 interface StatDef {
   icon: string;
-  iconBg: string;
-  iconColor: string;
+  colorType: StatColorType;
   label: string;
   getValue: (p: ReturnType<typeof useProgressStore.getState>['progress']) => string;
 }
 
 const STAT_DEFS: StatDef[] = [
-  {
-    icon: 'zap',
-    iconBg: T.primaryLight,
-    iconColor: T.primary,
-    label: 'Day Streak',
-    getValue: (p) => String(p.currentStreak),
-  },
-  {
-    icon: 'check-circle',
-    iconBg: T.successLight,
-    iconColor: T.success,
-    label: 'Completed',
-    getValue: (p) => String(p.completedQuizzes),
-  },
-  {
-    icon: 'trending-up',
-    iconBg: T.warningLight,
-    iconColor: T.warning,
-    label: 'Avg Score',
-    getValue: (p) => `${p.averageScore}%`,
-  },
-  {
-    icon: 'award',
-    iconBg: T.errorLight,
-    iconColor: T.error,
-    label: 'Badges',
-    getValue: (p) => String(p.badges?.length ?? 0),
-  },
+  { icon: 'zap',          colorType: 'primary', label: 'Day Streak', getValue: (p) => String(p.currentStreak) },
+  { icon: 'check-circle', colorType: 'success', label: 'Completed',  getValue: (p) => String(p.completedQuizzes) },
+  { icon: 'trending-up',  colorType: 'warning', label: 'Avg Score',  getValue: (p) => `${p.averageScore}%` },
+  { icon: 'award',        colorType: 'error',   label: 'Badges',     getValue: (p) => String(p.badges?.length ?? 0) },
 ];
-
-// Category icon + accent color maps (matches quizzes.tsx)
-const CAT_ICON: Record<string, string> = {
-  bedrock: 'cpu', rag: 'database', agents: 'users', guardrails: 'shield',
-  'prompt-eng': 'edit-3', routing: 'shuffle', security: 'lock',
-  monitoring: 'activity', orchestration: 'git-branch', evaluation: 'bar-chart-2',
-  general: 'book',
-};
-const CAT_COLOR: Record<string, string> = {
-  bedrock: T.primary, rag: T.success, agents: T.warning, guardrails: T.error,
-  'prompt-eng': T.primary, routing: T.success, security: T.error,
-  monitoring: T.warning, orchestration: T.primary, evaluation: T.success,
-  general: T.primary,
-};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function GreetingHeader({ userName }: { userName: string }) {
+function GreetingHeader({ userName, coins, level }: { userName: string; coins: number; level: number }) {
   const colors = useThemeColors();
 
   const greeting = () => {
@@ -107,7 +61,7 @@ function GreetingHeader({ userName }: { userName: string }) {
   return (
     <View style={[styles.headerCard, { backgroundColor: colors.surface }, CARD_SHADOW]}>
       {/* Purple accent strip at top */}
-      <View style={styles.headerAccentStrip} />
+      <View style={[styles.headerAccentStrip, { backgroundColor: colors.primary }]} />
 
       <View style={styles.headerInner}>
         <View style={styles.headerTextBlock}>
@@ -122,14 +76,26 @@ function GreetingHeader({ userName }: { userName: string }) {
           </Text>
         </View>
 
-        {/* CTA button */}
-        <Pressable
-          onPress={() => router.push('/(tabs)/quizzes')}
-          style={({ pressed }) => [styles.ctaButton, { opacity: pressed ? 0.88 : 1 }]}
-        >
-          <Feather name="play" size={15} color="#FFFFFF" />
-          <Text style={styles.ctaButtonText}>Start Learning</Text>
-        </Pressable>
+        <View style={styles.headerRight}>
+          {/* Coin balance */}
+          <View style={[styles.coinPill, { backgroundColor: colors.warning + '18' }]}>
+            <Feather name="zap" size={13} color={colors.warning} />
+            <Text style={[styles.coinPillText, { color: colors.warning }]}>{coins.toLocaleString()}</Text>
+          </View>
+          {/* Level badge */}
+          <View style={[styles.levelPill, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[styles.levelPillText, { color: colors.primary }]}>Lv.{level}</Text>
+          </View>
+          {/* CTA button */}
+          <Pressable
+            onPress={() => router.push('/(tabs)/quizzes')}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.ctaButton, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
+          >
+            <Feather name="play" size={15} color="#FFFFFF" />
+            <Text style={styles.ctaButtonText}>Start</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -145,6 +111,8 @@ function StatCard({
   flex?: boolean;
 }) {
   const colors = useThemeColors();
+  const iconColor = colors[def.colorType];
+  const iconBg    = iconColor + '18';
   return (
     <View
       style={[
@@ -154,8 +122,8 @@ function StatCard({
         flex && { flex: 1 },
       ]}
     >
-      <View style={[styles.statIconContainer, { backgroundColor: def.iconBg }]}>
-        <Feather name={def.icon as any} size={20} color={def.iconColor} />
+      <View style={[styles.statIconContainer, { backgroundColor: iconBg }]}>
+        <Feather name={def.icon as any} size={20} color={iconColor} />
       </View>
       <Text style={[styles.statValue, { color: colors.text }]}>
         {def.getValue(progress)}
@@ -167,47 +135,36 @@ function StatCard({
   );
 }
 
-function ProgressCard({
-  completionRate,
-  completed,
-  total,
-}: {
-  completionRate: number;
-  completed: number;
-  total: number;
-}) {
-  const colors = useThemeColors();
-  const pct = Math.round(completionRate * 100);
-
+function RecentResultsStrip() {
+  const colors  = useThemeColors();
+  const results = useProgressStore((s) => s.progress.recentResults).slice(0, 3);
+  if (results.length === 0) return null;
   return (
-    <View style={[styles.progressCard, { backgroundColor: colors.surface }, CARD_SHADOW]}>
-      {/* Purple accent strip */}
-      <View style={styles.progressAccentStrip} />
-
-      <View style={styles.progressInner}>
-        <View style={styles.progressHeaderRow}>
-          <View>
-            <Text style={[styles.progressTitle, { color: colors.text }]}>
-              Course Completion
-            </Text>
-            <Text style={[styles.progressSubtitle, { color: colors.textSecondary }]}>
-              {completed} of {total} quizzes done
-            </Text>
-          </View>
-          <Text style={[styles.progressPercent, { color: colors.primary }]}>
-            {pct}%
-          </Text>
-        </View>
-
-        <ProgressBar progress={completionRate} height={8} />
-
-        <View style={styles.progressFooterRow}>
-          <Text style={[styles.progressFooterText, { color: colors.textSecondary }]}>
-            Keep going — you're building real AWS expertise!
-          </Text>
-        </View>
+    <>
+      <SectionHeader title="Recent Results" />
+      <View style={[styles.recentCard, { backgroundColor: colors.surface }, CARD_SHADOW]}>
+        {results.map((r, i) => {
+          const quiz = quizzes.find((q) => q.id === r.quizId);
+          const pct  = Math.round((r.score / r.totalQuestions) * 100);
+          const pass = pct >= 70;
+          return (
+            <View
+              key={`${r.quizId}-${r.completedAt}`}
+              style={[styles.recentRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.surfaceBorder }]}
+            >
+              <Text style={[styles.recentTitle, { color: colors.text }]} numberOfLines={1}>
+                {quiz?.title ?? r.quizId}
+              </Text>
+              <View style={[styles.recentBadge, { backgroundColor: (pass ? colors.success : colors.error) + '18' }]}>
+                <Text style={[styles.recentBadgeText, { color: pass ? colors.success : colors.error }]}>
+                  {pct}%
+                </Text>
+              </View>
+            </View>
+          );
+        })}
       </View>
-    </View>
+    </>
   );
 }
 
@@ -223,43 +180,55 @@ function SectionHeader({
     <View style={styles.sectionHeader}>
       <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
       {onViewAll && (
-        <Pressable onPress={onViewAll} hitSlop={8}>
-          <Text style={styles.sectionViewAll}>View All</Text>
+        <Pressable onPress={onViewAll} hitSlop={8} accessibilityRole="button">
+          <Text style={[styles.sectionViewAll, { color: colors.primary }]}>View All</Text>
         </Pressable>
       )}
     </View>
   );
 }
 
-function CategoryCoverage({
-  quizList,
-}: {
-  quizList: typeof quizzes;
-}) {
+function QuickActionsRow() {
   const colors = useThemeColors();
-
-  // Build category totals from quiz list
-  const catMap: Record<string, number> = {};
-  quizList.forEach((q) => { catMap[q.category] = (catMap[q.category] ?? 0) + 1; });
-  const entries = Object.entries(catMap).slice(0, 6); // top 6
-
+  const ACTIONS = [
+    { icon: 'award',    label: 'Leaderboard', color: colors.warning, bg: colors.warning + '18', route: '/leaderboard' as const },
+    { icon: 'zap',      label: 'Challenge',   color: colors.primary, bg: colors.primaryLight,   route: '/challenge' as const },
+    { icon: 'calendar', label: 'Contests',    color: colors.error,   bg: colors.error + '18',   route: '/contest' as const },
+  ];
   return (
-    <View style={[styles.catCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      {entries.map(([cat, total]) => {
-        const accent = CAT_COLOR[cat] ?? T.primary;
-        const icon   = CAT_ICON[cat]  ?? 'book';
-        const label  = cat.charAt(0).toUpperCase() + cat.slice(1).replace('-', ' ');
-        return (
-          <View key={cat} style={styles.catRow}>
-            <View style={[styles.catIconWrap, { backgroundColor: accent + '18' }]}>
-              <Feather name={icon as any} size={14} color={accent} />
-            </View>
-            <Text style={[styles.catLabel, { color: colors.text }]}>{label}</Text>
-            <Text style={[styles.catCount, { color: colors.textSecondary }]}>{total} quizzes</Text>
-          </View>
-        );
-      })}
+    <View style={styles.quickRow}>
+      {ACTIONS.map((a) => (
+        <Pressable
+          key={a.label}
+          onPress={() => router.push(a.route as any)}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.quickBtn, { backgroundColor: a.bg, opacity: pressed ? 0.88 : 1 }]}
+        >
+          <Feather name={a.icon as any} size={22} color={a.color} />
+          <Text style={[styles.quickBtnLabel, { color: a.color }]}>{a.label}</Text>
+        </Pressable>
+      ))}
     </View>
+  );
+}
+
+function LiveContestBanner() {
+  const colors = useThemeColors();
+  const live   = getContests('live')[0];
+  if (!live) return null;
+  return (
+    <Pressable
+      onPress={() => router.push('/contest' as any)}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.liveContest, { opacity: pressed ? 0.92 : 1 }]}
+    >
+      <View style={styles.liveContestLeft}>
+        <View style={styles.liveContestDot} />
+        <Text style={styles.liveContestLabel}>LIVE NOW</Text>
+      </View>
+      <Text style={styles.liveContestTitle} numberOfLines={1}>{live.title}</Text>
+      <Feather name="chevron-right" size={16} color="#fff" />
+    </Pressable>
   );
 }
 
@@ -272,8 +241,6 @@ export default function HomeScreen() {
   const { isDesktop, isWide, contentContainerWeb } = useWebLayout();
 
   const userName = user?.name ?? 'Learner';
-  const completionRate =
-    quizzes.length > 0 ? progress.completedQuizzes / quizzes.length : 0;
 
   // ── Desktop two-column layout ─────────────────────────────────────────────
   if (isDesktop) {
@@ -282,6 +249,7 @@ export default function HomeScreen() {
         style={[styles.safeArea, { backgroundColor: colors.background }]}
         edges={[]}
       >
+        <BadgeCelebrationModal />
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -291,7 +259,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <GreetingHeader userName={userName} />
+          <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} />
 
           {/* Stats row — 4 equal columns on desktop */}
           <View style={styles.statsRowDesktop}>
@@ -304,23 +272,15 @@ export default function HomeScreen() {
 
           {/* Progress + Topics + Quiz list: side by side on wide screens */}
           <View style={styles.desktopBodyRow}>
-            {/* Left col: progress + topics */}
+            {/* Left col: recent results */}
             <View style={styles.desktopLeftCol}>
-              <ProgressCard
-                completionRate={completionRate}
-                completed={progress.completedQuizzes}
-                total={quizzes.length}
-              />
-              <View style={{ marginTop: 20 }}>
-                <SectionHeader title="Topics Available" />
-                <CategoryCoverage quizList={quizzes} />
-              </View>
+              <RecentResultsStrip />
             </View>
 
             {/* Right col: quiz list */}
             <View style={styles.desktopRightCol}>
               <SectionHeader
-                title="Continue Learning"
+                title="Start Practicing"
                 onViewAll={() => router.push('/(tabs)/quizzes')}
               />
               {quizzes.slice(0, 5).map((quiz) => (
@@ -343,16 +303,25 @@ export default function HomeScreen() {
       style={[styles.safeArea, { backgroundColor: colors.background }]}
       edges={['top']}
     >
+      <BadgeCelebrationModal />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <GreetingHeader userName={userName} />
+        <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} />
+
+        {/* Live contest banner */}
+        <LiveContestBanner />
+
+        {/* Quick actions */}
+        <View style={styles.sectionGap}>
+          <QuickActionsRow />
+        </View>
 
         {/* Stats — 2×2 grid on mobile */}
         <View style={styles.statsGrid}>
-          {STAT_DEFS.map((def, i) => (
+          {STAT_DEFS.map((def) => (
             <View key={def.label} style={styles.statGridCell}>
               <StatCard def={def} progress={progress} />
             </View>
@@ -363,17 +332,18 @@ export default function HomeScreen() {
         <View style={styles.sectionGap}>
           <SectionHeader title="Daily Quiz" />
           {(() => {
-            const dailyQuiz = quizzes[new Date().getDate() % quizzes.length];
+            const dailyQuiz = getDailyQuiz(quizzes);
             return (
               <Pressable
                 onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
+                accessibilityRole="button"
                 style={({ pressed }) => [
                   styles.dailyCard,
                   { backgroundColor: colors.surface, opacity: pressed ? 0.92 : 1 },
                   CARD_SHADOW,
                 ]}
               >
-                <View style={styles.dailyAccent} />
+                <View style={[styles.dailyAccent, { backgroundColor: colors.warning }]} />
                 <View style={styles.dailyBody}>
                   <View style={[styles.dailyIconWrap, { backgroundColor: colors.primaryLight }]}>
                     <Feather name={dailyQuiz.icon as any} size={22} color={colors.primary} />
@@ -394,35 +364,11 @@ export default function HomeScreen() {
           })()}
         </View>
 
-        {/* Overall Progress */}
+        {/* Recent Results */}
         <View style={styles.sectionGap}>
-          <ProgressCard
-            completionRate={completionRate}
-            completed={progress.completedQuizzes}
-            total={quizzes.length}
-          />
+          <RecentResultsStrip />
         </View>
 
-        {/* Topic Coverage */}
-        <View style={styles.sectionGap}>
-          <SectionHeader title="Topics Available" onViewAll={() => router.push('/(tabs)/quizzes')} />
-          <CategoryCoverage quizList={quizzes} />
-        </View>
-
-        {/* Continue Learning */}
-        <View style={styles.sectionGap}>
-          <SectionHeader
-            title="Continue Learning"
-            onViewAll={() => router.push('/(tabs)/quizzes')}
-          />
-          {quizzes.slice(0, 3).map((quiz) => (
-            <QuizCard
-              key={quiz.id}
-              quiz={quiz}
-              onPress={() => router.push(`/quiz/${quiz.id}`)}
-            />
-          ))}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -448,7 +394,6 @@ const styles = StyleSheet.create({
   },
   headerAccentStrip: {
     height: 4,
-    backgroundColor: T.primary,
   },
   headerInner: {
     padding: 20,
@@ -478,14 +423,36 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
+  // ── Header right cluster ────────────────────────────────────────────────────
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 0,
+  },
+  coinPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  coinPillText: { fontFamily: F.bold, fontSize: 12 },
+  levelPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  levelPillText: { fontFamily: F.bold, fontSize: 12 },
+
   // ── CTA button ─────────────────────────────────────────────────────────────
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    backgroundColor: T.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 11,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 8,
     shadowColor: '#5E50EE',
     shadowOffset: { width: 0, height: 3 },
@@ -496,9 +463,51 @@ const styles = StyleSheet.create({
   ctaButtonText: {
     fontFamily: F.semiBold,
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     letterSpacing: 0.1,
   },
+
+  // ── Live contest banner ─────────────────────────────────────────────────────
+  liveContest: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#EA5455',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
+    shadowColor: '#EA5455',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+  liveContestLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  liveContestDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+  },
+  liveContestLabel: { fontFamily: F.bold, fontSize: 11, color: '#fff', letterSpacing: 0.5 },
+  liveContestTitle: { fontFamily: F.semiBold, fontSize: 14, color: '#fff', flex: 1 },
+
+  // ── Quick actions row ───────────────────────────────────────────────────────
+  quickRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 0,
+  },
+  quickBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  quickBtnLabel: { fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Stats (mobile 2×2 grid) ────────────────────────────────────────────────
   statsGrid: {
@@ -534,48 +543,32 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 
-  // ── Progress card ──────────────────────────────────────────────────────────
-  progressCard: {
-    borderRadius: 10,
+  // ── Recent results strip ───────────────────────────────────────────────────
+  recentCard: {
+    borderRadius: 12,
     overflow: 'hidden',
   },
-  progressAccentStrip: {
-    height: 4,
-    backgroundColor: T.primary,
-  },
-  progressInner: {
-    padding: 20,
-  },
-  progressHeaderRow: {
+  recentRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    gap: 8,
   },
-  progressTitle: {
-    fontFamily: F.semiBold,
-    fontSize: 16,
-    lineHeight: 22,
+  recentTitle: {
+    fontFamily: F.medium,
+    fontSize: 14,
+    flex: 1,
   },
-  progressSubtitle: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    marginTop: 2,
-    lineHeight: 18,
+  recentBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
-  progressPercent: {
+  recentBadgeText: {
     fontFamily: F.bold,
-    fontSize: 32,
-    lineHeight: 38,
-    letterSpacing: -0.5,
-  },
-  progressFooterRow: {
-    marginTop: 12,
-  },
-  progressFooterText: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
   },
 
   // ── Section header ─────────────────────────────────────────────────────────
@@ -595,7 +588,6 @@ const styles = StyleSheet.create({
   sectionViewAll: {
     fontFamily: F.semiBold,
     fontSize: 13,
-    color: T.primary,
   },
 
   // ── Daily Quiz card ────────────────────────────────────────────────────────
@@ -605,7 +597,6 @@ const styles = StyleSheet.create({
   },
   dailyAccent: {
     height: 3,
-    backgroundColor: T.warning,
   },
 
   // Daily card internals
@@ -652,41 +643,6 @@ const styles = StyleSheet.create({
     fontFamily: F.semiBold,
     color: '#FFFFFF',
     fontSize: 13,
-  },
-
-  // ── Category coverage card ─────────────────────────────────────────────────
-  catCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  catRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 7,
-  },
-  catIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  catLabel: {
-    fontFamily: F.medium,
-    flex: 1,
-    fontSize: 13,
-  },
-  catCount: {
-    fontFamily: F.regular,
-    fontSize: 12,
   },
 
   // ── Desktop layout ─────────────────────────────────────────────────────────

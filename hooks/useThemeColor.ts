@@ -1,14 +1,33 @@
 import { Colors } from '@/constants/Colors';
+import { useThemeStore, ACCENT_PRESETS } from '@/stores/themeStore';
+import type { ThemeColors } from '@/constants/Colors';
 
-/** App is locked to light mode — Vuexy design system. */
-function useScheme() {
-  return 'light' as const;
+export function useThemeColor(colorName: keyof ThemeColors): string {
+  const accent   = useThemeStore((s) => s.accent);
+  const darkMode = useThemeStore((s) => s.darkMode);
+  const base     = Colors[darkMode ? 'dark' : 'light'];
+  const preset   = ACCENT_PRESETS[accent];
+  const overrides: Partial<ThemeColors> = {
+    primary:         preset.primary,
+    primaryLight:    preset.primaryLight,
+    primaryText:     darkMode ? preset.primaryTextDark : preset.primaryText,
+    tint:            preset.primary,
+    tabIconSelected: preset.primary,
+  };
+  return (overrides[colorName] ?? base[colorName]) as string;
 }
 
-export function useThemeColor(colorName: keyof typeof Colors.light) {
-  return Colors[useScheme()][colorName];
-}
-
-export function useThemeColors() {
-  return Colors[useScheme()];
+export function useThemeColors(): ThemeColors {
+  const accent   = useThemeStore((s) => s.accent);
+  const darkMode = useThemeStore((s) => s.darkMode);
+  const base     = Colors[darkMode ? 'dark' : 'light'];
+  const preset   = ACCENT_PRESETS[accent];
+  return {
+    ...base,
+    primary:         preset.primary,
+    primaryLight:    preset.primaryLight,
+    primaryText:     darkMode ? preset.primaryTextDark : preset.primaryText,
+    tint:            preset.primary,
+    tabIconSelected: preset.primary,
+  };
 }

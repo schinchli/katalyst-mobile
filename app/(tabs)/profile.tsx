@@ -4,9 +4,11 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useAuthStore } from '@/stores/authStore';
-import { useProgressStore } from '@/stores/progressStore';
+import { useProgressStore, LEVEL_NAMES, xpToNextLevel } from '@/stores/progressStore';
+import { useThemeStore, ACCENT_PRESETS, type AccentPreset } from '@/stores/themeStore';
 import { getMissingCount } from '@/config/appConfig';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
@@ -16,14 +18,15 @@ const AVATAR_SIZE = 80;
 const AVATAR_RING = AVATAR_SIZE + 8;
 
 const ACCOUNT_ITEMS = [
-  { icon: 'bell',        label: 'Notifications' },
-  { icon: 'moon',        label: 'Appearance' },
-  { icon: 'download',    label: 'Downloads' },
+  { icon: 'bookmark',    label: 'Bookmarks',    route: '/(tabs)/bookmarks' },
+  { icon: 'bell',        label: 'Notifications', route: undefined },
+  { icon: 'moon',        label: 'Appearance',    route: undefined },
+  { icon: 'download',    label: 'Downloads',     route: undefined },
 ] as const;
 
 const SUPPORT_ITEMS = [
-  { icon: 'help-circle', label: 'Help & Support' },
-  { icon: 'info',        label: 'About' },
+  { icon: 'help-circle', label: 'Help & Support', route: undefined },
+  { icon: 'info',        label: 'About',           route: undefined },
 ] as const;
 
 type Colors = ReturnType<typeof useThemeColors>;
@@ -34,7 +37,7 @@ function MenuSection({
   colors,
 }: {
   title: string;
-  items: readonly { icon: string; label: string }[];
+  items: readonly { icon: string; label: string; route?: string }[];
   colors: Colors;
 }) {
   return (
@@ -43,7 +46,11 @@ function MenuSection({
       <Card padding={0} style={styles.menuCard}>
         {items.map((item, idx) => (
           <View key={item.label}>
-            <Card onPress={() => {}} padding={16} style={styles.menuRow}>
+            <Card
+              onPress={() => { if (item.route) router.push(item.route as any); }}
+              padding={16}
+              style={styles.menuRow}
+            >
               <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
                 <Feather name={item.icon as any} size={17} color={colors.primary} />
               </View>
@@ -60,11 +67,74 @@ function MenuSection({
   );
 }
 
+function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
+  const accent     = useThemeStore((s) => s.accent);
+  const darkMode   = useThemeStore((s) => s.darkMode);
+  const setAccent  = useThemeStore((s) => s.setAccent);
+  const toggleDark = useThemeStore((s) => s.toggleDark);
+  const presets    = Object.entries(ACCENT_PRESETS) as [AccentPreset, typeof ACCENT_PRESETS[AccentPreset]][];
+
+  return (
+    <View style={styles.menuSection}>
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>APPEARANCE</Text>
+      <View style={[styles.themeCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+
+        {/* Dark mode toggle row */}
+        <Pressable
+          onPress={toggleDark}
+          style={[styles.darkRow, { borderBottomColor: colors.surfaceBorder }]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: darkMode }}
+        >
+          <View style={[styles.menuIconWrap, { backgroundColor: darkMode ? '#43406B' : colors.primaryLight }]}>
+            <Feather name={darkMode ? 'moon' : 'sun'} size={17} color={darkMode ? '#A79BF4' : colors.primary} />
+          </View>
+          <Text style={[styles.menuLabel, { color: colors.text, flex: 1 }]}>Dark Mode</Text>
+          {/* Toggle pill */}
+          <View style={[styles.toggleTrack, { backgroundColor: darkMode ? colors.primary : colors.surfaceBorder }]}>
+            <View style={[styles.toggleThumb, { transform: [{ translateX: darkMode ? 18 : 2 }] }]} />
+          </View>
+        </Pressable>
+
+        {/* Accent color grid */}
+        <View style={styles.themeGrid}>
+          {presets.map(([key, cfg]) => {
+            const isActive = accent === key;
+            return (
+              <Pressable
+                key={key}
+                onPress={() => setAccent(key)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isActive }}
+                style={({ pressed }) => [
+                  styles.themeBtn,
+                  { borderColor: isActive ? cfg.primary : colors.surfaceBorder,
+                    backgroundColor: isActive ? cfg.primary + '18' : 'transparent',
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}
+              >
+                <View style={[styles.themeCircle, { backgroundColor: cfg.primary }]}>
+                  {isActive && <Feather name="check" size={11} color="#fff" />}
+                </View>
+                <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
+                  {cfg.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
   const colors   = useThemeColors();
   const user     = useAuthStore((s) => s.user);
   const signOut  = useAuthStore((s) => s.signOut);
-  const progress = useProgressStore((s) => s.progress);
+  const progress       = useProgressStore((s) => s.progress);
+  const loadDemoData   = useProgressStore((s) => s.loadDemoData);
   const { isDesktop, contentContainerWeb } = useWebLayout();
 
   const handleSignOut = () => {
@@ -80,6 +150,11 @@ export default function ProfileScreen() {
   const initials  = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
   const isPremium = user?.subscription === 'premium';
 
+  const level      = progress.level ?? 1;
+  const levelName  = LEVEL_NAMES[level - 1] ?? 'Novice';
+  const xpInfo     = xpToNextLevel(progress.xp ?? 0, level);
+  const xpProgress = xpInfo.needed > 0 ? xpInfo.current / xpInfo.needed : 1;
+
   const stats = [
     {
       icon: 'check-square', label: 'Quizzes',
@@ -94,10 +169,16 @@ export default function ProfileScreen() {
       bg: colors.success + '22',
     },
     {
-      icon: 'award', label: 'Badges',
-      value: progress.badges.length,
+      icon: 'zap', label: 'Coins',
+      value: (progress.coins ?? 0).toLocaleString(),
       color: colors.warning,
       bg: colors.warning + '22',
+    },
+    {
+      icon: 'award', label: 'Badges',
+      value: progress.badges.length,
+      color: '#EA5455',
+      bg: '#EA545522',
     },
   ];
 
@@ -127,6 +208,21 @@ export default function ProfileScreen() {
                 color={isPremium ? colors.aws : undefined}
                 size="md"
               />
+              <View style={[styles.levelBadge, { backgroundColor: colors.primaryLight }]}>
+                <Text style={[styles.levelBadgeText, { color: colors.primary }]}>
+                  Lv.{level} · {levelName}
+                </Text>
+              </View>
+            </View>
+            {/* XP Progress */}
+            <View style={styles.xpWrap}>
+              <View style={styles.xpRow}>
+                <Text style={[styles.xpLabel, { color: colors.textSecondary }]}>XP Progress</Text>
+                <Text style={[styles.xpLabel, { color: colors.primary }]}>
+                  {xpInfo.current}/{xpInfo.needed}
+                </Text>
+              </View>
+              <ProgressBar progress={xpProgress} height={6} color={colors.primary} />
             </View>
           </View>
         </View>
@@ -143,6 +239,9 @@ export default function ProfileScreen() {
             </View>
           ))}
         </View>
+
+        {/* ── Brand color picker ── */}
+        <ThemePicker colors={colors} />
 
         {/* ── Menus ── */}
         <MenuSection title="ACCOUNT"      items={ACCOUNT_ITEMS} colors={colors} />
@@ -164,18 +263,29 @@ export default function ProfileScreen() {
 
         {/* ── Developer Settings (DEV only) ── */}
         {__DEV__ && (
-          <Pressable
-            onPress={() => router.push('/dev-config' as any)}
-            style={({ pressed }) => [styles.devRow, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Feather name="settings" size={15} color={colors.primary} />
-            <Text style={[styles.devText, { color: colors.primary }]}>Developer Settings</Text>
-            {getMissingCount() > 0 && (
-              <View style={[styles.devBadge, { backgroundColor: colors.error + '1A' }]}>
-                <Text style={[styles.devBadgeText, { color: colors.error }]}>{getMissingCount()}</Text>
-              </View>
-            )}
-          </Pressable>
+          <>
+            <Pressable
+              onPress={loadDemoData}
+              style={({ pressed }) => [styles.devRow, { opacity: pressed ? 0.6 : 1 }]}
+              accessibilityRole="button"
+            >
+              <Feather name="database" size={15} color="#28C76F" />
+              <Text style={[styles.devText, { color: '#28C76F' }]}>Load Demo Data</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/dev-config' as any)}
+              style={({ pressed }) => [styles.devRow, { opacity: pressed ? 0.6 : 1 }]}
+              accessibilityRole="button"
+            >
+              <Feather name="settings" size={15} color={colors.primary} />
+              <Text style={[styles.devText, { color: colors.primary }]}>Developer Settings</Text>
+              {getMissingCount() > 0 && (
+                <View style={[styles.devBadge, { backgroundColor: colors.error + '1A' }]}>
+                  <Text style={[styles.devBadgeText, { color: colors.error }]}>{getMissingCount()}</Text>
+                </View>
+              )}
+            </Pressable>
+          </>
         )}
 
         {/* ── Version ── */}
@@ -243,17 +353,46 @@ const styles = StyleSheet.create({
   },
   badgeWrap: {
     marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  levelBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  levelBadgeText: {
+    fontFamily: F.semiBold,
+    fontSize: 12,
+  },
+  xpWrap: {
+    marginTop: 12,
+    width: '100%',
+    gap: 6,
+  },
+  xpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  xpLabel: {
+    fontFamily: F.medium,
+    fontSize: 12,
   },
 
   /* ── Stats ── */
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 10,
     marginHorizontal: 20,
     marginBottom: 24,
   },
   statCard: {
-    flex: 1,
+    width: '47%',
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 8,
@@ -316,6 +455,63 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 62,
+  },
+
+  /* ── Theme picker ── */
+  themeCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  darkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderBottomWidth: 1,
+  },
+  toggleTrack: {
+    width: 42,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  themeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    padding: 14,
+  },
+  themeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  themeCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeLabel: {
+    fontFamily: F.medium,
+    fontSize: 12,
   },
 
   /* ── Sign out ── */

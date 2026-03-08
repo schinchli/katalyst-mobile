@@ -898,3 +898,157 @@ Every new Expo feature must pass ALL of these before shipping:
 - [ ] Content rating questionnaire completed in Play Console
 - [ ] Internal Testing track tested by ≥ 2 people before promoting to Production
 - [ ] `serviceAccountKeyPath` in `eas.json` points to correct file (not placeholder)
+
+
+***
+
+## 🎨 Vuexy Widget Catalog Reference
+
+> **Complete component library:** See `../VUEXY_WIDGET_CATALOG.md` for detailed patterns
+
+### Available Components
+
+All Vuexy components are documented with:
+- HTML/CSS patterns
+- React/Next.js implementations
+- React Native mobile equivalents
+- TypeScript types
+- Usage examples
+- Accessibility guidelines
+
+### Component Categories
+
+1. **Card Components** (10+ variants)
+   - Basic cards, image cards, horizontal cards
+   - Colored cards, outline cards, label cards
+   - Card groups, grid layouts, masonry
+
+2. **Statistics Cards** (5+ variants)
+   - Simple stat cards with icons
+   - Trend cards with percentage changes
+   - Progress stat cards with bars
+   - Circular progress indicators
+   - Multi-metric cards
+
+3. **Progress & Metrics**
+   - Linear progress bars (striped, animated)
+   - Circular progress (doughnut charts)
+   - Multi-segment progress bars
+   - Percentage indicators
+
+4. **Lists & Tables**
+   - List groups with badges
+   - Data tables with sorting
+   - Responsive tables
+   - Action tables with buttons
+
+5. **Badges & Labels**
+   - Solid, outline, light variants
+   - Pill badges, rounded badges
+   - Status indicators
+   - Notification badges
+
+6. **Buttons & Actions**
+   - Solid, outline, flat styles
+   - Icon buttons, loading states
+   - Button groups, dropdowns
+   - Floating action buttons
+
+7. **Layout Patterns**
+   - Grid system (12-column)
+   - Sidebar layouts
+   - Card grids
+   - Responsive containers
+
+### Color System
+
+```typescript
+// Vuexy color tokens (use these everywhere)
+const colors = {
+  primary: '#7367F0',
+  secondary: '#82868B',
+  success: '#28C76F',
+  danger: '#EA5455',
+  warning: '#FF9F43',
+  info: '#00CFE8',
+  
+  // Light variants (12% opacity)
+  lightPrimary: 'rgba(115, 103, 240, 0.12)',
+  lightSuccess: 'rgba(40, 199, 111, 0.12)',
+  lightDanger: 'rgba(234, 84, 85, 0.12)',
+  lightWarning: 'rgba(255, 159, 67, 0.12)',
+  
+  // Surface colors
+  surface: '#FFFFFF',
+  background: '#F8F7FA',
+  text: '#4B465C',
+  textSecondary: '#A8AAAE',
+  border: '#DBDADE',
+};
+```
+
+### Responsive Breakpoints
+
+```typescript
+// Vuexy breakpoints (Bootstrap 5)
+const breakpoints = {
+  xs: 0,      // Mobile portrait
+  sm: 576,    // Mobile landscape
+  md: 768,    // Tablet
+  lg: 992,    // Desktop
+  xl: 1200,   // Large desktop
+  xxl: 1400,  // Extra large desktop
+};
+```
+
+### Implementation Rules
+
+1. **Web (Next.js):**
+   - Use Vuexy HTML/CSS classes directly
+   - Create React components in `packages/ui`
+   - Import from `@lms/ui` in apps
+
+2. **Mobile (React Native):**
+   - Recreate Vuexy visual style with NativeWind
+   - Use `app-*` color tokens (e.g., `app-primary`, `app-surface`)
+   - Match spacing, typography, shadows from Vuexy
+
+3. **Shared Components:**
+   - All UI components go in `packages/ui`
+   - Export both web and mobile versions
+   - Use conditional exports if needed
+
+### Quick Start
+
+```tsx
+// Web usage
+import { StatCard, TrendStatCard, Button } from '@lms/ui';
+
+<StatCard 
+  icon={<i className="icon-users" />}
+  value="1,234"
+  label="Total Users"
+  variant="primary"
+/>
+
+// Mobile usage
+import { StatCard } from '@/components/ui/StatCard';
+
+<StatCard 
+  icon="users"
+  value="1,234"
+  label="Total Users"
+  variant="primary"
+/>
+```
+
+### Resources
+
+- **Full Catalog:** `../VUEXY_WIDGET_CATALOG.md`
+- **Vuexy Demo:** https://demos.pixinvent.com/vuexy-html-admin-template/
+- **Bootstrap 5 Docs:** https://getbootstrap.com/docs/5.3/
+- **Feather Icons:** https://feathericons.com/
+
+***
+
+_Last updated: 2026-02-27 by Claude Code_
