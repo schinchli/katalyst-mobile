@@ -213,17 +213,21 @@ function LearnPreviewRow() {
             { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.9 : 1 },
           ]}
         >
-          <View style={[styles.learnThumb, { backgroundColor: v.tagColor + '18' }]}>
-            <Feather name="play" size={16} color={v.tagColor} />
-            <Text style={[styles.learnDuration, { color: colors.text }]}>{v.duration}</Text>
+          <View style={styles.learnCardRow}>
+            <View style={[styles.learnThumb, { backgroundColor: v.tagColor + '18' }]}>
+              <Feather name="play" size={16} color={v.tagColor} />
+            </View>
+            <View style={styles.learnBody}>
+              <Text style={[styles.learnTitle, { color: colors.text }]} numberOfLines={2}>{v.title}</Text>
+              <Text style={[styles.learnMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+                {v.author} · {v.views} · {v.duration}
+              </Text>
+              <View style={[styles.learnTag, { backgroundColor: v.tagColor + '15' }]}>
+                <Text style={[styles.learnTagText, { color: v.tagColor }]}>{v.tag}</Text>
+              </View>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.textSecondary} />
           </View>
-          <View style={styles.learnBody}>
-            <Text style={[styles.learnTitle, { color: colors.text }]} numberOfLines={2}>{v.title}</Text>
-            <Text style={[styles.learnMeta, { color: colors.textSecondary }]} numberOfLines={1}>
-              {v.author} · {v.views} views
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={16} color={colors.textSecondary} />
         </Pressable>
       ))}
     </View>
@@ -729,13 +733,13 @@ const styles = StyleSheet.create({
   },
   learnCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    alignItems: 'flex-start',
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
   },
+  learnCardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, flex: 1 },
   learnThumb: {
     width: 56,
     height: 56,
@@ -745,9 +749,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   learnDuration: { fontFamily: F.medium, fontSize: 10 },
-  learnBody: { flex: 1, gap: 2 },
+  learnBody: { flex: 1, gap: 4 },
   learnTitle: { fontFamily: F.semiBold, fontSize: 13, lineHeight: 18 },
   learnMeta: { fontFamily: F.regular, fontSize: 11 },
+  learnTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginTop: 2 },
+  learnTagText: { fontFamily: F.semiBold, fontSize: 10, letterSpacing: 0.3 },
 
   // ── Flashcards ────────────────────────────────────────────────────────────
   flashContainer: { gap: 12 },
