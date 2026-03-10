@@ -90,6 +90,8 @@ export default function QuizScreen() {
   const answeredCount      = Object.keys(selectedAnswers).length;
   const isLastQuestion     = currentQuestionIndex === questions.length - 1;
   const hasAnsweredCurrent = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
+  const selectedCurrentAnswer = currentQuestion ? selectedAnswers[currentQuestion.id] : undefined;
+  const isCurrentCorrect = currentQuestion ? selectedCurrentAnswer === currentQuestion.correctOptionId : false;
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const stopTimer = useCallback(() => {
@@ -678,7 +680,7 @@ export default function QuizScreen() {
         {currentQuestion && (
           <QuestionView
             question={currentQuestion}
-            selectedOptionId={selectedAnswers[currentQuestion.id]}
+            selectedOptionId={selectedCurrentAnswer}
             onSelectOption={handleSelectAnswer}
             showResult={showFeedback && hasAnsweredCurrent}
             hiddenOptionIds={hiddenOptions}
@@ -686,6 +688,20 @@ export default function QuizScreen() {
           />
         )}
       </ScrollView>
+
+      {!isReview && showFeedback && hasAnsweredCurrent ? (
+        <View style={[s.feedbackBanner, { backgroundColor: isCurrentCorrect ? colors.primary : colors.error }]}>
+          <View style={s.feedbackLeft}>
+            <View style={s.feedbackIconCircle}>
+              <Feather name={isCurrentCorrect ? 'check' : 'x'} size={30} color={isCurrentCorrect ? colors.primary : colors.error} />
+            </View>
+            <Text style={s.feedbackText}>
+              {isCurrentCorrect ? 'Well done!' : "Whoo! That's not right."}
+            </Text>
+          </View>
+          <Feather name="menu" size={22} color="#04111F" />
+        </View>
+      ) : null}
 
       {/* Bottom nav */}
       <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
@@ -708,14 +724,14 @@ export default function QuizScreen() {
               onPress={exitAndReset}
               style={({ pressed }) => [s.navBtn, { backgroundColor: pressed ? colors.primary + 'CC' : colors.primary }]}
             >
-              <Text style={[s.navBtnText, { color: '#fff' }]}>Done{' >>'}</Text>
+              <Text style={[s.navBtnText, { color: '#04111F' }]}>Done{' >>'}</Text>
             </Pressable>
           ) : (
             <Pressable
               onPress={() => { setShowFeedback(true); nextQuestion(); }}
               style={({ pressed }) => [s.navBtn, { backgroundColor: pressed ? colors.primary + 'CC' : colors.primary }]}
             >
-              <Text style={[s.navBtnText, { color: '#fff' }]}>Next{' >>'}</Text>
+              <Text style={[s.navBtnText, { color: '#04111F' }]}>Next{' >>'}</Text>
             </Pressable>
           )
         ) : showFeedback && hasAnsweredCurrent ? (
@@ -723,7 +739,7 @@ export default function QuizScreen() {
             onPress={handleNext}
             style={({ pressed }) => [s.navBtn, { backgroundColor: pressed ? colors.primary + 'CC' : colors.primary }]}
           >
-            <Text style={[s.navBtnText, { color: '#fff' }]}>
+            <Text style={[s.navBtnText, { color: '#04111F' }]}>
               {isLastQuestion ? 'See Results >>' : 'Next >>'}
             </Text>
           </Pressable>
@@ -1037,6 +1053,24 @@ const s = StyleSheet.create({
 
   // ── Question area ──
   questionPad: { padding: 20, paddingBottom: 120 },
+  feedbackBanner: {
+    minHeight: 84,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  feedbackLeft: { flexDirection: 'row', alignItems: 'center', gap: 16, flex: 1 },
+  feedbackIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#04111F',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  feedbackText: { color: '#04111F', fontFamily: F.bold, fontSize: 18, flex: 1 },
 
   // ── Bottom nav ──
   bottomNav: {

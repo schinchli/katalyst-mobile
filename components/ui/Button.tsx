@@ -38,7 +38,7 @@ export function Button({
     }
   })();
 
-  const textColor = variant === 'primary' ? '#fff' : colors.primaryText;
+  const textColor = variant === 'primary' ? '#04111F' : colors.primaryText;
 
   return (
     <Pressable
@@ -61,7 +61,7 @@ export function Button({
           style={[StyleSheet.absoluteFillObject, { borderRadius: 10 }]}
         />
       ) : null}
-      {loading && <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primaryText} size="small" />}
+      {loading && <ActivityIndicator color={variant === 'primary' ? '#04111F' : colors.primaryText} size="small" />}
       <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]} numberOfLines={1}>{title}</Text>
     </Pressable>
   );

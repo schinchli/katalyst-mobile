@@ -1,804 +1,227 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { QuizCard } from '@/components/quiz/QuizCard';
-import { BadgeCelebrationModal } from '@/components/ui/BadgeCelebrationModal';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
-import { LEVEL_NAMES } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
-import { getContests } from '@/data/contests';
-import { getDailyQuiz } from '@/utils/dailyChallenge';
-import { useWebLayout } from '@/hooks/useWebLayout';
+import { flashcards } from '@/data/flashcards';
 import { F } from '@/constants/Typography';
-import { PLAYLIST } from '@/data/videos';
-import { flashcards, type FlashcardCategory } from '@/data/flashcards';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const CARD_SHADOW = {
-  shadowColor: '#4B465C',
-  shadowOpacity: 0.08,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 2,
-};
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function GreetingHeader({ userName, coins, level, badges }: { userName: string; coins: number; level: number; badges: number }) {
-  const colors = useThemeColors();
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap; value: string; colors: ReturnType<typeof useThemeColors> }) {
   return (
-    <View style={[styles.headerCard, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }, CARD_SHADOW]}>
-      <View style={[styles.headerAccentStrip, { backgroundColor: colors.primary }]} />
-      <View style={styles.headerInner}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.greetingSubtext, { color: colors.textSecondary }]}>{greeting},</Text>
-          <Text style={[styles.greetingName, { color: colors.text }]} numberOfLines={1}>{userName}</Text>
-          <View style={styles.headerPillsRow}>
-            <View style={[styles.hPill, { backgroundColor: colors.warning + '18' }]}>
-              <Feather name="zap" size={11} color={colors.warning} />
-              <Text style={[styles.hPillText, { color: colors.warning }]}>{coins.toLocaleString()}</Text>
-            </View>
-            <View style={[styles.hPill, { backgroundColor: colors.primaryLight }]}>
-              <Feather name="shield" size={11} color={colors.primary} />
-              <Text style={[styles.hPillText, { color: colors.primary }]}>Lv.{level}</Text>
-            </View>
-            <View style={[styles.hPill, { backgroundColor: colors.success + '18' }]}>
-              <Feather name="award" size={11} color={colors.success} />
-              <Text style={[styles.hPillText, { color: colors.success }]}>{badges} badges</Text>
-            </View>
-          </View>
-        </View>
-        <Pressable
-          onPress={() => router.push('/(tabs)/quizzes')}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.ctaButton, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-        >
-          <Feather name="play" size={15} color="#FFFFFF" />
-          <Text style={styles.ctaButtonText} numberOfLines={1}>Start</Text>
-        </Pressable>
-      </View>
+    <View style={[styles.statPill, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <Feather name={icon} size={16} color={colors.primary} />
+      <Text style={[styles.statPillText, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }
-
-// Recent results section removed from home per user request
-
-function SectionHeader({
-  title,
-  onViewAll,
-  icon,
-}: {
-  title: string;
-  onViewAll?: () => void;
-  icon?: string;
-}) {
-  const colors = useThemeColors();
-  return (
-    <View style={styles.sectionHeader}>
-      <View style={[styles.sectionAccentBar, { backgroundColor: colors.primary }]} />
-      {icon && <Feather name={icon as any} size={16} color={colors.textSecondary} />}
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-      {onViewAll && (
-        <Pressable onPress={onViewAll} hitSlop={8} accessibilityRole="button">
-          <Text style={[styles.sectionViewAll, { color: colors.primary }]}>View All</Text>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-function QuickActionsRow() {
-  const colors = useThemeColors();
-  const ACTIONS = [
-    { icon: 'award',    label: 'Leaderboard', color: colors.warning, route: '/leaderboard' as const },
-    { icon: 'zap',      label: 'Challenge',   color: colors.primary, route: '/challenge' as const },
-    { icon: 'calendar', label: 'Contests',    color: colors.error,   route: '/contest' as const },
-  ];
-  return (
-    <View style={styles.quickRow}>
-      {ACTIONS.map((a) => (
-        <Pressable
-          key={a.label}
-          onPress={() => router.push(a.route as any)}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.quickBtn,
-            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.88 : 1, flexDirection: 'row', alignItems: 'center' },
-          ]}
-        >
-          <View style={[styles.quickIconWrap, { backgroundColor: a.color + '18' }]}>
-            <Feather name={a.icon as any} size={20} color={a.color} />
-          </View>
-          <Text style={[styles.quickBtnLabel, { color: colors.text }]} numberOfLines={1}>{a.label}</Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
-function LearnPreviewRow({ limit = 5 }: { limit?: number }) {
-  const colors = useThemeColors();
-  const items  = PLAYLIST.filter((v) => !['rag-bedrock', 'bedrock-agents'].includes(v.id)).slice(0, limit);
-  return (
-    <View style={styles.learnWrap}>
-      {items.map((v) => (
-        <Pressable
-          key={v.id}
-          onPress={() => router.push('/(tabs)/learn')}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.learnCard,
-            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.9 : 1 },
-          ]}
-        >
-          <View style={styles.learnCardRow}>
-            <View style={[styles.learnThumb, { backgroundColor: v.tagColor + '18' }]}>
-              <Feather name="play" size={16} color={v.tagColor} />
-            </View>
-            <View style={styles.learnBody}>
-              <Text style={[styles.learnTitle, { color: colors.text }]} numberOfLines={2}>{v.title}</Text>
-              <Text style={[styles.learnMeta, { color: colors.textSecondary }]} numberOfLines={1}>
-                {v.author} · {v.views} · {v.duration}
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={16} color={colors.textSecondary} />
-          </View>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
-function FlashcardStrip({ isWide }: { isWide?: boolean }) {
-  const colors = useThemeColors();
-  const [flipped, setFlipped]   = useState<Record<string, boolean>>({});
-  const [activeIdx, setActiveIdx] = useState<Record<FlashcardCategory, number>>({
-    'aws-practitioner': 0,
-    'genai-practitioner': 0,
-  });
-  const categories: FlashcardCategory[] = ['aws-practitioner', 'genai-practitioner'];
-
-  return (
-    <View style={[styles.flashContainer, isWide && styles.flashContainerRow]}>
-      {categories.map((cat) => {
-        const label = cat === 'aws-practitioner' ? 'AWS Practitioner' : 'GenAI Practitioner';
-        const catColor = cat === 'aws-practitioner' ? colors.primary : colors.warning;
-        const cards = flashcards.filter((c) => c.category === cat).slice(0, 5);
-        const index = activeIdx[cat] ?? 0;
-        const card = cards[index];
-
-        const nextCard = () => {
-          const nextIdx = (index + 1) % cards.length;
-          setActiveIdx((prev) => ({ ...prev, [cat]: nextIdx }));
-          setFlipped((prev) => ({ ...prev, [card.id]: false }));
-        };
-
-        if (!card) return null;
-
-        return (
-          <View key={cat} style={[styles.flashSection, isWide && styles.flashSectionWide]}>
-            <Text style={[styles.flashSectionTitle, { color: colors.text }]}>{label}</Text>
-            <View style={styles.flashColumn}>
-              <Pressable
-                onPress={() => setFlipped((prev) => ({ ...prev, [card.id]: !prev[card.id] }))}
-                style={[
-                  styles.flashCard,
-                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                ]}
-              >
-                <View style={[styles.flashBadge, { backgroundColor: catColor + '15' }]}>
-                  <Text style={[styles.flashBadgeText, { color: catColor }]}>{card.tag ?? 'Core'}</Text>
-                </View>
-                <Text style={[styles.flashFront, { color: colors.text }]} numberOfLines={4}>
-                  {flipped[card.id] ? card.back : card.front}
-                </Text>
-                <Text style={[styles.flashHint, { color: colors.textSecondary }]}>
-                  {flipped[card.id] ? 'Tap to see term' : 'Tap to see answer'}
-                </Text>
-              </Pressable>
-
-              <View style={styles.flashNavRow}>
-                <Text style={[styles.flashCounter, { color: colors.textSecondary }]}>{index + 1}/{cards.length}</Text>
-                <Pressable
-                  onPress={nextCard}
-                  style={[styles.flashNext, { backgroundColor: catColor }]}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.flashNextText}>Next</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-function LiveContestBanner() {
-  const colors = useThemeColors();
-  const live   = getContests('live')[0];
-  if (!live) return null;
-  return (
-    <Pressable
-      onPress={() => router.push('/contest' as any)}
-      accessibilityRole="button"
-      style={({ pressed }) => [styles.liveContest, { opacity: pressed ? 0.92 : 1 }]}
-    >
-      <View style={styles.liveContestLeft}>
-        <View style={styles.liveContestDot} />
-        <Text style={styles.liveContestLabel}>LIVE NOW</Text>
-      </View>
-      <Text style={styles.liveContestTitle} numberOfLines={1}>{live.title}</Text>
-      <Feather name="chevron-right" size={16} color="#fff" />
-    </Pressable>
-  );
-}
-
-// ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const colors = useThemeColors();
   const user = useAuthStore((s) => s.user);
   const progress = useProgressStore((s) => s.progress);
-  const { isDesktop, isWide, contentContainerWeb } = useWebLayout();
+  const featuredQuiz = quizzes[0];
+  const popularCourses = quizzes.slice(0, 6);
+  const flashcardItems = flashcards.slice(0, 4);
+  const courseCompletion = featuredQuiz ? Math.min(100, Math.max(8, Math.round((progress.completedQuizzes / quizzes.length) * 100))) : 0;
+  const firstName = user?.name?.split(' ')[0] ?? 'Learner';
+  const platformConfig = usePlatformConfigStore((s) => s.config);
+  const actionCards = [
+    { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/(tabs)/quizzes' as const, tone: '#8B5CF6' },
+    { icon: 'activity', title: 'Practice', subtitle: 'Test yourself with an exercise', route: featuredQuiz ? (`/quiz/${featuredQuiz.id}` as const) : ('/(tabs)/quizzes' as const), tone: '#F59E0B' },
+    { icon: 'globe', title: 'Resources', subtitle: 'Cheat sheets, guides, and updates', route: '/(tabs)/learn' as const, tone: '#60A5FA' },
+    { icon: 'star', title: 'Premium', subtitle: 'Unlock all content and projects', route: '/(tabs)/profile' as const, tone: colors.primary },
+  ];
 
-  const userName = user?.name ?? 'Learner';
-
-  // ── Desktop two-column layout ─────────────────────────────────────────────
-  if (isDesktop) {
-    return (
-      <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: colors.background }]}
-        edges={[]}
-      >
-        <BadgeCelebrationModal />
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            contentContainerWeb,
-            { paddingHorizontal: isWide ? 40 : 28 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} badges={progress.badges?.length ?? 0} />
-
-          {/* Quiz list */}
-          <SectionHeader
-            title="Start Practicing"
-            icon="play"
-            onViewAll={() => router.push('/(tabs)/quizzes')}
-          />
-          {quizzes.slice(0, 5).map((quiz) => (
-            <QuizCard
-              key={quiz.id}
-              quiz={quiz}
-              onPress={() => router.push(`/quiz/${quiz.id}`)}
-            />
-          ))}
-
-          <SectionHeader
-            title="Learn Videos"
-            icon="youtube"
-            onViewAll={() => router.push('/(tabs)/learn')}
-          />
-          <LearnPreviewRow />
-
-          <SectionHeader title="Flashcards" />
-          <SectionHeader title="Flashcards" icon="layers" />
-          <FlashcardStrip isWide />
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // ── Mobile layout ─────────────────────────────────────────────────────────
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-      edges={['top']}
-    >
-      <BadgeCelebrationModal />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} badges={progress.badges?.length ?? 0} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {platformConfig.widgets.showHomeStats ? (
+          <View style={styles.topStats}>
+            <StatPill icon="award" value={`${(progress.coins ?? 0).toLocaleString()} coins`} colors={colors} />
+            <StatPill icon="zap" value={`${progress.xp ?? 0} XP`} colors={colors} />
+          </View>
+        ) : null}
 
-        {/* Quick actions */}
-        <View style={styles.sectionGap}>
-          <QuickActionsRow />
-        </View>
+        <LinearGradient colors={[colors.backgroundAlt, colors.surface, colors.surfaceElevated]} style={[styles.heroCard, { borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.heroEyebrow, { color: colors.primary }]}>{EXPERIENCE_COPY.home.heroEyebrow}</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Hi {firstName}, {platformConfig.copy.homeHeroTitle}</Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>{platformConfig.copy.homeHeroSubtitle}</Text>
 
-        {/* Daily Quiz Card */}
-        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SectionHeader title="Daily Quiz" />
-          {(() => {
-            const dailyQuiz = getDailyQuiz(quizzes);
-            return (
-              <Pressable
-                onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.dailyCard,
-                  { backgroundColor: colors.surface, opacity: pressed ? 0.92 : 1 },
-                  CARD_SHADOW,
-                ]}
-              >
-                <View style={[styles.dailyAccent, { backgroundColor: colors.warning }]} />
-                <View style={styles.dailyBody}>
-                  <View style={[styles.dailyIconWrap, { backgroundColor: colors.primaryLight }]}>
-                    <Feather name={dailyQuiz.icon as any} size={22} color={colors.primary} />
+          <View style={[styles.heroCourseCard, { backgroundColor: platformConfig.colors.homeHeroCourseBg }]}>
+            <View style={styles.heroCourseTop}>
+              <View>
+                <Text style={[styles.heroCourseTitle, { color: colors.text }]}>{featuredQuiz?.title ?? 'Featured course'}</Text>
+                <View style={[styles.desktopOnlyChip, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.desktopOnlyText, { color: colors.primary }]}>
+                    {featuredQuiz?.isPremium ? 'Premium track' : 'Desktop only'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.progressRing, { borderColor: colors.primary + '25' }]}>
+                <View style={[styles.progressRingInner, { borderColor: colors.primary }]}>
+                  <Text style={[styles.progressRingText, { color: colors.text }]}>{courseCompletion}%</Text>
+                </View>
+              </View>
+            </View>
+
+            <Pressable onPress={() => router.push(featuredQuiz ? `/quiz/${featuredQuiz.id}` : '/(tabs)/quizzes')} style={[styles.heroPrimaryCta, { backgroundColor: colors.primary }]}>
+              <Text style={styles.heroPrimaryText}>{EXPERIENCE_COPY.home.primaryCta}</Text>
+            </Pressable>
+          </View>
+        </LinearGradient>
+
+        {platformConfig.widgets.showHomeActions ? (
+          <View style={platformConfig.layout.homeActionsStyle === 'stack' ? styles.actionStack : styles.actionGrid}>
+            {actionCards.map((item) => (
+            <Pressable key={item.title} onPress={() => router.push(item.route as any)} style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={[styles.actionIcon, { backgroundColor: item.tone + '20' }]}>
+                <Feather name={item.icon as any} size={22} color={item.tone} />
+              </View>
+              <Text style={[styles.actionTitle, { color: colors.text }]}>{item.title}</Text>
+              <Text style={[styles.actionSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
+            </Pressable>
+            ))}
+          </View>
+        ) : null}
+
+        {platformConfig.widgets.showPopularCourses ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Courses</Text>
+              <Pressable onPress={() => router.push('/(tabs)/quizzes')}>
+                <Text style={[styles.sectionLink, { color: colors.text }]}>{'See All'}</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalRow}>
+              {popularCourses.map((quiz, index) => (
+                <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                  <LinearGradient
+                    colors={index % 2 === 0 ? [colors.gradientAccent, colors.error] : [colors.warning, '#FACC15']}
+                    style={styles.courseVisual}
+                  >
+                    <Feather name={quiz.icon as any} size={44} color="#F8FAFC" />
+                  </LinearGradient>
+                  <View style={styles.courseBody}>
+                    <View style={[styles.courseProgressTrack, { backgroundColor: colors.backgroundAlt }]}>
+                      <View style={[styles.courseProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 1) * 14)}%` }]} />
+                    </View>
+                    <Text style={[styles.courseTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
                   </View>
-                  <View style={styles.dailyInfo}>
-                    <Text style={[styles.dailyLabel, { color: colors.primary }]}>TODAY'S CHALLENGE</Text>
-                    <Text style={[styles.dailyTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
-                    <Text style={[styles.dailyMeta, { color: colors.textSecondary }]}>
-                      {dailyQuiz.questionCount} questions · {dailyQuiz.duration} min
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        ) : null}
+
+        {platformConfig.widgets.showFlashcards ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Flashcard Packs</Text>
+            </View>
+
+            <View style={styles.flashcardList}>
+              {flashcardItems.map((item, index) => (
+                <Pressable key={item.id} onPress={() => router.push('/(tabs)/quizzes')} style={[styles.flashcardRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                  <View style={[styles.flashcardBadge, { backgroundColor: index % 2 === 0 ? colors.primaryLight : colors.error + '20' }]}>
+                    <Text style={[styles.flashcardBadgeText, { color: index % 2 === 0 ? colors.primary : colors.error }]}>
+                      {item.category === 'aws-practitioner' ? 'AWS' : 'AI'}
                     </Text>
                   </View>
-                  <View style={[styles.dailyStartBtn, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.dailyStartText}>Start</Text>
+                  <View style={styles.flashcardBody}>
+                    <Text style={[styles.flashcardTitle, { color: colors.text }]} numberOfLines={2}>{item.front}</Text>
+                    <Text style={[styles.flashcardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                      {item.tag ?? 'Core concept'} · tap to review
+                    </Text>
                   </View>
-                </View>
-              </Pressable>
-            );
-          })()}
-        </View>
+                  <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
 
-        {/* Quizzes preview */}
-        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SectionHeader
-            title="Featured Quizzes"
-            icon="play"
-            onViewAll={() => router.push('/(tabs)/quizzes')}
-          />
-          {quizzes.slice(0, 3).map((quiz) => (
-            <Pressable
-              key={quiz.id}
-              onPress={() => router.push(`/quiz/${quiz.id}`)}
-              style={({ pressed }) => [
-                styles.featureCard,
-                { borderColor: colors.surfaceBorder, backgroundColor: colors.surface, opacity: pressed ? 0.92 : 1 },
-              ]}
-            >
-              <View style={[styles.featureIcon, { backgroundColor: colors.primaryLight }]}>
-                <Feather name={quiz.icon as any} size={18} color={colors.primary} />
+        {platformConfig.widgets.showGrowthWidget ? (
+          <LinearGradient colors={[colors.surface, colors.surfaceElevated]} style={[styles.growthCard, { borderColor: colors.surfaceBorder }]}>
+            <View style={styles.growthHeader}>
+              <Text style={[styles.growthTitle, { color: colors.text }]}>Growth snapshot</Text>
+              <Text style={[styles.growthChip, { color: colors.primary }]}>{progress.currentStreak} day streak</Text>
+            </View>
+            <View style={styles.growthGrid}>
+              <View>
+                <Text style={[styles.growthValue, { color: colors.text }]}>{progress.completedQuizzes}</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>Completed</Text>
               </View>
-              <View style={styles.featureBody}>
-                <Text style={[styles.featureTitle, { color: colors.text }]} numberOfLines={1}>{quiz.title}</Text>
-                <Text style={[styles.featureMeta, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {quiz.questionCount} Q · {quiz.difficulty.toUpperCase()}
-                </Text>
+              <View>
+                <Text style={[styles.growthValue, { color: colors.text }]}>{progress.averageScore}%</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>Average score</Text>
               </View>
-              <View style={[styles.featurePill, { backgroundColor: colors.primary }]}>
-                <Text style={styles.featurePillText}>Start</Text>
+              <View>
+                <Text style={[styles.growthValue, { color: colors.text }]}>{progress.badges.length}</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>Badges</Text>
               </View>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Learn preview */}
-        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SectionHeader
-            title="Learn Videos"
-            icon="youtube"
-            onViewAll={() => router.push('/(tabs)/learn')}
-          />
-          <LearnPreviewRow limit={3} />
-        </View>
-
-        {/* Flashcards */}
-        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SectionHeader title="Flashcards" icon="layers" />
-          <FlashcardStrip />
-        </View>
-
+            </View>
+          </LinearGradient>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 52,
-  },
-
-  // ── Header card ────────────────────────────────────────────────────────────
-  headerCard: {
-    borderRadius: 16,
-    marginBottom: 22,
-    overflow: 'hidden',
-  },
-  headerAccentStrip: {
-    height: 4,
-  },
-  headerInner: {
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 14,
-  },
-  headerLeft: {
-    flex: 1,
-    gap: 2,
-  },
-  greetingSubtext: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  greetingName: {
-    fontFamily: F.bold,
-    fontSize: 24,
-    lineHeight: 32,
-    marginTop: 1,
-  },
-
-  // ── Header pills row ────────────────────────────────────────────────────────
-  headerPillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  hPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  hPillText: {
-    fontFamily: F.semiBold,
-    fontSize: 11,
-  },
-
-  // ── CTA button ─────────────────────────────────────────────────────────────
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    minHeight: 44,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 11,
-    shadowColor: '#5E50EE',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.45,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  ctaButtonText: {
-    fontFamily: F.semiBold,
-    color: '#FFFFFF',
-    fontSize: 13,
-    letterSpacing: 0.1,
-  },
-
-  // ── Live contest banner ─────────────────────────────────────────────────────
-  liveContest: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#EA5455',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 12,
-    shadowColor: '#EA5455',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  liveContestLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  liveContestDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#fff',
-  },
-  liveContestLabel: { fontFamily: F.bold, fontSize: 11, color: '#fff', letterSpacing: 0.5 },
-  liveContestTitle: { fontFamily: F.semiBold, fontSize: 14, color: '#fff', flex: 1 },
-
-  // ── Quick actions row ───────────────────────────────────────────────────────
-  quickRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 0,
-  },
-  quickBtn: {
-    flexBasis: '30%',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 12,
-    minHeight: 72,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    shadowColor: '#4B465C',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  quickIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickBtnLabel: { fontFamily: F.semiBold, fontSize: 13, lineHeight: 16, textAlign: 'left', flex: 1 },
-
-  // ── Stats (mobile 2×2 grid) ────────────────────────────────────────────────
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 0,
-  },
-  statGridCell: {
-    width: '47.5%',
-  },
-  statCard: {
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  statIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statTextCol: { flex: 1, gap: 2 },
-  statValue: { fontFamily: F.bold, fontSize: 18, lineHeight: 22 },
-  statLabel: { fontFamily: F.medium, fontSize: 11, lineHeight: 15 },
-
-  // ── Recent results strip ───────────────────────────────────────────────────
-  recentCard: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  recentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 8,
-  },
-  recentTitle: {
-    fontFamily: F.medium,
-    fontSize: 14,
-    flex: 1,
-  },
-  recentBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  recentBadgeText: {
-    fontFamily: F.bold,
-    fontSize: 13,
-  },
-
-  // ── Section header ─────────────────────────────────────────────────────────
-  sectionGap: {
-    marginTop: 22,
-  },
-  sectionCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 14,
-    gap: 10,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 13,
-  },
-  sectionAccentBar: {
-    width: 3,
-    height: 18,
-    borderRadius: 2,
-  },
-  sectionTitle: {
-    fontFamily: F.bold,
-    fontSize: 18,
-  },
-  sectionViewAll: {
-    fontFamily: F.semiBold,
-    fontSize: 13,
-  },
-
-  // ── Learn preview ─────────────────────────────────────────────────────────
-  learnWrap: {
-    gap: 10,
-  },
-  learnCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  learnCardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, flex: 1 },
-  learnThumb: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  learnDuration: { fontFamily: F.medium, fontSize: 10 },
-  learnBody: { flex: 1, gap: 4 },
-  learnTitle: { fontFamily: F.semiBold, fontSize: 13, lineHeight: 18 },
-  learnMeta: { fontFamily: F.regular, fontSize: 11, lineHeight: 16 },
-  learnTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginTop: 2 },
-  learnTagText: { fontFamily: F.semiBold, fontSize: 10, letterSpacing: 0.3 },
-
-  // ── Featured list cards ───────────────────────────────────────────────────
-  featureCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 10,
-  },
-  featureIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureBody: { flex: 1, gap: 2 },
-  featureTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 19 },
-  featureMeta: { fontFamily: F.regular, fontSize: 11 },
-  featurePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featurePillText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
-
-  // ── Flashcards ────────────────────────────────────────────────────────────
-  flashContainer: { gap: 12 },
-  flashContainerRow: { flexDirection: 'row', gap: 16 },
-  flashSection: { gap: 8 },
-  flashSectionWide: { flex: 1 },
-  flashSectionTitle: { fontFamily: F.bold, fontSize: 14 },
-  flashColumn: { gap: 10 },
-  flashCard: {
-    width: '100%',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
-    gap: 8,
-  },
-  flashBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  flashBadgeText: { fontFamily: F.semiBold, fontSize: 10, letterSpacing: 0.3 },
-  flashFront: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
-  flashHint: { fontFamily: F.regular, fontSize: 11 },
-  flashNavRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
-  flashCounter: { fontFamily: F.medium, fontSize: 11 },
-  flashNext: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
-  flashNextText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
-
-  // ── Daily Quiz card ────────────────────────────────────────────────────────
-  dailyCard: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  dailyAccent: {
-    height: 0,
-  },
-
-  // Daily card internals
-  dailyBody: {
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  dailyIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  dailyInfo: {
-    flex: 1,
-  },
-  dailyLabel: {
-    fontFamily: F.bold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    marginBottom: 2,
-  },
-  dailyTitle: {
-    fontFamily: F.bold,
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  dailyMeta: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  dailyStartBtn: {
-    borderRadius: 10,
-    minHeight: 40,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dailyStartText: {
-    fontFamily: F.semiBold,
-    color: '#FFFFFF',
-    fontSize: 13,
-  },
-
-  // ── Desktop layout ─────────────────────────────────────────────────────────
-  statsRowDesktop: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  statColDesktop: {
-    flex: 1,
-  },
-  desktopBodyRow: {
-    flexDirection: 'row',
-    gap: 20,
-    alignItems: 'flex-start',
-  },
-  desktopLeftCol: {
-    width: '36%',
-  },
-  desktopRightCol: {
-    flex: 1,
-  },
+  safeArea: { flex: 1 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 44, gap: 18 },
+  topStats: { flexDirection: 'row', gap: 12, marginBottom: 6 },
+  statPill: { flex: 1, borderWidth: 1, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  statPillText: { fontFamily: F.bold, fontSize: 16 },
+  heroCard: { borderWidth: 1, borderRadius: 30, padding: 20, gap: 14 },
+  heroEyebrow: { fontFamily: F.bold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.8 },
+  heroTitle: { fontFamily: F.bold, fontSize: 28, lineHeight: 34, letterSpacing: -0.8 },
+  heroSubtitle: { fontFamily: F.regular, fontSize: 15, lineHeight: 24 },
+  heroCourseCard: { backgroundColor: '#0E1830', borderRadius: 24, padding: 18, gap: 18 },
+  heroCourseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  heroCourseTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24, maxWidth: 190 },
+  desktopOnlyChip: { alignSelf: 'flex-start', borderRadius: 999, marginTop: 8, paddingHorizontal: 12, paddingVertical: 7 },
+  desktopOnlyText: { fontFamily: F.semiBold, fontSize: 13 },
+  progressRing: { width: 124, height: 124, borderRadius: 62, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
+  progressRingInner: { width: 100, height: 100, borderRadius: 50, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
+  progressRingText: { fontFamily: F.bold, fontSize: 30 },
+  heroPrimaryCta: { borderRadius: 20, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
+  heroPrimaryText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  actionStack: { gap: 14 },
+  actionCard: { width: '48%', borderWidth: 1, borderRadius: 24, padding: 16, minHeight: 168, gap: 12 },
+  actionIcon: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  actionTitle: { fontFamily: F.bold, fontSize: 18 },
+  actionSubtitle: { fontFamily: F.regular, fontSize: 14, lineHeight: 22 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
+  sectionTitle: { fontFamily: F.bold, fontSize: 18 },
+  sectionLink: { fontFamily: F.semiBold, fontSize: 15, textDecorationLine: 'underline' },
+  horizontalRow: { gap: 14, paddingRight: 16 },
+  courseCard: { width: 184, borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
+  courseVisual: { height: 128, alignItems: 'center', justifyContent: 'center' },
+  courseBody: { padding: 14, gap: 12 },
+  courseProgressTrack: { height: 12, borderRadius: 999, overflow: 'hidden' },
+  courseProgressFill: { height: '100%', borderRadius: 999 },
+  courseTitle: { fontFamily: F.bold, fontSize: 17, lineHeight: 24 },
+  flashcardList: { gap: 12 },
+  flashcardRow: { borderWidth: 1, borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  flashcardBadge: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  flashcardBadgeText: { fontFamily: F.bold, fontSize: 16 },
+  flashcardBody: { flex: 1, gap: 5 },
+  flashcardTitle: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 22 },
+  flashcardSubtitle: { fontFamily: F.regular, fontSize: 13 },
+  growthCard: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 18, marginTop: 4 },
+  growthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  growthTitle: { fontFamily: F.bold, fontSize: 18 },
+  growthChip: { fontFamily: F.semiBold, fontSize: 13 },
+  growthGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+  growthValue: { fontFamily: F.bold, fontSize: 26 },
+  growthLabel: { fontFamily: F.regular, fontSize: 13, marginTop: 4 },
 });

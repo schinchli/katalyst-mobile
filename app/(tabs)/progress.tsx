@@ -1,225 +1,128 @@
-import { useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
-import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
-import { quizzes } from '@/data/quizzes';
 import { F } from '@/constants/Typography';
+import { EXPERIENCE_COPY } from '@/config/experience';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function pct(score: number, total: number) {
-  if (!total) return 0;
-  return Math.round((score / total) * 100);
-}
-
-function fmtDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch {
-    return iso.slice(0, 10);
-  }
-}
-
-function quizTitle(quizId: string) {
-  return quizzes.find((q) => q.id === quizId)?.title ?? quizId;
-}
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-
-function StatCard({
-  icon, label, value, accent, colors,
-}: {
-  icon: string; label: string; value: string; accent: string;
-  colors: ReturnType<typeof useThemeColors>;
-}) {
-  return (
-    <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <View style={[styles.statIcon, { backgroundColor: accent + '18' }]}>
-        <Feather name={icon as any} size={18} color={accent} />
-      </View>
-      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
-  );
-}
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
+const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function ProgressScreen() {
-  const colors    = useThemeColors();
-  const userId    = useAuthStore((s) => s.user?.id);
-  const step      = useAuthStore((s) => s.step);
-  const progress  = useProgressStore((s) => s.progress);
-  const initFromSupabase = useProgressStore((s) => s.initFromSupabase);
-
-  // Load history from Supabase on first mount for real users
-  useEffect(() => {
-    if (step === 'authenticated' && userId) {
-      initFromSupabase(userId).catch(() => {});
-    }
-  }, [step, userId, initFromSupabase]);
-
-  const results   = progress.recentResults ?? [];
-  const total     = quizzes.length;
-  const completed = progress.completedQuizzes;
-  const avgScore  = progress.averageScore;
-  const bestScore = results.reduce((best, r) => Math.max(best, pct(r.score, r.totalQuestions)), 0);
-  const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const colors = useThemeColors();
+  const progress = useProgressStore((s) => s.progress);
+  const activeDay = Math.min(6, Math.max(0, new Date().getDay() === 0 ? 6 : new Date().getDay() - 1));
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>My Progress</Text>
-        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Track your learning journey</Text>
-      </View>
-
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.screenTitle, { color: colors.text }]}>Growth</Text>
 
-        {/* ── Stats grid ──────────────────────────────────────────────── */}
-        <View style={styles.statsGrid}>
-          <StatCard icon="percent"     label="Completion"  value={`${completionPct}%`} accent="#7367F0" colors={colors} />
-          <StatCard icon="trending-up" label="Avg Score"   value={`${avgScore}%`}      accent="#28C76F" colors={colors} />
-          <StatCard icon="award"       label="Best Score"  value={`${bestScore}%`}     accent="#FF9F43" colors={colors} />
-          <StatCard icon="check-circle" label="Taken"      value={String(completed)}   accent="#00BAD1" colors={colors} />
-        </View>
-
-        {/* ── Overall completion bar ──────────────────────────────────── */}
-        <View style={[styles.completionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <View style={styles.completionHeader}>
-            <Text style={[styles.completionTitle, { color: colors.text }]}>Overall Completion</Text>
-            <Text style={[styles.completionPct, { color: colors.primary }]}>{completionPct}%</Text>
-          </View>
-          <View style={[styles.trackBg, { backgroundColor: colors.surfaceBorder }]}>
-            <View style={[styles.trackFill, { width: `${completionPct}%` as any, backgroundColor: colors.primary }]} />
-          </View>
-          <Text style={[styles.completionSub, { color: colors.textSecondary }]}>
-            {completed} of {total} quizzes completed
-          </Text>
-        </View>
-
-        {/* ── Quiz history ────────────────────────────────────────────── */}
-        <View style={styles.historySection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quiz History</Text>
-
-          {results.length === 0 ? (
-            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <Feather name="bar-chart-2" size={32} color={colors.textSecondary} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No quizzes yet</Text>
-              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-                Complete your first quiz to see your progress here
-              </Text>
-              <Pressable
-                onPress={() => router.push('/(tabs)/quizzes')}
-                style={[styles.browseBtn, { backgroundColor: colors.primary }]}
-              >
-                <Text style={styles.browseBtnText}>Browse Quizzes</Text>
-              </Pressable>
+        <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          {[
+            { icon: 'bell', title: 'Notifications', badge: '1' },
+            { icon: 'award', title: 'Leaderboard' },
+            { icon: 'book-open', title: 'My library' },
+          ].map((item, index) => (
+            <View key={item.title}>
+              <View style={styles.menuRow}>
+                <View style={[styles.menuIcon, { backgroundColor: colors.backgroundAlt }]}>
+                  <Feather name={item.icon as any} size={18} color={colors.text} />
+                </View>
+                <Text style={[styles.menuTitle, { color: colors.text }]}>{item.title}</Text>
+                {item.badge ? (
+                  <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.badgeText}>{item.badge}</Text>
+                  </View>
+                ) : null}
+                <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+              </View>
+              {index < 2 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
-          ) : (
-            results.map((r, idx) => {
-              const p      = pct(r.score, r.totalQuestions);
-              const passed = p >= 70;
-              const accent = passed ? '#28C76F' : '#FF4C51';
+          ))}
+        </View>
+
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text }]}>{EXPERIENCE_COPY.progress.streakTitle}</Text>
+          <View style={styles.streakNumbers}>
+            <View>
+              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.currentStreak} days</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Total</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[styles.bigValue, { color: colors.text }]}>{Math.max(0, 2 - Math.min(2, progress.currentStreak))} freezes</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Left</Text>
+            </View>
+          </View>
+          <View style={styles.weekRow}>
+            {WEEK.map((label, index) => {
+              const active = index === activeDay;
               return (
-                <View
-                  key={`${r.quizId}-${idx}`}
-                  style={[styles.resultRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-                >
-                  {/* Accent bar */}
-                  <View style={[styles.resultAccent, { backgroundColor: accent }]} />
-
-                  <View style={styles.resultBody}>
-                    <View style={styles.resultTop}>
-                      <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={1}>
-                        {quizTitle(r.quizId)}
-                      </Text>
-                      <View style={[styles.passBadge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
-                        <Text style={[styles.passBadgeText, { color: accent }]}>
-                          {passed ? 'PASS' : 'FAIL'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.resultMeta}>
-                      <Text style={[styles.resultScore, { color: accent }]}>{p}%</Text>
-                      <Text style={[styles.resultDetail, { color: colors.textSecondary }]}>
-                        {r.score}/{r.totalQuestions} correct
-                      </Text>
-                      <Text style={[styles.resultDate, { color: colors.textSecondary }]}>
-                        {fmtDate(r.completedAt)}
-                      </Text>
-                    </View>
+                <View key={`${label}-${index}`} style={styles.weekCell}>
+                  <Text style={[styles.weekLabel, { color: colors.textSecondary }]}>{label}</Text>
+                  <View style={[styles.weekBolt, { borderColor: active ? '#F8E84A' : 'transparent' }]}>
+                    <Feather name="zap" size={20} color={active ? '#F8E84A' : '#223A70'} />
                   </View>
                 </View>
               );
-            })
-          )}
+            })}
+          </View>
+        </View>
+
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text }]}>{EXPERIENCE_COPY.progress.xpTitle}</Text>
+          <View style={styles.streakNumbers}>
+            <View>
+              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.xp ?? 0} XP</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Last 30 days</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.averageScore}%</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Today</Text>
+            </View>
+          </View>
+          <View style={styles.chartArea}>
+            {Array.from({ length: 5 }).map((_, row) => (
+              <View key={row} style={styles.chartRow}>
+                <Text style={[styles.chartAxisLabel, { color: colors.textSecondary }]}>1</Text>
+                <View style={[styles.chartLine, { borderColor: colors.surfaceBorder }]} />
+              </View>
+            ))}
+          </View>
+          <View style={styles.chartFooter}>
+            <Text style={[styles.chartFooterText, { color: colors.textSecondary }]}>09 February</Text>
+            <Text style={[styles.chartFooterText, { color: colors.textSecondary }]}>Today</Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  safe:   { flex: 1 },
-  scroll: { paddingBottom: 52, paddingHorizontal: 16, paddingTop: 16 },
-
-  header: {
-    paddingHorizontal: 20, paddingVertical: 17,
-    borderBottomWidth: 1,
-  },
-  headerTitle: { fontFamily: F.bold,    fontSize: 22 },
-  headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
-
-  // Stats
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
-  statCard: {
-    flex: 1, minWidth: '46%', minHeight: 98, padding: 12, borderRadius: 12, borderWidth: 1,
-    alignItems: 'center', gap: 4,
-  },
-  statIcon:  { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontFamily: F.bold,    fontSize: 18 },
-  statLabel: { fontFamily: F.regular, fontSize: 11 },
-
-  // Completion
-  completionCard: { padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 18 },
-  completionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  completionTitle:  { fontFamily: F.semiBold, fontSize: 14 },
-  completionPct:    { fontFamily: F.bold,     fontSize: 14 },
-  trackBg:   { height: 8,  borderRadius: 5, overflow: 'hidden', marginBottom: 8 },
-  trackFill: { height: '100%' as any, borderRadius: 5 },
-  completionSub: { fontFamily: F.regular, fontSize: 12, textAlign: 'center' },
-
-  // History
-  historySection: { gap: 12 },
-  sectionTitle:   { fontFamily: F.bold, fontSize: 16, marginBottom: 4 },
-
-  emptyCard: { padding: 26, borderRadius: 12, borderWidth: 1, alignItems: 'center', gap: 8 },
-  emptyTitle: { fontFamily: F.semiBold, fontSize: 16, marginTop: 8 },
-  emptySub:   { fontFamily: F.regular,  fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  browseBtn:  { marginTop: 8, minHeight: 42, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  browseBtnText: { fontFamily: F.semiBold, fontSize: 14, color: '#fff' },
-
-  resultRow: {
-    flexDirection: 'row', borderRadius: 12, borderWidth: 1, overflow: 'hidden',
-  },
-  resultAccent: { width: 4 },
-  resultBody:   { flex: 1, padding: 12, gap: 6 },
-  resultTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  resultTitle:  { fontFamily: F.semiBold, fontSize: 14, flex: 1, marginRight: 8 },
-  passBadge: {
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5, borderWidth: 1, flexShrink: 0,
-  },
-  passBadgeText: { fontFamily: F.bold, fontSize: 10 },
-  resultMeta:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  resultScore:  { fontFamily: F.bold,    fontSize: 16 },
-  resultDetail: { fontFamily: F.regular, fontSize: 12 },
-  resultDate:   { fontFamily: F.regular, fontSize: 11, marginLeft: 'auto' },
+  safeArea: { flex: 1 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 18 },
+  screenTitle: { fontFamily: F.bold, fontSize: 34, lineHeight: 40, letterSpacing: -1.1 },
+  menuCard: { borderWidth: 1, borderRadius: 28, overflow: 'hidden' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 18 },
+  menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  menuTitle: { fontFamily: F.semiBold, fontSize: 18, flex: 1 },
+  badge: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
+  divider: { height: 1, marginHorizontal: 16 },
+  panel: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 16 },
+  panelTitle: { fontFamily: F.bold, fontSize: 18 },
+  streakNumbers: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  bigValue: { fontFamily: F.bold, fontSize: 22 },
+  subLabel: { fontFamily: F.regular, fontSize: 14, marginTop: 4 },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  weekCell: { alignItems: 'center', gap: 10 },
+  weekLabel: { fontFamily: F.medium, fontSize: 13 },
+  weekBolt: { width: 52, height: 52, borderRadius: 26, borderWidth: 4, alignItems: 'center', justifyContent: 'center' },
+  chartArea: { gap: 16, marginTop: 4 },
+  chartRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  chartAxisLabel: { width: 14, fontFamily: F.regular, fontSize: 14 },
+  chartLine: { flex: 1, borderBottomWidth: 1, borderStyle: 'dotted' },
+  chartFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  chartFooterText: { fontFamily: F.regular, fontSize: 13 },
 });

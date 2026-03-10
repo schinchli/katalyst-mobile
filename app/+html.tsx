@@ -9,7 +9,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="description" content="Katalyst — AWS GenAI Certification Prep" />
         <title>Katalyst</title>
         <ScrollViewStyleReset />
-        <style dangerouslySetInnerHTML={{ __html: `html,body{height:100%;background:#F8F7FA;}#root{display:flex;flex:1;height:100%;}` }} />
+        <style dangerouslySetInnerHTML={{ __html: `html,body{height:100%;background:#050B18;color:#E5E7EB;}#root{display:flex;flex:1;height:100%;}` }} />
       </head>
       <body>{children}</body>
     </html>

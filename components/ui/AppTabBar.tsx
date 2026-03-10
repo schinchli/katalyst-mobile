@@ -1,35 +1,33 @@
 import { View, Text, Pressable, Platform, useWindowDimensions, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { LinearGradient } from 'expo-linear-gradient';
 import { F } from '@/constants/Typography';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { EXPERIENCE_COPY } from '@/config/experience';
 
-const MENU_WIDTH = 260;
+const MENU_WIDTH = 274;
 
 const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: string }> = {
-  index:    { icon: 'home',         label: 'Home' },
-  quizzes:  { icon: 'book-open',    label: 'Quizzes' },
-  learn:    { icon: 'play-circle',  label: 'Learn' },
-  progress: { icon: 'trending-up',  label: 'Progress' },
-  profile:  { icon: 'user',         label: 'Profile' },
+  index: { icon: 'home', label: 'Home' },
+  quizzes: { icon: 'compass', label: 'Explore' },
+  learn: { icon: 'book-open', label: 'Resources' },
+  progress: { icon: 'bar-chart-2', label: 'Growth' },
+  profile: { icon: 'sliders', label: 'Profile' },
 };
 
 export function AppTabBar({ state, navigation }: BottomTabBarProps) {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
-  const colors    = useThemeColors();
+  const colors = useThemeColors();
+
+  const visibleRoutes = state.routes.filter((route) => TAB_CONFIG[route.name]);
 
   const navigate = (route: (typeof state.routes)[0], isFocused: boolean) => {
     const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-    if (!isFocused && !event.defaultPrevented) {
-      navigation.navigate(route.name, route.params);
-    }
+    if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
   };
 
-  // Filter out hidden routes (those not in TAB_CONFIG)
-  const visibleRoutes = state.routes.filter((r) => TAB_CONFIG[r.name]);
-
-  // ── Desktop: Vuexy vertical sidebar ──────────────────────────────────────
   if (isDesktop) {
     return (
       <View
@@ -38,72 +36,50 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
           backgroundColor: colors.surface,
           borderRightWidth: 1,
           borderRightColor: colors.surfaceBorder,
-          // stretch to full viewport height on web
-          ...(Platform.OS === 'web' ? { minHeight: '100vh' as any } : { flex: 1 }),
+          minHeight: Platform.OS === 'web' ? ('100vh' as any) : undefined,
         }}
       >
-        {/* ── App brand ─────────────────────────────────────────────────── */}
-        <View
-          style={{
-            height: 68,
-            paddingHorizontal: 20,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.surfaceBorder,
-          }}
+        <LinearGradient
+          colors={[colors.backgroundAlt, colors.surface]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingHorizontal: 22, paddingTop: 28, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }}
         >
-          <View
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              backgroundColor: colors.primary,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: colors.primary,
-              shadowOpacity: 0.4,
-              shadowRadius: 6,
-              shadowOffset: { width: 0, height: 3 },
-            }}
-          >
-            <Feather name="zap" size={19} color="#FFFFFF" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <LinearGradient
+              colors={[colors.primary, colors.gradientAccent]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Feather name="activity" size={20} color="#04111F" />
+            </LinearGradient>
+            <View>
+              <Text style={{ color: colors.text, fontFamily: F.bold, fontSize: 18 }}>{EXPERIENCE_COPY.appName}</Text>
+              <Text style={{ color: colors.textSecondary, fontFamily: F.medium, fontSize: 11 }}>
+                {EXPERIENCE_COPY.themeName} mobile theme
+              </Text>
+            </View>
           </View>
-          <View>
-            <Text style={{ fontFamily: F.bold, fontSize: 16, color: colors.text, letterSpacing: -0.3 }}>
-              Katalyst
-            </Text>
-            <Text style={{ fontFamily: F.medium, fontSize: 10, color: colors.textSecondary }}>
-              AWS GenAI Prep
-            </Text>
-          </View>
-        </View>
+        </LinearGradient>
 
-        {/* ── Navigation items ──────────────────────────────────────────── */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingVertical: 16, paddingHorizontal: 16 }}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
           <Text
             style={{
+              color: colors.textMuted,
               fontFamily: F.semiBold,
               fontSize: 11,
-              color: colors.textSecondary,
-              letterSpacing: 0.9,
               textTransform: 'uppercase',
-              paddingHorizontal: 8,
-              marginBottom: 4,
-              marginTop: 4,
+              letterSpacing: 1.1,
+              marginBottom: 10,
+              paddingHorizontal: 10,
             }}
           >
             Navigation
           </Text>
-
           {visibleRoutes.map((route) => {
             const isFocused = state.routes[state.index]?.name === route.name;
-            const cfg = TAB_CONFIG[route.name] ?? { icon: 'circle' as any, label: route.name };
-
+            const tab = TAB_CONFIG[route.name];
             return (
               <Pressable
                 key={route.key}
@@ -112,121 +88,83 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 11,
-                  borderRadius: 12,
-                  marginBottom: 4,
-                  backgroundColor: isFocused
-                    ? colors.primary
-                    : (hovered || pressed)
-                    ? colors.primaryLight
-                    : 'transparent',
-                } as any)}
+                  borderRadius: 18,
+                  paddingHorizontal: 14,
+                  paddingVertical: 13,
+                  marginBottom: 6,
+                  backgroundColor: isFocused ? colors.surfaceElevated : hovered || pressed ? colors.backgroundAlt : 'transparent',
+                  borderWidth: 1,
+                  borderColor: isFocused ? colors.primary : 'transparent',
+                })}
               >
-                <Feather
-                  name={cfg.icon}
-                  size={20}
-                  color={isFocused ? '#FFFFFF' : colors.text}
-                />
-                <Text
+                <View
                   style={{
-                    fontFamily: isFocused ? F.semiBold : F.regular,
-                    fontSize: 14,
-                    color: isFocused ? '#FFFFFF' : colors.text,
-                    flex: 1,
+                    width: 36,
+                    height: 36,
+                    borderRadius: 12,
+                    backgroundColor: isFocused ? colors.primaryLight : colors.backgroundAlt,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                  numberOfLines={1}
                 >
-                  {cfg.label}
+                  <Feather name={tab.icon} size={18} color={isFocused ? colors.primary : colors.textSecondary} />
+                </View>
+                <Text style={{ color: isFocused ? colors.text : colors.textSecondary, fontFamily: isFocused ? F.semiBold : F.medium, fontSize: 14, flex: 1 }}>
+                  {tab.label}
                 </Text>
               </Pressable>
             );
           })}
         </ScrollView>
-
-        {/* ── Footer ────────────────────────────────────────────────────── */}
-        <View
-          style={{
-            borderTopWidth: 1,
-            borderTopColor: colors.surfaceBorder,
-            padding: 16,
-          }}
-        >
-          <Text style={{ fontFamily: F.regular, fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
-            v1.0.0 · KataHQ
-          </Text>
-        </View>
       </View>
     );
   }
 
-  // ── Mobile: Premium bottom tab bar with pill indicator ───────────────────
   return (
     <View
       style={{
-        flexDirection: 'row',
         backgroundColor: colors.surface,
         borderTopWidth: 1,
         borderTopColor: colors.surfaceBorder,
-        height: 92,
-        paddingBottom: 24,
         paddingTop: 8,
-        shadowColor: '#4B465C',
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: -3 },
+        paddingBottom: 24,
+        shadowColor: '#020617',
+        shadowOpacity: 0.24,
+        shadowRadius: 24,
+        shadowOffset: { width: 0, height: -6 },
+        elevation: 12,
       }}
     >
-      {visibleRoutes.map((route) => {
-        const isFocused = state.routes[state.index]?.name === route.name;
-        const cfg = TAB_CONFIG[route.name] ?? { icon: 'circle' as any, label: route.name };
-        return (
-          <Pressable
-            key={route.key}
-            onPress={() => navigate(route, isFocused)}
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 7 }}
-          >
-            {/* Active indicator bar */}
-            {isFocused && (
-              <View style={{
-                position: 'absolute',
-                top: 0,
-                width: 20,
-                height: 3,
-                borderBottomLeftRadius: 4,
-                borderBottomRightRadius: 4,
-                backgroundColor: colors.primary,
-              }} />
-            )}
-            {/* Icon with pill background when active */}
-            <View style={{
-              width: 44,
-              height: 32,
-              borderRadius: 11,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: isFocused ? colors.primaryLight : 'transparent',
-            }}>
-              <Feather
-                name={cfg.icon}
-                size={21}
-                color={isFocused ? colors.primary : colors.textSecondary}
-              />
-            </View>
-            <Text
-              style={{
-                fontFamily: isFocused ? F.semiBold : F.regular,
-                fontSize: 11,
-                color: isFocused ? colors.primary : colors.textSecondary,
-                marginTop: 2,
-              }}
-              numberOfLines={1}
+      <View style={{ flexDirection: 'row' }}>
+        {visibleRoutes.map((route) => {
+          const isFocused = state.routes[state.index]?.name === route.name;
+          const tab = TAB_CONFIG[route.name];
+          return (
+            <Pressable
+              key={route.key}
+              onPress={() => navigate(route, isFocused)}
+              style={{ flex: 1, alignItems: 'center', gap: 5 }}
             >
-              {cfg.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+              <View style={{ height: 4, width: 20, borderRadius: 999, backgroundColor: isFocused ? colors.primary : 'transparent' }} />
+              <View
+                style={{
+                  width: 46,
+                  height: 34,
+                  borderRadius: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isFocused ? colors.primaryLight : 'transparent',
+                }}
+              >
+                <Feather name={tab.icon} size={20} color={isFocused ? colors.primary : colors.textSecondary} />
+              </View>
+              <Text style={{ color: isFocused ? colors.text : colors.textSecondary, fontFamily: isFocused ? F.semiBold : F.medium, fontSize: 11 }}>
+                {tab.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }

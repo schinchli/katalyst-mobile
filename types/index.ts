@@ -3,6 +3,7 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+  role?: string;
   subscription: 'free' | 'premium';
   unlockedCourses?: string[];
   createdAt: string;

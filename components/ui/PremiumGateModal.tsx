@@ -1,20 +1,16 @@
 import { Modal, View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import { PLANS } from '@/services/razorpayService';
 import type { Quiz } from '@/types';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { COMPANY_TONES } from '@/config/themePresets';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 
 type Tab = 'course' | 'pro';
-
-const PRO_FEATURES = [
-  { icon: 'file-text',   text: 'All 5 CLF-C02 quizzes (195 questions)' },
-  { icon: 'zap',         text: 'Security, Technology & all domains' },
-  { icon: 'bar-chart-2', text: 'Advanced analytics & weak-area insights' },
-  { icon: 'download',    text: 'Offline access to all quiz content' },
-  { icon: 'award',       text: 'Exclusive Pro badges' },
-];
 
 interface PremiumGateModalProps {
   visible: boolean;
@@ -24,169 +20,94 @@ interface PremiumGateModalProps {
 }
 
 export function PremiumGateModal({ visible, quiz, onClose, onUpgrade }: PremiumGateModalProps) {
-  const colors  = useThemeColors();
-  const [tab,     setTab]     = useState<Tab>('course');
+  const colors = useThemeColors();
+  const platformConfig = usePlatformConfigStore((s) => s.config);
+  const [tab, setTab] = useState<Tab>('pro');
   const [loading, setLoading] = useState(false);
 
   const handleAction = async (type: 'subscription' | 'course') => {
-    if (!onUpgrade) { onClose(); return; }
+    if (!onUpgrade) return onClose();
     setLoading(true);
-    try { await onUpgrade(type); } finally { setLoading(false); }
+    try {
+      await onUpgrade(type);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const COURSE_FEATURES = [
-    { icon: 'list',    text: `${quiz.questionCount} questions for ${quiz.title.replace('CLF-C02: ', '')}` },
-    { icon: 'zap',     text: 'Instant feedback with explanations' },
-    { icon: 'refresh-cw', text: 'Unlimited retries — practice until you pass' },
-    { icon: 'check',   text: 'Score saved to your profile history' },
+  const courseFeatures = [
+    `${quiz.questionCount} questions in ${quiz.title}`,
+    'Instant feedback with detailed explanations',
+    'Unlimited retries and saved results',
+    'Premium practice experience on mobile',
   ];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      presentationStyle="overFullScreen"
-      statusBarTranslucent
-    >
+    <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" statusBarTranslucent>
       <View style={styles.overlay}>
-        <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
-          {/* Close */}
-          <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
-            <Feather name="x" size={22} color={colors.textSecondary} />
+        <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+          <Pressable onPress={onClose} style={styles.closeButton}>
+            <Feather name="x" size={22} color={colors.text} />
           </Pressable>
 
-          {/* Icon */}
-          <View style={[styles.iconWrap, { backgroundColor: '#FFF3E8' }]}>
-            <Feather name="lock" size={32} color={colors.warning} />
-          </View>
+          <Text style={[styles.headline, { color: colors.text }]}>{platformConfig.copy.premiumHeadline}</Text>
+          <Text style={[styles.subheadline, { color: platformConfig.colors.premiumAccent }]}>{platformConfig.copy.premiumSubheadline}</Text>
 
-          <Text style={[styles.title, { color: colors.text }]}>Unlock Access</Text>
-
-          {/* Tabs */}
-          <View style={[styles.tabRow, { backgroundColor: colors.background }]}>
-            {(['course', 'pro'] as Tab[]).map((t) => (
-              <Pressable
-                key={t}
-                onPress={() => setTab(t)}
-                style={[
-                  styles.tabBtn,
-                  tab === t && [styles.tabBtnActive, { backgroundColor: colors.surface }],
-                ]}
-              >
-                <Text style={[styles.tabLabel, { color: tab === t ? colors.primary : colors.textSecondary }]}>
-                  {t === 'course' ? 'Unlock This Quiz' : 'Go Pro — All Access'}
-                </Text>
-              </Pressable>
+          <View style={styles.featureList}>
+            {EXPERIENCE_COPY.premium.features.map((feature) => (
+              <View key={feature} style={styles.featureRow}>
+                <Feather name="check-circle" size={18} color={colors.error} />
+                <Text style={[styles.featureText, { color: colors.text }]}>{feature}</Text>
+              </View>
             ))}
           </View>
 
-          {/* Tab: course unlock */}
-          {tab === 'course' && (
-            <>
-              <View style={styles.priceCenter}>
-                <Text style={[styles.priceAmount, { color: colors.text }]}>
-                  ₹{quiz.price ?? 149}
-                </Text>
-                <Text style={[styles.priceSub, { color: colors.textSecondary }]}>
-                  one-time · permanent access
-                </Text>
-              </View>
-
-              <View style={[styles.featureBox, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
-                {COURSE_FEATURES.map((f) => (
-                  <View key={f.text} style={styles.featureRow}>
-                    <View style={[styles.featureIconWrap, { backgroundColor: colors.primaryLight }]}>
-                      <Feather name={f.icon as never} size={14} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.featureText, { color: colors.text }]}>{f.text}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <Pressable
-                onPress={() => handleAction('course')}
-                disabled={loading}
-                style={({ pressed }) => [
-                  styles.upgradeBtn,
-                  { backgroundColor: colors.primary, opacity: (pressed || loading) ? 0.88 : 1 },
-                ]}
-              >
-                {loading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Feather name="unlock" size={16} color="#fff" />
-                    <Text style={styles.upgradeBtnText}>Unlock for ₹{quiz.price ?? 149}</Text>
-                  </>
-                )}
+          <View style={styles.planRow}>
+            <Pressable onPress={() => setTab('course')} style={[styles.planCard, { backgroundColor: colors.surface, borderColor: tab === 'course' ? colors.gradientAccent : colors.surfaceBorder }]}>
+              <Text style={[styles.planName, { color: colors.text }]}>Monthly</Text>
+              <Text style={[styles.planPrice, { color: colors.text }]}>₹ {quiz.price ?? 249}.00</Text>
+              <Text style={[styles.planMeta, { color: colors.textSecondary }]}>Billed once</Text>
+              <Pressable onPress={() => handleAction('course')} style={[styles.planButton, { borderColor: colors.gradientAccent }]}>
+                {loading && tab === 'course' ? <ActivityIndicator size="small" color={colors.text} /> : <Text style={[styles.planButtonText, { color: colors.text }]}>Unlock Quiz</Text>}
               </Pressable>
+            </Pressable>
 
-              <Pressable onPress={() => setTab('pro')} hitSlop={8}>
-                <Text style={[styles.proLink, { color: colors.warning }]}>
-                  Or Go Pro for all quizzes →
-                </Text>
-              </Pressable>
-            </>
-          )}
-
-          {/* Tab: pro subscription */}
-          {tab === 'pro' && (
-            <>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Unlock all 5 CLF-C02 quizzes and upcoming certifications.
-              </Text>
-
-              {/* Pricing row */}
-              <View style={styles.pricingRow}>
-                <View style={[styles.planChip, styles.planChipSelected, { borderColor: colors.warning, backgroundColor: colors.warning + '14' }]}>
-                  <Text style={[styles.planLabel, { color: colors.warning }]}>Annual</Text>
-                  <Text style={[styles.planPrice, { color: colors.text }]}>₹999<Text style={[styles.planPer, { color: colors.textSecondary }]}>/yr</Text></Text>
-                  <View style={[styles.saveBadge, { backgroundColor: colors.warning }]}>
-                    <Text style={styles.saveBadgeText}>Save 44%</Text>
-                  </View>
-                </View>
-                <View style={[styles.planChip, { borderColor: colors.surfaceBorder }]}>
-                  <Text style={[styles.planLabel, { color: colors.textSecondary }]}>Monthly</Text>
-                  <Text style={[styles.planPrice, { color: colors.text }]}>₹149<Text style={[styles.planPer, { color: colors.textSecondary }]}>/mo</Text></Text>
-                </View>
+            <LinearGradient colors={[colors.surfaceElevated, colors.surface]} style={[styles.planCard, { borderColor: tab === 'pro' ? colors.primary : colors.surfaceBorder }]}>
+              <View style={[styles.saveBadge, { backgroundColor: platformConfig.colors.premiumAccent }]}>
+                <Text style={styles.saveBadgeText}>Save 50%</Text>
               </View>
-
-              {/* Feature list */}
-              <View style={[styles.featureBox, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
-                {PRO_FEATURES.map((f) => (
-                  <View key={f.text} style={styles.featureRow}>
-                    <View style={[styles.featureIconWrap, { backgroundColor: colors.primaryLight }]}>
-                      <Feather name={f.icon as never} size={14} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.featureText, { color: colors.text }]}>{f.text}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <Pressable
-                onPress={() => handleAction('subscription')}
-                disabled={loading}
-                style={({ pressed }) => [
-                  styles.upgradeBtn,
-                  { backgroundColor: colors.warning, opacity: (pressed || loading) ? 0.88 : 1 },
-                ]}
-              >
-                {loading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Feather name="star" size={16} color="#fff" />
-                    <Text style={styles.upgradeBtnText}>Go Pro — ₹{PLANS.annual.price}/yr</Text>
-                  </>
-                )}
+              <Text style={[styles.planName, { color: colors.text }]}>Yearly</Text>
+              <Text style={[styles.strikePrice, { color: colors.textSecondary }]}>₹10,999.00</Text>
+              <Text style={[styles.planPrice, { color: colors.text }]}>₹ {PLANS.annual.price}.00</Text>
+              <Text style={[styles.planMeta, { color: colors.textSecondary }]}>₹533.33 / month billed yearly</Text>
+              <Pressable onPress={() => { setTab('pro'); handleAction('subscription'); }} style={[styles.planButtonSolid, { backgroundColor: colors.primary }]}>
+                {loading && tab === 'pro' ? <ActivityIndicator size="small" color="#04111F" /> : <Text style={styles.planButtonSolidText}>Subscribe</Text>}
               </Pressable>
-            </>
-          )}
+            </LinearGradient>
+          </View>
 
-          <Pressable onPress={onClose} hitSlop={8}>
-            <Text style={[styles.maybeLater, { color: colors.textSecondary }]}>Maybe later</Text>
-          </Pressable>
+          <Text style={[styles.renewText, { color: colors.textSecondary }]}>Subscriptions automatically renew. Cancel anytime.</Text>
+
+          <View style={styles.ratingWrap}>
+            <Feather name="star" size={34} color="#F8E84A" />
+            <Text style={[styles.ratingValue, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.rating}</Text>
+          </View>
+          <Text style={[styles.ratingMeta, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.reviews}</Text>
+
+          <View style={[styles.testimonialCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.testimonialStars, { color: '#F8E84A' }]}>5.0 ★★★★★</Text>
+            <Text style={[styles.testimonialTitle, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.title}</Text>
+            <Text style={[styles.testimonialBody, { color: colors.textSecondary }]}>{EXPERIENCE_COPY.premium.testimonial.body}</Text>
+          </View>
+
+          <Text style={[styles.companyTitle, { color: colors.text }]}>{EXPERIENCE_COPY.premium.companiesTitle}</Text>
+          <View style={styles.companyGrid}>
+            {COMPANY_TONES.map((company) => (
+              <View key={company.name} style={[styles.companyCard, { backgroundColor: company.tone }]}>
+                <Text style={styles.companyText}>{company.name}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
     </Modal>
@@ -194,186 +115,36 @@ export function PremiumGateModal({ visible, quiz, onClose, onUpgrade }: PremiumG
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(47, 43, 61, 0.55)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 28,
-    paddingBottom: 40,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 16,
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    padding: 4,
-  },
-  iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  title: {
-    fontFamily: F.bold,
-    fontSize: 22,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  tabRow: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    padding: 4,
-    width: '100%',
-    marginBottom: 20,
-  },
-  tabBtn: {
-    flex: 1,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabBtnActive: {
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  tabLabel: {
-    fontFamily: F.semiBold,
-    fontSize: 12,
-  },
-  priceCenter: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  priceAmount: {
-    fontFamily: F.bold,
-    fontSize: 40,
-  },
-  priceSub: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  subtitle: {
-    fontFamily: F.regular,
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  pricingRow: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-    marginBottom: 16,
-  },
-  planChip: {
-    flex: 1,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    padding: 12,
-    alignItems: 'center',
-    gap: 2,
-  },
-  planChipSelected: {
-    borderWidth: 2,
-  },
-  planLabel: {
-    fontFamily: F.medium,
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  planPrice: {
-    fontFamily: F.bold,
-    fontSize: 20,
-  },
-  planPer: {
-    fontFamily: F.regular,
-    fontSize: 12,
-  },
-  saveBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginTop: 2,
-  },
-  saveBadgeText: {
-    fontFamily: F.semiBold,
-    fontSize: 10,
-    color: '#fff',
-  },
-  featureBox: {
-    width: '100%',
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 20,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 10,
-  },
-  featureIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  featureText: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    flex: 1,
-    lineHeight: 18,
-  },
-  upgradeBtn: {
-    width: '100%',
-    height: 52,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  upgradeBtnText: {
-    fontFamily: F.semiBold,
-    color: '#fff',
-    fontSize: 16,
-  },
-  proLink: {
-    fontFamily: F.semiBold,
-    fontSize: 13,
-    paddingVertical: 4,
-    marginBottom: 4,
-  },
-  maybeLater: {
-    fontFamily: F.medium,
-    fontSize: 13,
-    paddingVertical: 4,
-  },
+  overlay: { flex: 1, backgroundColor: 'rgba(3,8,20,0.75)', justifyContent: 'flex-end' },
+  sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 34, maxHeight: '94%' },
+  closeButton: { alignSelf: 'flex-end', padding: 4 },
+  headline: { fontFamily: F.bold, fontSize: 34, lineHeight: 40, letterSpacing: -1.1 },
+  subheadline: { fontFamily: F.bold, fontSize: 18, marginTop: 8 },
+  featureList: { gap: 14, marginTop: 24 },
+  featureRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  featureText: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 26, flex: 1 },
+  planRow: { flexDirection: 'row', gap: 14, marginTop: 24 },
+  planCard: { flex: 1, borderRadius: 24, borderWidth: 1, padding: 18, gap: 10, overflow: 'hidden' },
+  saveBadge: { position: 'absolute', right: 12, top: 12, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
+  saveBadgeText: { color: '#fff', fontFamily: F.bold, fontSize: 12 },
+  planName: { fontFamily: F.medium, fontSize: 18 },
+  strikePrice: { fontFamily: F.medium, fontSize: 14, textDecorationLine: 'line-through' },
+  planPrice: { fontFamily: F.bold, fontSize: 24, lineHeight: 30 },
+  planMeta: { fontFamily: F.regular, fontSize: 13, lineHeight: 20 },
+  planButton: { minHeight: 50, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  planButtonText: { fontFamily: F.bold, fontSize: 16 },
+  planButtonSolid: { minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  planButtonSolidText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
+  renewText: { fontFamily: F.regular, fontSize: 14, lineHeight: 22, marginTop: 16 },
+  ratingWrap: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 30 },
+  ratingValue: { fontFamily: F.bold, fontSize: 40 },
+  ratingMeta: { fontFamily: F.medium, fontSize: 20, textAlign: 'center', marginTop: 4 },
+  testimonialCard: { borderWidth: 1, borderRadius: 22, padding: 18, gap: 10, marginTop: 20 },
+  testimonialStars: { fontFamily: F.bold, fontSize: 18 },
+  testimonialTitle: { fontFamily: F.bold, fontSize: 22 },
+  testimonialBody: { fontFamily: F.regular, fontSize: 15, lineHeight: 24 },
+  companyTitle: { fontFamily: F.bold, fontSize: 18, textAlign: 'center', marginTop: 24, marginBottom: 14 },
+  companyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  companyCard: { width: '48%', borderRadius: 18, minHeight: 74, alignItems: 'center', justifyContent: 'center' },
+  companyText: { color: '#fff', fontFamily: F.bold, fontSize: 18, textAlign: 'center' },
 });

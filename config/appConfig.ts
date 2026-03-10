@@ -35,6 +35,9 @@ export const AppConfig = {
   eas: {
     projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? '',
   },
+  web: {
+    baseUrl: process.env.EXPO_PUBLIC_WEB_URL ?? '',
+  },
 } as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

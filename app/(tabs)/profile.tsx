@@ -1,621 +1,154 @@
-import { View, Text, ScrollView, Alert, Pressable, StyleSheet } from 'react-native';
+import { Alert, View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useAuthStore } from '@/stores/authStore';
-import { useProgressStore, LEVEL_NAMES, xpToNextLevel } from '@/stores/progressStore';
+import { useProgressStore } from '@/stores/progressStore';
 import { useThemeStore, ACCENT_PRESETS, type AccentPreset } from '@/stores/themeStore';
-import { useWebLayout } from '@/hooks/useWebLayout';
-import { saveUserThemeToSupabase } from '@/services/themeSyncService';
 import { F } from '@/constants/Typography';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 
-const BANNER_H = 100;
-const AVATAR_SIZE = 80;
-const AVATAR_RING = AVATAR_SIZE + 8;
-
-const ACCOUNT_ITEMS = [
-  { icon: 'bookmark',    label: 'Bookmarks',    route: '/(tabs)/bookmarks' },
-  { icon: 'bell',        label: 'Notifications', route: undefined },
-  { icon: 'moon',        label: 'Appearance',    route: undefined },
-  { icon: 'download',    label: 'Downloads',     route: undefined },
-] as const;
-
-const SUPPORT_ITEMS = [
-  { icon: 'help-circle', label: 'Help & Support', route: undefined },
-  { icon: 'info',        label: 'About',           route: undefined },
-] as const;
-
-type Colors = ReturnType<typeof useThemeColors>;
-
-function MenuSection({
-  title,
-  items,
-  colors,
-}: {
-  title: string;
-  items: readonly { icon: string; label: string; route?: string }[];
-  colors: Colors;
-}) {
-  return (
-    <View style={styles.menuSection}>
-      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{title}</Text>
-      <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-        {items.map((item, idx) => (
-          <View key={item.label}>
-            <Pressable
-              onPress={() => { if (item.route) router.push(item.route as any); }}
-              style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.8 : 1 }]}
-            >
-              <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
-                <Feather name={item.icon as any} size={15} color={colors.primary} />
-              </View>
-              <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
-              <Feather name="chevron-right" size={15} color={colors.textSecondary} />
-            </Pressable>
-            {idx < items.length - 1 && (
-              <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-            )}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function ThemePicker({ colors, userId }: { colors: ReturnType<typeof useThemeColors>; userId?: string | null }) {
-  const accent     = useThemeStore((s) => s.accent);
-  const darkMode   = useThemeStore((s) => s.darkMode);
-  const usePlatform = useThemeStore((s) => s.usePlatform);
-  const setAccent  = useThemeStore((s) => s.setAccent);
-  const setUsePlatform = useThemeStore((s) => s.setUsePlatform);
-  const toggleDark = useThemeStore((s) => s.toggleDark);
-  const presetKeys: AccentPreset[] = ['aurora', 'sand', 'midnight'];
-  const presets = presetKeys.map((k) => [k, ACCENT_PRESETS[k]]) as [AccentPreset, typeof ACCENT_PRESETS[AccentPreset]][];
-
-  return (
-    <View style={styles.menuSection}>
-      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>APPEARANCE</Text>
-      <View style={[styles.themeCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-
-        {/* Dark mode toggle row */}
-        <Pressable
-          onPress={toggleDark}
-          style={[styles.darkRow, { borderBottomColor: colors.surfaceBorder }]}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: darkMode }}
-        >
-          <View style={[styles.menuIconWrap, { backgroundColor: darkMode ? '#43406B' : colors.primaryLight }]}>
-            <Feather name={darkMode ? 'moon' : 'sun'} size={17} color={darkMode ? '#A79BF4' : colors.primary} />
-          </View>
-          <Text style={[styles.menuLabel, { color: colors.text, flex: 1 }]}>Dark Mode</Text>
-          {/* Toggle pill */}
-          <View style={[styles.toggleTrack, { backgroundColor: darkMode ? colors.primary : colors.surfaceBorder }]}>
-            <View style={[styles.toggleThumb, { transform: [{ translateX: darkMode ? 18 : 2 }] }]} />
-          </View>
-        </Pressable>
-
-        {/* Platform vs custom */}
-        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingTop: 12 }}>
-          <Pressable
-            onPress={() => setUsePlatform(true)}
-            style={[
-              styles.modeBtn,
-              { borderColor: usePlatform ? colors.primary : colors.surfaceBorder, backgroundColor: usePlatform ? colors.primaryLight : 'transparent' },
-            ]}
-          >
-            <Text style={[styles.modeBtnText, { color: colors.text }]}>Use Platform</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setUsePlatform(false)}
-            style={[
-              styles.modeBtn,
-              { borderColor: !usePlatform ? colors.primary : colors.surfaceBorder, backgroundColor: !usePlatform ? colors.primaryLight : 'transparent' },
-            ]}
-          >
-            <Text style={[styles.modeBtnText, { color: colors.text }]}>Custom</Text>
-          </Pressable>
-        </View>
-
-        {/* Accent color grid */}
-        <View style={styles.themeGrid}>
-          {presets.map(([key, cfg]) => {
-            const isActive = accent === key;
-            return (
-              <Pressable
-                key={key}
-                onPress={() => { setUsePlatform(false); setAccent(key); }}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isActive }}
-                style={[
-                  styles.themeBtn,
-                  { borderColor: isActive ? cfg.primary : colors.surfaceBorder,
-                    backgroundColor: isActive ? cfg.primary + '18' : 'transparent',
-                  },
-                ]}
-                >
-                  <LinearGradient
-                    colors={[cfg.gradientFrom, cfg.gradientTo]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  style={[styles.themeCircle, { backgroundColor: cfg.primary }]}
-                  >
-                    {isActive && <Feather name="check" size={11} color="#fff" />}
-                  </LinearGradient>
-                  <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
-                    {cfg.label}
-                  </Text>
-                  <Feather name={isActive ? 'check' : 'plus'} size={14} color={isActive ? cfg.primary : colors.textSecondary} />
-                </Pressable>
-              );
-            })}
-        </View>
-        <Text style={[styles.themeHint, { color: colors.textSecondary }]}>
-          Platform theme syncs from admin; choose Custom to override on this device.
-        </Text>
-
-        {!usePlatform && userId && (
-          <Pressable
-            onPress={() => saveUserThemeToSupabase(userId).catch(() => {})}
-            style={({ pressed }) => [styles.saveThemeBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 }]}
-          >
-            <Feather name="save" size={14} color="#fff" />
-            <Text style={styles.saveThemeText}>Save Theme to Account</Text>
-          </Pressable>
-        )}
-      </View>
-    </View>
-  );
-}
+const PRESETS: AccentPreset[] = ['datacamp', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'indigo'];
 
 export default function ProfileScreen() {
-  const colors   = useThemeColors();
-  const user     = useAuthStore((s) => s.user);
-  const signOut  = useAuthStore((s) => s.signOut);
+  const colors = useThemeColors();
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
   const progress = useProgressStore((s) => s.progress);
-  const { isDesktop, contentContainerWeb } = useWebLayout();
-
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out', style: 'destructive',
-        onPress: () => { signOut(); router.replace('/(auth)/login'); },
-      },
-    ]);
-  };
-
-  const initials  = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
-  const isPremium = user?.subscription === 'premium';
-
-  const level      = progress.level ?? 1;
-  const levelName  = LEVEL_NAMES[level - 1] ?? 'Novice';
-  const xpInfo     = xpToNextLevel(progress.xp ?? 0, level);
-  const xpProgress = xpInfo.needed > 0 ? xpInfo.current / xpInfo.needed : 1;
-
-  const stats = [
-    {
-      icon: 'check-square', label: 'Quizzes',
-      value: progress.completedQuizzes,
-      color: colors.primary,
-      bg: colors.primaryLight,
-    },
-    {
-      icon: 'trending-up', label: 'Avg Score',
-      value: `${progress.averageScore}%`,
-      color: colors.success,
-      bg: colors.success + '22',
-    },
-    {
-      icon: 'zap', label: 'Coins',
-      value: (progress.coins ?? 0).toLocaleString(),
-      color: colors.warning,
-      bg: colors.warning + '22',
-    },
-    {
-      icon: 'award', label: 'Badges',
-      value: progress.badges.length,
-      color: '#EA5455',
-      bg: '#EA545522',
-    },
-  ];
+  const accent = useThemeStore((s) => s.accent);
+  const setAccent = useThemeStore((s) => s.setAccent);
+  const initials = user?.name?.charAt(0)?.toUpperCase() ?? 'K';
+  const platformConfig = usePlatformConfigStore((s) => s.config);
+  const isAdmin = (user?.role ?? '').toLowerCase() === 'admin';
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
-      <ScrollView contentContainerStyle={[styles.scroll, contentContainerWeb as any]}>
-
-        {/* ── Profile Header ── */}
-        <View style={styles.headerCard}>
-          {/* Banner */}
-          <LinearGradient
-            colors={[colors.gradientFrom, colors.gradientTo, colors.gradientAccent]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerBanner}
-          />
-
-          {/* Avatar */}
-          <View style={[styles.avatarRing, { backgroundColor: colors.background }]}>
-            <View style={[styles.avatarInner, { backgroundColor: colors.primaryLight }]}>
-              <Text style={[styles.avatarInitial, { color: colors.primary }]}>{initials}</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.profileTop}>
+          <View style={[styles.avatarWrap, { borderColor: colors.surfaceBorder }]}>
+            <View style={[styles.avatarInner, { backgroundColor: '#F2D7AC' }]}>
+              <Text style={styles.avatarText}>{initials}</Text>
+            </View>
+            <View style={[styles.editBadge, { backgroundColor: colors.primary }]}>
+              <Feather name="edit-2" size={16} color="#04111F" />
             </View>
           </View>
-
-          {/* Body */}
-          <View style={[styles.headerBody, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[styles.userName, { color: colors.text }]}>{user?.name ?? 'User'}</Text>
-            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email ?? ''}</Text>
-            <View style={styles.badgeWrap}>
-              <Badge
-                label={isPremium ? 'Premium' : 'Free Plan'}
-                color={isPremium ? colors.aws : undefined}
-                size="md"
-              />
-              <View style={[styles.levelBadge, { backgroundColor: colors.primaryLight }]}>
-                <Text style={[styles.levelBadgeText, { color: colors.primary }]}>
-                  Lv.{level} · {levelName}
-                </Text>
-              </View>
-            </View>
-            {/* XP Progress */}
-            <View style={styles.xpWrap}>
-              <View style={styles.xpRow}>
-                <Text style={[styles.xpLabel, { color: colors.textSecondary }]}>XP Progress</Text>
-                <Text style={[styles.xpLabel, { color: colors.primary }]}>
-                  {xpInfo.current}/{xpInfo.needed}
-                </Text>
-              </View>
-              <ProgressBar progress={xpProgress} height={6} color={colors.primary} />
-            </View>
-          </View>
+          <Text style={[styles.profileName, { color: colors.text }]}>{user?.name ?? 'Katalyst learner'}</Text>
+          <Text style={[styles.profileHandle, { color: colors.textSecondary }]}>@{(user?.email ?? 'schinchli').split('@')[0]}</Text>
         </View>
 
-        {/* ── Quick Stats ── */}
-        <View style={styles.statsRow}>
-          {stats.map((s) => (
-            <View key={s.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
-                <Feather name={s.icon as any} size={18} color={s.color} />
+        <Pressable onPress={() => Alert.alert('Share', 'Profile share action can be connected here.')} style={[styles.shareButton, { borderColor: colors.gradientAccent }]}>
+          <Text style={[styles.shareButtonText, { color: colors.text }]}>{EXPERIENCE_COPY.profile.shareCta}</Text>
+        </Pressable>
+
+        <LinearGradient colors={[colors.surface, colors.surfaceElevated]} style={[styles.offerCard, { borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.offerTitle, { color: colors.text }]}>{platformConfig.copy.profileOfferTitle}</Text>
+          <Text style={[styles.offerSubtitle, { color: platformConfig.colors.profileOfferAccent }]}>{platformConfig.copy.profileOfferSubtitle}</Text>
+          <View style={[styles.offerArrow, { backgroundColor: colors.backgroundAlt }]}>
+            <Feather name="arrow-right" size={18} color={colors.text} />
+          </View>
+        </LinearGradient>
+
+        {isAdmin ? (
+          <Pressable onPress={() => router.push('/admin-settings' as any)} style={[styles.adminButton, { borderColor: colors.primary }]}>
+            <Feather name="tool" size={16} color={colors.primary} />
+            <Text style={[styles.adminButtonText, { color: colors.primary }]}>Admin mobile settings</Text>
+          </Pressable>
+        ) : null}
+
+        <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          {[
+            { icon: 'bell', label: 'Notifications', badge: '1' },
+            { icon: 'award', label: 'Leaderboard' },
+            { icon: 'book-open', label: 'My library' },
+          ].map((item, index) => (
+            <View key={item.label}>
+              <View style={styles.listRow}>
+                <Feather name={item.icon as any} size={24} color={colors.text} />
+                <Text style={[styles.listLabel, { color: colors.text }]}>{item.label}</Text>
+                {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={styles.rowBadgeText}>{item.badge}</Text></View> : null}
+                <Feather name="chevron-right" size={18} color={colors.textSecondary} />
               </View>
-              <Text style={[styles.statNumber, { color: s.color }]}>{s.value}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{s.label}</Text>
+              {index < 2 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
           ))}
         </View>
 
-        {/* ── Brand color picker ── */}
-        <ThemePicker colors={colors} userId={user?.id} />
-
-        {/* ── Menus ── */}
-        <MenuSection title="ACCOUNT"      items={ACCOUNT_ITEMS} colors={colors} />
-        <MenuSection title="APP SETTINGS" items={SUPPORT_ITEMS} colors={colors} />
-
-        {/* ── Sign Out ── */}
-        <View style={styles.signOutWrap}>
-          <Pressable
-            onPress={handleSignOut}
-            style={({ pressed }) => [
-              styles.signOutBtn,
-              { borderColor: colors.error, opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Feather name="log-out" size={16} color={colors.error} />
-            <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
-          </Pressable>
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text }]}>Streaks</Text>
+          <View style={styles.panelMetrics}>
+            <View>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{progress.currentStreak} days</Text>
+              <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Total</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{Math.max(0, 2 - Math.min(2, progress.currentStreak))} freezes</Text>
+              <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Left</Text>
+            </View>
+          </View>
         </View>
 
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text }]}>Theme</Text>
+          <View style={styles.swatchGrid}>
+            {PRESETS.map((preset) => {
+              const item = ACCENT_PRESETS[preset];
+              const active = accent === preset;
+              return (
+                <Pressable key={preset} onPress={() => setAccent(preset)} style={[styles.swatchCard, { borderColor: active ? item.primary : colors.surfaceBorder, backgroundColor: active ? colors.backgroundAlt : 'transparent' }]}>
+                  <LinearGradient colors={[item.gradientFrom, item.gradientTo]} style={styles.swatchBubble} />
+                  <Text style={[styles.swatchLabel, { color: colors.text }]}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
 
-        {/* ── Version ── */}
-        <Text style={[styles.version, { color: colors.textSecondary }]}>Katalyst v1.0.0 · KataHQ</Text>
-
+        <Pressable onPress={() => signOut()} style={[styles.signOutButton, { borderColor: '#FF6B7A' }]}>
+          <Feather name="log-out" size={16} color="#FF6B7A" />
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1 },
-  scroll: { paddingBottom: 48, paddingHorizontal: 18, paddingTop: 6 },
-
-  /* ── Header ── */
-  headerCard: {
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  headerBanner: {
-    width: '100%',
-    height: BANNER_H,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  avatarRing: {
-    width: AVATAR_RING,
-    height: AVATAR_RING,
-    borderRadius: AVATAR_RING / 2,
-    marginTop: -(AVATAR_RING / 2),
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  avatarInner: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    fontFamily: F.bold,
-    fontSize: 30,
-  },
-  headerBody: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    borderWidth: 1,
-    borderTopWidth: 0,
-  },
-  userName: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    marginBottom: 2,
-  },
-  userEmail: {
-    fontFamily: F.regular,
-    fontSize: 13,
-  },
-  badgeWrap: {
-    marginTop: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  levelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  levelBadgeText: {
-    fontFamily: F.semiBold,
-    fontSize: 12,
-  },
-  xpWrap: {
-    marginTop: 12,
-    width: '100%',
-    gap: 6,
-  },
-  xpRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  xpLabel: {
-    fontFamily: F.medium,
-    fontSize: 12,
-  },
-
-  /* ── Stats ── */
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginHorizontal: 0,
-    marginBottom: 24,
-  },
-  statCard: {
-    width: '48%',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  statIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  statNumber: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  statLabel: {
-    fontFamily: F.medium,
-    fontSize: 11,
-    marginTop: 2,
-  },
-
-  /* ── Menu ── */
-  menuSection: {
-    marginHorizontal: 0,
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    fontFamily: F.semiBold,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    marginBottom: 6,
-    marginLeft: 4,
-  },
-  menuCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  menuIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuLabel: {
-    flex: 1,
-    fontFamily: F.medium,
-    fontSize: 14,
-  },
-  divider: {
-    height: 1,
-    marginLeft: 66,
-  },
-
-  /* ── Theme picker ── */
-  themeCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  darkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderBottomWidth: 1,
-  },
-  toggleTrack: {
-    width: 42,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-  },
-  toggleThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  themeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    padding: 14,
-  },
-  themeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  themeCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeLabel: {
-    fontFamily: F.medium,
-    fontSize: 12,
-  },
-  modeBtn: {
-    flex: 1,
-    borderWidth: 1.2,
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  modeBtnText: { fontFamily: F.semiBold, fontSize: 12 },
-  themeHint: {
-    fontFamily: F.regular,
-    fontSize: 11,
-    lineHeight: 16,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    marginTop: -2,
-  },
-  saveThemeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginHorizontal: 14,
-    marginBottom: 12,
-    paddingVertical: 11,
-    borderRadius: 10,
-  },
-  saveThemeText: {
-    fontFamily: F.semiBold,
-    fontSize: 13,
-    color: '#fff',
-  },
-
-  /* ── Sign out ── */
-  signOutWrap: {
-    marginHorizontal: 0,
-    marginTop: 12,
-    marginBottom: 16,
-  },
-  signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  signOutText: {
-    fontFamily: F.semiBold,
-    fontSize: 15,
-  },
-
-  /* ── Dev row ── */
-  devRow: {
-    marginTop: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-  },
-  devText: {
-    fontFamily: F.medium,
-    fontSize: 13,
-  },
-  devBadge: {
-    borderRadius: 99,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  devBadgeText: {
-    fontFamily: F.bold,
-    fontSize: 10,
-  },
-
-  /* ── Version ── */
-  version: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 4,
-  },
+  safeArea: { flex: 1 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 18 },
+  profileTop: { alignItems: 'center', gap: 10 },
+  avatarWrap: { width: 164, height: 164, borderRadius: 82, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  avatarInner: { width: 152, height: 152, borderRadius: 76, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#1A1A1A', fontFamily: F.bold, fontSize: 58 },
+  editBadge: { position: 'absolute', right: 6, top: 6, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  profileName: { fontFamily: F.bold, fontSize: 28, lineHeight: 34 },
+  profileHandle: { fontFamily: F.medium, fontSize: 17 },
+  shareButton: { minHeight: 56, borderRadius: 20, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  shareButtonText: { fontFamily: F.bold, fontSize: 18 },
+  offerCard: { borderWidth: 1, borderRadius: 26, padding: 18, minHeight: 124, justifyContent: 'center', gap: 6, overflow: 'hidden' },
+  offerTitle: { fontFamily: F.bold, fontSize: 22 },
+  offerSubtitle: { fontFamily: F.bold, fontSize: 18 },
+  offerArrow: { position: 'absolute', right: 18, top: 18, width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  listCard: { borderWidth: 1, borderRadius: 28, overflow: 'hidden' },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 18 },
+  listLabel: { fontFamily: F.semiBold, fontSize: 18, flex: 1 },
+  rowBadge: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  rowBadgeText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
+  divider: { height: 1, marginHorizontal: 18 },
+  panel: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 16 },
+  panelTitle: { fontFamily: F.bold, fontSize: 18 },
+  panelMetrics: { flexDirection: 'row', justifyContent: 'space-between' },
+  metricValue: { fontFamily: F.bold, fontSize: 22 },
+  metricLabel: { fontFamily: F.regular, fontSize: 14, marginTop: 4 },
+  swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  swatchCard: { width: '31%', borderWidth: 1, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center', gap: 8 },
+  swatchBubble: { width: 34, height: 34, borderRadius: 17 },
+  swatchLabel: { fontFamily: F.medium, fontSize: 11, textAlign: 'center' },
+  signOutButton: { borderWidth: 1.5, borderRadius: 18, minHeight: 54, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
+  adminButton: { borderWidth: 1.5, borderRadius: 18, minHeight: 54, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
+  adminButtonText: { fontFamily: F.bold, fontSize: 16 },
+  signOutText: { color: '#FF6B7A', fontFamily: F.bold, fontSize: 16 },
 });

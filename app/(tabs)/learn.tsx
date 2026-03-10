@@ -1,199 +1,91 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Modal } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
-import { PLAYLIST, type VideoItem } from '@/data/videos';
-import { WebView } from 'react-native-webview';
-import * as WebBrowser from 'expo-web-browser';
-
-// ─── Playlist data (mirrors web /dashboard/learn) ─────────────────────────────
-
-// Playlist shared with Home previews via data/videos.ts
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
+import { PLAYLIST } from '@/data/videos';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 
 export default function LearnScreen() {
   const colors = useThemeColors();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState('ALL');
+  const platformConfig = usePlatformConfigStore((s) => s.config);
+  const tags = ['ALL', ...Array.from(new Set(PLAYLIST.map((item) => item.tag.toUpperCase())))];
+  const visibleItems = (selectedTag === 'ALL' ? PLAYLIST : PLAYLIST.filter((item) => item.tag.toUpperCase() === selectedTag)).slice(0, platformConfig.layout.resourcesArticleCount);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Video Library</Text>
-        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
-          AWS Generative AI — {PLAYLIST.length} videos
-        </Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.darkHeader, { borderBottomColor: colors.surfaceBorder }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{platformConfig.copy.resourcesTitle}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <View style={[styles.filterBar, { backgroundColor: platformConfig.colors.resourcesBackground }]}>
+        <View style={styles.filterHeader}>
+          <Text style={styles.filterTitle}>{platformConfig.copy.resourcesFilter}</Text>
+          <Text style={styles.filterSecondary}>{EXPERIENCE_COPY.resources.secondaryFilter}</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
+          {tags.map((tag) => {
+            const active = tag === selectedTag;
+            return (
+              <Pressable key={tag} onPress={() => setSelectedTag(tag)} style={[styles.chip, { backgroundColor: active ? '#D7FEE7' : '#FFFFFF', borderColor: active ? '#00ED64' : '#D5DBE6' }]}>
+                <Text style={[styles.chipText, { color: active ? '#04111F' : '#1E293B' }]}>{tag}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
 
-        {PLAYLIST.map((video, idx) => {
-          const isExpanded = expandedId === video.id;
-          return (
-            <View
-              key={video.id}
-              style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-            >
-              {/* Accent bar */}
-              <View style={[styles.cardAccent, { backgroundColor: video.tagColor }]} />
-
-              <View style={styles.cardBody}>
-                {/* Top row: thumbnail + info */}
-                <View style={styles.cardTop}>
-                  {/* Thumbnail */}
-                  <View style={[styles.thumb, { backgroundColor: '#0f172a' }]}>
-                    <View style={[styles.thumbGradient, { backgroundColor: video.tagColor + '35' }]} />
-                    <Feather name="play-circle" size={30} color={video.tagColor} style={styles.thumbIcon} />
-                    <View style={styles.durationBadge}>
-                      <Text style={styles.durationText}>{video.duration}</Text>
-                    </View>
+      <ScrollView contentContainerStyle={styles.articleScroll} showsVerticalScrollIndicator={false}>
+        {visibleItems.map((item) => (
+          <View key={item.id} style={styles.articleShell}>
+            <View style={styles.articleCard}>
+              <View style={[styles.articleTag, { backgroundColor: item.tagColor }]}>
+                <Text style={styles.articleTagText}>{item.tag.toUpperCase()}</Text>
+              </View>
+              <Text style={styles.articleTitle}>{item.title}</Text>
+              <Text style={styles.articleDescription}>{item.description}</Text>
+              <Text style={styles.articleMeta}>DataCamp Team • January 2026</Text>
+              <View style={styles.chapterList}>
+                {item.chapters?.slice(0, 3).map((chapter) => (
+                  <View key={`${item.id}-${chapter.time}`} style={styles.chapterRow}>
+                    <Feather name="play-circle" size={14} color="#3A4B6E" />
+                    <Text style={styles.chapterText}>{chapter.label}</Text>
+                    <Text style={styles.chapterTime}>{chapter.time}</Text>
                   </View>
-
-                  {/* Info */}
-                  <View style={styles.cardInfo}>
-                    <View style={[styles.tagBadge, { backgroundColor: video.tagColor + '18' }]}>
-                      <Text style={[styles.tagText, { color: video.tagColor }]}>{video.tag}</Text>
-                    </View>
-                    <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-                      {video.title}
-                    </Text>
-                    <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>
-                      {video.author} · {video.views} views
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Description (expandable) */}
-                <Pressable
-                  onPress={() => setExpandedId(isExpanded ? null : video.id)}
-                  style={styles.expandRow}
-                >
-                  {isExpanded && (
-                    <Text style={[styles.description, { color: colors.textSecondary }]}>
-                      {video.description}
-                    </Text>
-                  )}
-                  {video.chapters && video.chapters.length > 0 && isExpanded && (
-                    <View style={[styles.chaptersBox, { borderTopColor: colors.surfaceBorder }]}>
-                      <Text style={[styles.chaptersTitle, { color: colors.text }]}>
-                        Chapters ({video.chapters.length})
-                      </Text>
-                      {video.chapters.map((ch, i) => (
-                        <View key={i} style={styles.chapterRow}>
-                          <View style={[styles.chapterNum, { backgroundColor: video.tagColor + '18' }]}>
-                            <Text style={[styles.chapterNumText, { color: video.tagColor }]}>
-                              {String(i + 1).padStart(2, '0')}
-                            </Text>
-                          </View>
-                          <Text style={[styles.chapterLabel, { color: colors.text }]} numberOfLines={1}>
-                            {ch.label}
-                          </Text>
-                          <Text style={[styles.chapterTime, { color: video.tagColor, backgroundColor: video.tagColor + '12' }]}>
-                            {ch.time}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                  <View style={styles.expandToggle}>
-                  <Text style={[styles.expandText, { color: colors.primary }]}>
-                    {isExpanded ? 'Show less' : 'Show details'}
-                  </Text>
-                    <Feather
-                      name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                      size={14}
-                      color={colors.primary}
-                    />
-                  </View>
-                </Pressable>
-
-                {/* External watch hint */}
-                <View style={[styles.watchBtn, { backgroundColor: video.tagColor + '18', borderWidth: 0 }]}>
-                  <Feather name="youtube" size={15} color={video.tagColor} />
-                  <Text style={[styles.watchBtnText, { color: video.tagColor }]}>Opens on YouTube</Text>
-                </View>
+                ))}
               </View>
             </View>
-          );
-        })}
-
-        {/* Footer */}
-        <Text style={[styles.footer, { color: colors.textSecondary }]}>
-          Videos sourced from official AWS channels
-        </Text>
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  safe:   { flex: 1 },
-  scroll: { paddingBottom: 52, paddingHorizontal: 16, paddingTop: 16 },
-
-  header: {
-    paddingHorizontal: 20, paddingVertical: 17,
-    borderBottomWidth: 1,
-  },
-  headerTitle: { fontFamily: F.bold,    fontSize: 22 },
-  headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
-
-  card: {
-    borderRadius: 14, borderWidth: 1, marginBottom: 14,
-    overflow: 'hidden', flexDirection: 'row',
-  },
-  cardAccent: { width: 4 },
-  cardBody:   { flex: 1, padding: 15, gap: 10 },
-
-  cardTop: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-
-  thumb: {
-    width: 96, height: 66, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0, overflow: 'hidden',
-  },
-  thumbGradient: { ...StyleSheet.absoluteFillObject, opacity: 0.75 },
-  thumbIcon: { zIndex: 2 },
-  durationBadge: {
-    position: 'absolute', bottom: 5, right: 6,
-    backgroundColor: 'rgba(0,0,0,0.72)',
-    borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1,
-  },
-  durationText: { fontFamily: F.bold, fontSize: 10, color: '#fff' },
-
-  cardInfo:  { flex: 1, gap: 5 },
-  tagBadge:  { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5 },
-  tagText:   { fontFamily: F.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
-  cardTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
-  cardMeta:  { fontFamily: F.regular,  fontSize: 11 },
-
-  expandRow:   { gap: 9 },
-  description: { fontFamily: F.regular, fontSize: 13, lineHeight: 20 },
-
-  chaptersBox: { borderTopWidth: 1, paddingTop: 11, gap: 7 },
-  chaptersTitle: { fontFamily: F.semiBold, fontSize: 13, marginBottom: 2 },
-  chapterRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  chapterNum: { width: 30, height: 30, borderRadius: 7, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  chapterNumText: { fontFamily: F.bold, fontSize: 11 },
-  chapterLabel: { fontFamily: F.regular, fontSize: 13, flex: 1 },
-  chapterTime: { fontFamily: F.semiBold, fontSize: 11, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-
-  expandToggle: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  expandText:   { fontFamily: F.semiBold, fontSize: 13 },
-
-  watchBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, minHeight: 42, paddingVertical: 9, borderRadius: 10,
-  },
-  watchBtnText: { fontFamily: F.semiBold, fontSize: 13, color: '#fff' },
-
-  footer: {
-    fontFamily: F.regular, fontSize: 12,
-    textAlign: 'center', marginTop: 8,
-  },
+  safeArea: { flex: 1 },
+  darkHeader: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 20, borderBottomWidth: 1 },
+  headerTitle: { fontFamily: F.bold, fontSize: 34, lineHeight: 40, letterSpacing: -0.9, textAlign: 'center' },
+  filterBar: { paddingVertical: 14, gap: 12 },
+  filterHeader: { paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  filterTitle: { fontFamily: F.bold, fontSize: 17, color: '#10233D', letterSpacing: 1.6, textTransform: 'uppercase' },
+  filterSecondary: { fontFamily: F.medium, fontSize: 17, color: '#10233D' },
+  filterChips: { paddingHorizontal: 16, gap: 10 },
+  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
+  chipText: { fontFamily: F.bold, fontSize: 12 },
+  articleScroll: { backgroundColor: '#ECEFF4', paddingVertical: 18, paddingHorizontal: 16, gap: 18, paddingBottom: 40 },
+  articleShell: { borderRadius: 18 },
+  articleCard: { backgroundColor: '#FAFAFA', borderColor: '#D7D6CF', borderWidth: 1, borderRadius: 12, padding: 18, gap: 18 },
+  articleTag: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  articleTagText: { color: '#04111F', fontFamily: F.bold, fontSize: 12 },
+  articleTitle: { color: '#091433', fontFamily: F.bold, fontSize: 26, lineHeight: 34 },
+  articleDescription: { color: '#6B7280', fontFamily: F.regular, fontSize: 16, lineHeight: 28 },
+  articleMeta: { color: '#6B7280', fontFamily: F.medium, fontSize: 14 },
+  chapterList: { gap: 10 },
+  chapterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chapterText: { color: '#10233D', fontFamily: F.medium, fontSize: 14, flex: 1 },
+  chapterTime: { color: '#64748B', fontFamily: F.semiBold, fontSize: 12 },
 });

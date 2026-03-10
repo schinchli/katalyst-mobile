@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { Colors } from '@/constants/Colors';
 import { syncPlatformThemeFromSupabase, syncUserThemeFromSupabase } from '@/services/themeSyncService';
+import { syncPlatformConfigFromSupabase } from '@/services/platformConfigService';
 import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
@@ -77,6 +78,7 @@ function ThemedApp() {
         <Stack.Screen name="(tabs)"     options={{ headerShown: false }} />
         <Stack.Screen name="quiz/[id]"  options={{ headerShown: false, presentation: 'fullScreenModal' }} />
         <Stack.Screen name="dev-config" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="admin-settings" options={{ headerShown: false, presentation: 'card' }} />
       </Stack>
     </ThemeProvider>
   );
@@ -103,6 +105,7 @@ export default function RootLayout() {
       initAuth()
         .then(async () => {
           await syncPlatformThemeFromSupabase().catch(() => {});
+          await syncPlatformConfigFromSupabase().catch(() => {});
           const userId = useAuthStore.getState().user?.id;
           if (userId) await syncUserThemeFromSupabase(userId).catch(() => {});
         })

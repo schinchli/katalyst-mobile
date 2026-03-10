@@ -1,476 +1,170 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, TextInput, useWindowDimensions } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
-import type { QuizCategory, Quiz } from '@/types';
-import { useWebLayout } from '@/hooks/useWebLayout';
+import type { QuizCategory } from '@/types';
 import { F } from '@/constants/Typography';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 
-
-// ─── Difficulty filters ───────────────────────────────────────────────────────
-const difficulties: { key: 'all' | 'beginner' | 'intermediate' | 'advanced'; label: string }[] = [
-  { key: 'all',          label: 'All Levels' },
-  { key: 'beginner',     label: 'Beginner' },
-  { key: 'intermediate', label: 'Intermediate' },
-  { key: 'advanced',     label: 'Advanced' },
+const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'genai', label: 'AI' },
+  { key: 'bedrock', label: 'Bedrock' },
+  { key: 'security', label: 'Security' },
+  { key: 'clf-c02', label: 'CLF-C02' },
 ];
 
-// ─── Domain filters ───────────────────────────────────────────────────────────
-const categoryOptions: { key: QuizCategory | 'all'; label: string }[] = [
-  { key: 'all', label: 'All Domains' },
-  ...Array.from(new Set(quizzes.map((q) => q.category))).map((cat) => ({
-    key: cat,
-    label: cat.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-  })) as { key: QuizCategory; label: string }[],
-];
-
-// ─── Course Card ──────────────────────────────────────────────────────────────
-function CourseCard({ quiz, onPress, completedIds }: { quiz: Quiz; onPress: () => void; completedIds: Set<string> }) {
-  const colors    = useThemeColors();
-  const completed = completedIds.has(quiz.id);
-
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Start ${quiz.title} quiz`}
-      style={({ pressed }) => [
-        s.courseCard,
-        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-        pressed && s.cardPressed,
-      ]}
-    >
-      {/* Header banner — neutral primary tint */}
-      <View style={[s.cardBanner, { backgroundColor: colors.primaryLight }]}>
-        {quiz.isPremium && (
-          <View style={[s.proBadge, { backgroundColor: colors.aws }]}>
-            <Text style={s.proBadgeText}>PRO</Text>
-          </View>
-        )}
-        {completed && (
-          <View
-            style={[
-              s.completedBadge,
-              {
-                backgroundColor: colors.success + '22',
-                borderColor: colors.success + '55',
-                top: quiz.isPremium ? 38 : 10,
-                right: 10,
-              },
-            ]}
-          >
-            <Feather name="check-circle" size={11} color={colors.success} />
-            <Text style={[s.completedBadgeText, { color: colors.success }]}>Done</Text>
-          </View>
-        )}
-        <View style={[s.cardIconCircle, { backgroundColor: colors.primary + '28' }]}>
-          <Feather name={quiz.icon as any} size={28} color={colors.primary} />
-        </View>
-      </View>
-
-      {/* Body */}
-      <View style={s.cardBody}>
-        {/* Top content group */}
-        <View style={s.cardTop}>
-          <Text style={[s.cardTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
-          <Text style={[s.cardDesc, { color: colors.textSecondary }]} numberOfLines={3}>{quiz.description}</Text>
-        </View>
-
-        {/* Start button — pinned to bottom */}
-        <View style={[s.startBtn, { backgroundColor: colors.primary }]}>
-          <Text style={s.startBtnText}>Start →</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
-// ─── Main screen ──────────────────────────────────────────────────────────────
 export default function QuizzesScreen() {
   const colors = useThemeColors();
-  const { isDesktop, contentContainerWeb } = useWebLayout();
-  const { width } = useWindowDimensions();
-  const [selectedCategory, setSelectedCategory] = useState<QuizCategory | 'all'>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const progress = useProgressStore((s) => s.progress);
-  const results = useProgressStore((s) => s.progress.recentResults);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<QuizCategory | 'all'>('all');
+  const completedIds = new Set(progress.recentResults.map((item) => item.quizId));
+  const platformConfig = usePlatformConfigStore((s) => s.config);
 
-  const completedIds = new Set(results.map((r) => r.quizId));
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-
-  const filtered = quizzes.filter((q) => {
-    const catMatch  = selectedCategory === 'all' || q.category === selectedCategory;
-    const diffMatch = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
-    const searchMatch =
-      normalizedSearch.length === 0 ||
-      q.title.toLowerCase().includes(normalizedSearch) ||
-      q.description.toLowerCase().includes(normalizedSearch);
-    return catMatch && diffMatch && searchMatch;
-  });
-
-  const totalCategories = new Set(quizzes.map((q) => q.category)).size;
-  const recentHistory   = progress.recentResults.slice(0, 4);
-  const cellWidth = isDesktop ? '30%' : width >= 700 ? '48%' : width >= 480 ? '48%' : '100%';
+  const visibleCourses = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return quizzes.filter((quiz) => {
+      const matchFilter = filter === 'all' || quiz.category === filter;
+      const matchQuery = normalized.length === 0 || quiz.title.toLowerCase().includes(normalized) || quiz.description.toLowerCase().includes(normalized);
+      return matchFilter && matchQuery;
+    });
+  }, [filter, query]);
 
   return (
-    <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.screenTitle, { color: colors.text }]}>Explore</Text>
 
-      {/* ── Header ── */}
-      <View style={[s.header, contentContainerWeb]}>
-        <View>
-          <Text style={[s.screenTitle, { color: colors.text }]}>All Courses</Text>
-        </View>
-        <View style={[s.headerStatsRow]}>
-          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.primary }]}>{quizzes.length}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Quizzes</Text>
-          </View>
-          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.primary }]}>{totalCategories}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Topics</Text>
-          </View>
-          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.primary }]}>{completedIds.size}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Done</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ── Search & progress overview ── */}
-      <View style={[s.overviewWrap, contentContainerWeb]}>
-        <View style={[s.searchBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+        <View style={[styles.searchShell, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Feather name="search" size={18} color={colors.textSecondary} />
           <TextInput
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            placeholder="Search courses, topics, or tags"
-            placeholderTextColor={colors.textSecondary}
-            style={[s.searchInput, { color: colors.text }]}
-            returnKeyType="search"
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search courses"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.searchInput, { color: colors.text }]}
           />
         </View>
 
-        <View style={s.progressRow}>
-          <View style={[s.progressCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[s.progressLabel, { color: colors.textSecondary }]}>Completed</Text>
-            <Text style={[s.progressValue, { color: colors.text }]}>{progress.completedQuizzes}</Text>
-            <Text style={[s.progressSub, { color: colors.textSecondary }]}>out of {quizzes.length}</Text>
-          </View>
-          <View style={[s.progressCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[s.progressLabel, { color: colors.textSecondary }]}>Average Score</Text>
-            <Text style={[s.progressValue, { color: colors.primary }]}>{progress.averageScore}%</Text>
-            <Text style={[s.progressSub, { color: colors.textSecondary }]}>Keep pushing to 90%</Text>
-          </View>
-          <View style={[s.progressCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[s.progressLabel, { color: colors.textSecondary }]}>Current Streak</Text>
-            <Text style={[s.progressValue, { color: colors.text }]}>{progress.currentStreak} days</Text>
-            <Text style={[s.progressSub, { color: colors.textSecondary }]}>Longest {progress.longestStreak}d</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ── Filter pills ── */}
-      <View style={s.filtersWrap}>
-        <View style={s.diffRow}>
-          {difficulties.map((d) => {
-            const active = selectedDifficulty === d.key;
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {FILTERS.map((item) => {
+            const active = item.key === filter;
             return (
               <Pressable
-                key={d.key}
-                onPress={() => setSelectedDifficulty(d.key)}
-                style={[
-                  s.diffPill,
-                  active
-                    ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                    : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                ]}
+                key={item.key}
+                onPress={() => setFilter(item.key)}
+                style={[styles.filterChip, { backgroundColor: active ? colors.primary : colors.surface, borderColor: active ? colors.primary : colors.surfaceBorder }]}
               >
-                <Text style={[s.diffPillText, { color: active ? '#fff' : colors.text }]}>{d.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.pillRow}
-          style={s.pillScroll}
-        >
-          {categoryOptions.map((cat) => {
-            const active = selectedCategory === cat.key;
-            return (
-              <Pressable
-                key={cat.key}
-                onPress={() => setSelectedCategory(cat.key)}
-                style={[
-                  s.pill,
-                  active
-                    ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                    : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                ]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-              >
-                <Text style={[s.pillText, { color: active ? '#FFFFFF' : colors.text }]}>
-                  {cat.label}
-                </Text>
+                <Text style={[styles.filterChipText, { color: active ? '#04111F' : colors.text }]}>{item.label}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
-      </View>
 
-      {/* ── Course grid ── */}
-      <ScrollView
-        contentContainerStyle={[s.grid, contentContainerWeb]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ── History & results count ── */}
-        <View style={s.resultHeaderRow}>
-          <Text style={[s.resultCount, { color: colors.textSecondary }]}>
-            {filtered.length} {filtered.length === 1 ? 'course' : 'courses'} available
-          </Text>
-          {recentHistory.length > 0 && (
-            <Text style={[s.resultCount, { color: colors.textSecondary }]}>
-              Recent quizzes · {recentHistory.length}
-            </Text>
-          )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trackRow}>
+          {quizzes.slice(0, 4).map((quiz, index) => (
+            <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <LinearGradient colors={index % 2 === 0 ? [colors.error, colors.gradientAccent] : [colors.warning, '#F59E0B']} style={styles.trackVisual}>
+                <View style={[styles.trackBadge, { backgroundColor: '#04111F' }]}>
+                  <Text style={styles.trackBadgeText}>{quiz.isPremium ? 'Track' : 'Start'}</Text>
+                </View>
+                <Feather name={quiz.icon as any} size={54} color="#F8FAFC" />
+              </LinearGradient>
+              <View style={styles.trackBody}>
+                <View style={styles.trackProgressRow}>
+                  <View style={[styles.trackProgressBar, { backgroundColor: colors.backgroundAlt }]}>
+                    <View style={[styles.trackProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 2) * 16)}%` }]} />
+                  </View>
+                  <Text style={[styles.trackPercent, { color: colors.text }]}>{Math.min(100, (index + 2) * 16)}%</Text>
+                </View>
+                <Text style={[styles.trackTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Available courses</Text>
+          <Text style={[styles.sectionMeta, { color: colors.textSecondary }]}>{visibleCourses.length} total</Text>
         </View>
 
-        {recentHistory.length > 0 && (
-          <View style={s.historyRow}>
-            {recentHistory.map((item) => {
-              const quizMeta = quizzes.find((q) => q.id === item.quizId);
-              const pct = Math.round((item.score / item.totalQuestions) * 100);
-              return (
-                <View
-                  key={item.completedAt + item.quizId}
-                  style={[s.historyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-                >
-                  <View style={s.historyHeader}>
-                    <Text style={[s.historyTitle, { color: colors.text }]} numberOfLines={1}>
-                      {quizMeta?.title ?? 'Quiz'}
-                    </Text>
-                    <Text style={[s.historyScore, { color: pct >= 70 ? colors.success : colors.textSecondary }]}>
-                      {pct}%
-                    </Text>
-                  </View>
-                  <Text style={[s.historyMeta, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {quizMeta?.category?.toUpperCase()} · {item.totalQuestions} Qs · {new Date(item.completedAt).toLocaleDateString()}
-                  </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.courseRow}>
+          {visibleCourses.map((quiz, index) => (
+            <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <LinearGradient colors={index % 3 === 0 ? [colors.gradientAccent, colors.error] : index % 3 === 1 ? [colors.warning, '#FDE047'] : [colors.primary, colors.gradientAccent]} style={styles.courseImage}>
+                <Feather name={quiz.icon as any} size={48} color="#F8FAFC" />
+              </LinearGradient>
+              <View style={styles.courseBody}>
+                <View style={styles.metaRow}>
+                  <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{quiz.category.toUpperCase()}</Text>
+                  {quiz.isPremium && (
+                    <View style={[styles.proPill, { backgroundColor: colors.primaryLight }]}>
+                      <Text style={[styles.proPillText, { color: colors.primary }]}>PRO</Text>
+                    </View>
+                  )}
                 </View>
-              );
-            })}
-          </View>
-        )}
-
-        {filtered.length === 0 ? (
-          <View style={s.emptyState}>
-            <View style={[s.emptyIconWrap, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
-              <Feather name="search" size={32} color={colors.textSecondary} />
-            </View>
-            <Text style={[s.emptyTitle, { color: colors.textSecondary }]}>No quizzes found</Text>
-            <Text style={[s.emptySubtitle, { color: colors.textSecondary }]}>Try a different category filter</Text>
-          </View>
-        ) : (
-          <View style={[s.gridRow, isDesktop && s.gridRowDesktop]}>
-            {filtered.map((quiz) => (
-              <View
-                key={quiz.id}
-                style={[
-                  s.gridCell,
-                  { flexBasis: cellWidth as any, maxWidth: cellWidth as any },
-                ]}
-              >
-                <CourseCard
-                  quiz={quiz}
-                  onPress={() => router.push(`/quiz/${quiz.id}`)}
-                  completedIds={completedIds}
-                />
+                <Text style={[styles.courseTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
+                <Text style={[styles.courseSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{quiz.description}</Text>
+                <View style={styles.cardFooter}>
+                  <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+                    {quiz.questionCount} questions
+                  </Text>
+                  {completedIds.has(quiz.id) ? (
+                    <Text style={[styles.footerDone, { color: colors.primary }]}>Completed</Text>
+                  ) : (
+                    <Text style={[styles.footerDone, { color: colors.text }]}>Open</Text>
+                  )}
+                </View>
               </View>
-            ))}
-          </View>
-        )}
+            </Pressable>
+          ))}
+        </ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-
-  // ── Header ──
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  screenTitle: { fontFamily: F.bold, fontSize: 22, lineHeight: 28 },
-  headerStatsRow: { flexDirection: 'row', gap: 8 },
-  headerStat: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 11,
-    minWidth: 52,
-  },
-  headerStatVal:   { fontFamily: F.bold,    fontSize: 16, lineHeight: 20 },
-  headerStatLabel: { fontFamily: F.regular, fontSize: 10, marginTop: 1 },
-
-  // ── Overview ──
-  overviewWrap: { paddingHorizontal: 16, gap: 10, marginTop: 0 },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  searchInput: { flex: 1, fontFamily: F.regular, fontSize: 14 },
-  progressRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-  progressCard: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 12,
-    gap: 4,
-  },
-  progressLabel: { fontFamily: F.semiBold, fontSize: 12, letterSpacing: 0.2 },
-  progressValue: { fontFamily: F.bold, fontSize: 18 },
-  progressSub:   { fontFamily: F.regular, fontSize: 11 },
-
-  // ── Difficulty row ──
-  filtersWrap: { paddingHorizontal: 12, gap: 6 },
-  diffRow:     { flexDirection: 'row', gap: 6 },
-  diffPill:    { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 34, paddingVertical: 6, borderRadius: 18, borderWidth: 1 },
-  diffPillText:{ fontFamily: F.semiBold, fontSize: 12 },
-
-  // ── Pills ──
-  pillScroll: { flexGrow: 0 },
-  pillRow:    { paddingHorizontal: 16, paddingVertical: 6, gap: 8, flexDirection: 'row' },
-  pill:       { minHeight: 32, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 18, borderWidth: 1, justifyContent: 'center' },
-  pillText:   { fontFamily: F.semiBold, fontSize: 13 },
-
-  // ── Result count ──
-  resultHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2, marginBottom: 6 },
-  resultCount: { fontFamily: F.regular, fontSize: 12, paddingHorizontal: 20 },
-
-  // ── History ──
-  historyRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 18, marginBottom: 10 },
-  historyCard: { flexBasis: '48%', minWidth: 160, borderWidth: 1, borderRadius: 12, padding: 12, gap: 4 },
-  historyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  historyTitle: { fontFamily: F.semiBold, fontSize: 13, flex: 1, marginRight: 8 },
-  historyScore: { fontFamily: F.bold, fontSize: 13 },
-  historyMeta:  { fontFamily: F.regular, fontSize: 11 },
-
-  // ── Grid ──
-  grid: { paddingHorizontal: 14, paddingBottom: 48, paddingTop: 4 },
-  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
-  gridRowDesktop: { gap: 16 },
-  gridCell: { flexBasis: '48%', minWidth: 170, alignSelf: 'stretch', marginBottom: 6 },
-  gridCellDesktop: { flexBasis: '30%', maxWidth: '31%' as any },
-
-  // ── Course card ──
-  courseCard: {
-    flex: 1,
-    minHeight: 230,
-    height: '100%',
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowColor: '#4B465C',
-    shadowOpacity: 0.11,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  cardPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
-
-  cardBanner: {
-    height: 84,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  cardIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  proBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  proBadgeText: { fontFamily: F.bold, fontSize: 10, color: '#fff', letterSpacing: 0.3 },
-  completedBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  completedBadgeText: { fontFamily: F.semiBold, fontSize: 10 },
-
-  cardBody: { padding: 14, flex: 1, justifyContent: 'space-between' },
-  cardTop:  { gap: 7 },
-
-  catChip: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  catChipText: { fontFamily: F.semiBold, fontSize: 10 },
-
-  cardTitle: {
-    fontFamily: F.bold,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-
-  cardDesc: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    lineHeight: 19,
-  },
-
-  startBtn: {
-    height: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-  },
-  startBtnText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
-
-  // ── Empty state ──
-  emptyState:    { alignItems: 'center', paddingTop: 64, paddingBottom: 32 },
-  emptyIconWrap: { width: 72, height: 72, borderRadius: 36, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  emptyTitle:    { fontFamily: F.semiBold, fontSize: 16, marginBottom: 6 },
-  emptySubtitle: { fontFamily: F.regular,  fontSize: 13 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 16 },
+  screenTitle: { fontFamily: F.bold, fontSize: 34, lineHeight: 40, letterSpacing: -1.1 },
+  searchShell: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  searchInput: { flex: 1, fontFamily: F.medium, fontSize: 15 },
+  filterRow: { gap: 10, paddingRight: 16 },
+  filterChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10 },
+  filterChipText: { fontFamily: F.semiBold, fontSize: 13 },
+  trackRow: { gap: 14, paddingRight: 16 },
+  trackCard: { width: 224, borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
+  trackVisual: { height: 168, justifyContent: 'center', alignItems: 'center' },
+  trackBadge: { position: 'absolute', left: 14, top: 14, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+  trackBadgeText: { color: '#fff', fontFamily: F.bold, fontSize: 14 },
+  trackBody: { padding: 14, gap: 12 },
+  trackProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  trackProgressBar: { flex: 1, height: 12, borderRadius: 999, overflow: 'hidden' },
+  trackProgressFill: { height: '100%', borderRadius: 999 },
+  trackPercent: { fontFamily: F.semiBold, fontSize: 13 },
+  trackTitle: { fontFamily: F.bold, fontSize: 17, lineHeight: 24 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+  sectionTitle: { fontFamily: F.bold, fontSize: 20 },
+  sectionMeta: { fontFamily: F.medium, fontSize: 13 },
+  courseRow: { gap: 14, paddingRight: 16 },
+  courseCard: { width: 220, borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
+  courseCardSingleWide: { width: 280 },
+  courseImage: { height: 160, alignItems: 'center', justifyContent: 'center' },
+  courseBody: { padding: 14, gap: 10, minHeight: 180 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  metaLabel: { fontFamily: F.bold, fontSize: 11, letterSpacing: 0.8 },
+  proPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  proPillText: { fontFamily: F.bold, fontSize: 11 },
+  courseTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24 },
+  courseSubtitle: { fontFamily: F.regular, fontSize: 13, lineHeight: 20 },
+  cardFooter: { marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  footerText: { fontFamily: F.medium, fontSize: 12 },
+  footerDone: { fontFamily: F.bold, fontSize: 12 },
 });

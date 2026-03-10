@@ -1,0 +1,56 @@
+export const EXPERIENCE_COPY = {
+  appName: 'Katalyst',
+  themeName: 'DataCamp',
+  auth: {
+    eyebrow: 'Datacamp-inspired learning',
+    headline: 'Build data and AI skills. Anytime, anywhere.',
+    subheadline: 'Daily streaks, flashcards, premium practice, and polished progress tracking in one mobile workflow.',
+    socialProof: 'Join 18M+ learners',
+    highlights: ['Hands-on practice', 'Flashcards', 'Career-ready tracks'],
+    loginTitle: 'Welcome back',
+    loginSubtitle: 'Pick up where your last streak ended.',
+    signupTitle: 'Create your account',
+    signupSubtitle: 'Start your first guided learning path in minutes.',
+  },
+  home: {
+    heroEyebrow: 'Continue learning',
+    heroTitle: 'Create momentum with focused practice.',
+    heroSubtitle: 'Courses, flashcards, streaks, and premium drills built into one polished mobile flow.',
+    primaryCta: 'Continue Learning',
+    secondaryCta: 'Browse Courses',
+  },
+  progress: {
+    streakTitle: 'Streaks',
+    xpTitle: 'Experience points',
+    activityTitle: 'Activity dashboard',
+  },
+  premium: {
+    headline: 'Discount Available!',
+    subheadline: 'Up to 50% off on subscriptions',
+    features: [
+      'Full access across mobile and desktop',
+      'Learning paths and premium assessments',
+      'Real-world projects and guided drills',
+      'Certificates and career-focused outcomes',
+    ],
+    testimonial: {
+      rating: '4.7/5',
+      reviews: '35K reviews',
+      title: 'Awesome data & AI learning app',
+      body: 'Structured lessons, polished practice screens, and a motivating streak loop make it easy to keep showing up.',
+    },
+    companiesTitle: 'Trusted by ambitious teams',
+    companies: ['Google', 'eBay', 'PayPal', 'Credit Suisse', 'T-Mobile', 'Uber'],
+  },
+  resources: {
+    title: 'Resources',
+    filter: 'Cheat Sheets',
+    secondaryFilter: 'Category',
+    cardType: 'Guide',
+  },
+  profile: {
+    shareCta: 'Share profile',
+    offerTitle: 'Discount Available!',
+    offerSubtitle: 'Up to 50% off on subscriptions',
+  },
+} as const;
