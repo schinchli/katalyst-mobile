@@ -199,7 +199,15 @@ const styles = StyleSheet.create({
   },
   modalLabel: { fontFamily: F.semiBold, fontSize: 12, letterSpacing: 0.2 },
   modalTitle: { fontFamily: F.bold, fontSize: 16, marginTop: 3 },
-  playerWrap: { flex: 1, paddingHorizontal: 12, paddingBottom: 18, borderRadius: 14, overflow: 'hidden' },
+  playerWrap: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    paddingHorizontal: 12,
+    paddingBottom: 18,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#000',
+  },
   webview: { flex: 1 },
 
   card: {

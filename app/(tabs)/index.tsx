@@ -604,11 +604,12 @@ const styles = StyleSheet.create({
   // ── Quick actions row ───────────────────────────────────────────────────────
   quickRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
     marginBottom: 0,
   },
   quickBtn: {
-    flex: 1,
+    flexBasis: '30%',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 9,
@@ -756,7 +757,8 @@ const styles = StyleSheet.create({
   flashTabText: { fontFamily: F.semiBold, fontSize: 12 },
   flashRow: { gap: 12 },
   flashCard: {
-    width: 200,
+    minWidth: 180,
+    maxWidth: 240,
     borderRadius: 14,
     borderWidth: 1,
     padding: 12,
