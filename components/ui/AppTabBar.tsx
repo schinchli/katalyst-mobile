@@ -11,7 +11,6 @@ const TAB_CONFIG: Record<string, { icon: keyof typeof Feather.glyphMap; label: s
   quizzes:  { icon: 'book-open',    label: 'Quizzes' },
   learn:    { icon: 'play-circle',  label: 'Learn' },
   progress: { icon: 'trending-up',  label: 'Progress' },
-  search:   { icon: 'search',       label: 'Search' },
   profile:  { icon: 'user',         label: 'Profile' },
 };
 

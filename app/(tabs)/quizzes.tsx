@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -49,7 +49,17 @@ function CourseCard({ quiz, onPress, completedIds }: { quiz: Quiz; onPress: () =
           </View>
         )}
         {completed && (
-          <View style={[s.completedBadge, { backgroundColor: colors.success + '22', borderColor: colors.success + '55' }]}>
+          <View
+            style={[
+              s.completedBadge,
+              {
+                backgroundColor: colors.success + '22',
+                borderColor: colors.success + '55',
+                top: quiz.isPremium ? 38 : 10,
+                right: 10,
+              },
+            ]}
+          >
             <Feather name="check-circle" size={11} color={colors.success} />
             <Text style={[s.completedBadgeText, { color: colors.success }]}>Done</Text>
           </View>
@@ -82,17 +92,25 @@ export default function QuizzesScreen() {
   const { isDesktop, contentContainerWeb } = useWebLayout();
   const [selectedCategory, setSelectedCategory] = useState<QuizCategory | 'all'>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const progress = useProgressStore((s) => s.progress);
   const results = useProgressStore((s) => s.progress.recentResults);
 
   const completedIds = new Set(results.map((r) => r.quizId));
+  const normalizedSearch = searchTerm.trim().toLowerCase();
 
   const filtered = quizzes.filter((q) => {
     const catMatch  = selectedCategory === 'all' || q.category === selectedCategory;
     const diffMatch = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
-    return catMatch && diffMatch;
+    const searchMatch =
+      normalizedSearch.length === 0 ||
+      q.title.toLowerCase().includes(normalizedSearch) ||
+      q.description.toLowerCase().includes(normalizedSearch);
+    return catMatch && diffMatch && searchMatch;
   });
 
   const totalCategories = new Set(quizzes.map((q) => q.category)).size;
+  const recentHistory   = progress.recentResults.slice(0, 4);
 
   return (
     <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
@@ -114,6 +132,39 @@ export default function QuizzesScreen() {
           <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
             <Text style={[s.headerStatVal, { color: colors.primary }]}>{completedIds.size}</Text>
             <Text style={[s.headerStatLabel, { color: colors.primary }]}>Done</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Search & progress overview ── */}
+      <View style={[s.overviewWrap, contentContainerWeb]}>
+        <View style={[s.searchBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Feather name="search" size={18} color={colors.textSecondary} />
+          <TextInput
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            placeholder="Search courses, topics, or tags"
+            placeholderTextColor={colors.textSecondary}
+            style={[s.searchInput, { color: colors.text }]}
+            returnKeyType="search"
+          />
+        </View>
+
+        <View style={s.progressRow}>
+          <View style={[s.progressCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[s.progressLabel, { color: colors.textSecondary }]}>Completed</Text>
+            <Text style={[s.progressValue, { color: colors.text }]}>{progress.completedQuizzes}</Text>
+            <Text style={[s.progressSub, { color: colors.textSecondary }]}>out of {quizzes.length}</Text>
+          </View>
+          <View style={[s.progressCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[s.progressLabel, { color: colors.textSecondary }]}>Average Score</Text>
+            <Text style={[s.progressValue, { color: colors.primary }]}>{progress.averageScore}%</Text>
+            <Text style={[s.progressSub, { color: colors.textSecondary }]}>Keep pushing to 90%</Text>
+          </View>
+          <View style={[s.progressCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[s.progressLabel, { color: colors.textSecondary }]}>Current Streak</Text>
+            <Text style={[s.progressValue, { color: colors.text }]}>{progress.currentStreak} days</Text>
+            <Text style={[s.progressSub, { color: colors.textSecondary }]}>Longest {progress.longestStreak}d</Text>
           </View>
         </View>
       </View>
@@ -169,16 +220,50 @@ export default function QuizzesScreen() {
         })}
       </ScrollView>
 
-      {/* ── Results count ── */}
-      <Text style={[s.resultCount, { color: colors.textSecondary }]}>
-        {filtered.length} {filtered.length === 1 ? 'course' : 'courses'} available
-      </Text>
-
       {/* ── Course grid ── */}
       <ScrollView
         contentContainerStyle={[s.grid, contentContainerWeb]}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── History & results count ── */}
+        <View style={s.resultHeaderRow}>
+          <Text style={[s.resultCount, { color: colors.textSecondary }]}>
+            {filtered.length} {filtered.length === 1 ? 'course' : 'courses'} available
+          </Text>
+          {recentHistory.length > 0 && (
+            <Text style={[s.resultCount, { color: colors.textSecondary }]}>
+              Recent quizzes · {recentHistory.length}
+            </Text>
+          )}
+        </View>
+
+        {recentHistory.length > 0 && (
+          <View style={s.historyRow}>
+            {recentHistory.map((item) => {
+              const quizMeta = quizzes.find((q) => q.id === item.quizId);
+              const pct = Math.round((item.score / item.totalQuestions) * 100);
+              return (
+                <View
+                  key={item.completedAt + item.quizId}
+                  style={[s.historyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+                >
+                  <View style={s.historyHeader}>
+                    <Text style={[s.historyTitle, { color: colors.text }]} numberOfLines={1}>
+                      {quizMeta?.title ?? 'Quiz'}
+                    </Text>
+                    <Text style={[s.historyScore, { color: pct >= 70 ? colors.success : colors.textSecondary }]}>
+                      {pct}%
+                    </Text>
+                  </View>
+                  <Text style={[s.historyMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {quizMeta?.category?.toUpperCase()} · {item.totalQuestions} Qs · {new Date(item.completedAt).toLocaleDateString()}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
         {filtered.length === 0 ? (
           <View style={s.emptyState}>
             <View style={[s.emptyIconWrap, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
@@ -232,6 +317,30 @@ const s = StyleSheet.create({
   headerStatVal:   { fontFamily: F.bold,    fontSize: 16, lineHeight: 20 },
   headerStatLabel: { fontFamily: F.regular, fontSize: 10, marginTop: 1 },
 
+  // ── Overview ──
+  overviewWrap: { paddingHorizontal: 20, gap: 14, marginTop: 2 },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  searchInput: { flex: 1, fontFamily: F.regular, fontSize: 14 },
+  progressRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  progressCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    gap: 4,
+  },
+  progressLabel: { fontFamily: F.semiBold, fontSize: 12, letterSpacing: 0.2 },
+  progressValue: { fontFamily: F.bold, fontSize: 18 },
+  progressSub:   { fontFamily: F.regular, fontSize: 11 },
+
   // ── Difficulty row ──
   diffRow:     { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 9 },
   diffPill:    { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 36, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
@@ -244,23 +353,29 @@ const s = StyleSheet.create({
   pillText:   { fontFamily: F.semiBold, fontSize: 13 },
 
   // ── Result count ──
-  resultCount: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
+  resultHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2, marginBottom: 6 },
+  resultCount: { fontFamily: F.regular, fontSize: 12, paddingHorizontal: 20 },
+
+  // ── History ──
+  historyRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 18, marginBottom: 10 },
+  historyCard: { flexBasis: '48%', minWidth: 160, borderWidth: 1, borderRadius: 12, padding: 12, gap: 4 },
+  historyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  historyTitle: { fontFamily: F.semiBold, fontSize: 13, flex: 1, marginRight: 8 },
+  historyScore: { fontFamily: F.bold, fontSize: 13 },
+  historyMeta:  { fontFamily: F.regular, fontSize: 11 },
 
   // ── Grid ──
-  grid: { paddingHorizontal: 18, paddingBottom: 48 },
+  grid: { paddingHorizontal: 18, paddingBottom: 48, paddingTop: 6 },
   gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridRowDesktop: { gap: 16 },
-  gridCell: { width: '47%', alignSelf: 'stretch' },
-  gridCellDesktop: { width: '30%' },
+  gridCell: { flexBasis: '48%', minWidth: 160, alignSelf: 'stretch' },
+  gridCellDesktop: { flexBasis: '30%', maxWidth: '30%' as any },
 
   // ── Course card ──
   courseCard: {
     flex: 1,
+    minHeight: 230,
+    height: '100%',
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
@@ -297,7 +412,7 @@ const s = StyleSheet.create({
   completedBadge: {
     position: 'absolute',
     top: 10,
-    left: 10,
+    right: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
