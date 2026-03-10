@@ -4,11 +4,6 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { AppConfig, CONFIG_CHECKLIST, ConfigItem, getMissingCount, isSet, maskValue } from '@/config/appConfig';
 
-// Guard: never render in production builds
-if (!__DEV__) {
-  router.replace('/(tabs)');
-}
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function statusIcon(item: ConfigItem) {
@@ -112,6 +107,12 @@ function Divider() {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function DevConfigScreen() {
+  if (!__DEV__) {
+    // Redirect after mount to avoid module-scope navigation
+    setTimeout(() => router.replace('/(tabs)'), 0);
+    return null;
+  }
+
   const missing = getMissingCount();
 
   const handleCopyTemplate = async () => {

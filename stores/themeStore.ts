@@ -73,6 +73,15 @@ export const useThemeStore = create<ThemeState>()(
     {
       name:    'theme-store',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 2,
+      migrate: async (persisted) => {
+        const state = persisted as ThemeState | undefined;
+        if (!state) return { accent: 'aurora', darkMode: false, usePlatform: true } as ThemeState;
+        // Normalize legacy preset ids
+        const legacyMap: Record<string, AccentPreset> = { purple: 'aurora', teal: 'ocean' };
+        const nextAccent = legacyMap[state.accent as string] ?? state.accent ?? 'aurora';
+        return { ...state, accent: nextAccent, usePlatform: state.usePlatform ?? true };
+      },
     },
   ),
 );
