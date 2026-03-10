@@ -8,12 +8,7 @@ import type { Quiz } from '@/types';
 const DIFF_COLOR: Record<string, string> = {
   beginner:     '#28C76F',
   intermediate: '#FF9F43',
-  advanced:     '#FF4C51',
-};
-const DIFF_BG: Record<string, string> = {
-  beginner:     '#E8FAF0',
-  intermediate: '#FFF3E8',
-  advanced:     '#FFE5E6',
+  advanced:     '#EA5455',
 };
 
 interface QuizCardProps {
@@ -24,25 +19,26 @@ interface QuizCardProps {
 export function QuizCard({ quiz, onPress }: QuizCardProps) {
   const colors  = useThemeColors();
   const accent  = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
-  const badgeBg = DIFF_BG[quiz.difficulty]   ?? colors.primaryLight;
+  const badgeBg = accent + '18';
+  const iconBg  = accent + '22';
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         s.card,
-        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+        { backgroundColor: colors.surface },
         pressed && s.cardPressed,
       ]}
       accessibilityRole="button"
       accessibilityLabel={`Start ${quiz.title} quiz`}
     >
-      {/* Difficulty accent bar */}
+      {/* Left difficulty accent bar */}
       <View style={[s.accentBar, { backgroundColor: accent }]} />
 
-      {/* Icon */}
-      <View style={[s.iconWrap, { backgroundColor: colors.primaryLight }]}>
-        <Feather name={quiz.icon as any} size={20} color={colors.primary} />
+      {/* Category icon */}
+      <View style={[s.iconWrap, { backgroundColor: iconBg }]}>
+        <Feather name={quiz.icon as any} size={22} color={accent} />
       </View>
 
       {/* Content */}
@@ -60,18 +56,19 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
 
         <View style={s.footer}>
           <View style={[s.diffBadge, { backgroundColor: badgeBg }]}>
+            <View style={[s.diffDot, { backgroundColor: accent }]} />
             <Text style={[s.diffText, { color: accent }]}>
               {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
             </Text>
           </View>
           <View style={s.meta}>
-            <Feather name="help-circle" size={11} color={colors.textSecondary} />
+            <Feather name="help-circle" size={12} color={colors.textSecondary} />
             <Text style={[s.metaText, { color: colors.textSecondary }]}>
               {quiz.questionCount}q
             </Text>
           </View>
           <View style={s.meta}>
-            <Feather name="clock" size={11} color={colors.textSecondary} />
+            <Feather name="clock" size={12} color={colors.textSecondary} />
             <Text style={[s.metaText, { color: colors.textSecondary }]}>
               {quiz.duration}m
             </Text>
@@ -79,7 +76,9 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
         </View>
       </View>
 
-      <Feather name="chevron-right" size={18} color={colors.textSecondary} style={s.chevron} />
+      <View style={[s.chevronWrap, { backgroundColor: accent + '14' }]}>
+        <Feather name="chevron-right" size={16} color={accent} />
+      </View>
     </Pressable>
   );
 }
@@ -88,17 +87,16 @@ const s = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 16,
     marginBottom: 10,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowColor: '#4B465C',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
-  cardPressed: { opacity: 0.9 },
+  cardPressed: { opacity: 0.88, transform: [{ scale: 0.99 }] },
 
   accentBar: {
     width: 4,
@@ -106,19 +104,19 @@ const s = StyleSheet.create({
   },
 
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
+    marginLeft: 14,
     flexShrink: 0,
   },
 
   content: {
     flex: 1,
-    paddingVertical: 13,
-    paddingHorizontal: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 13,
   },
 
   titleRow: {
@@ -131,14 +129,14 @@ const s = StyleSheet.create({
     flex: 1,
     fontFamily: F.semiBold,
     fontSize: 15,
-    lineHeight: 20,
+    lineHeight: 21,
   },
 
   desc: {
     fontFamily: F.regular,
     fontSize: 12,
     lineHeight: 17,
-    marginBottom: 7,
+    marginBottom: 8,
   },
 
   footer: {
@@ -147,9 +145,17 @@ const s = StyleSheet.create({
     gap: 8,
   },
   diffBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  diffDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
   },
   diffText: {
     fontFamily: F.semiBold,
@@ -165,8 +171,13 @@ const s = StyleSheet.create({
     fontSize: 11,
   },
 
-  chevron: {
-    marginRight: 12,
+  chevronWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
     flexShrink: 0,
   },
 });

@@ -18,7 +18,7 @@ function statusIcon(item: ConfigItem) {
 
 function statusColor(item: ConfigItem) {
   if (!item.required) return '#9EA1BA';   // muted grey for optional
-  return isSet(item.value) ? '#28C76F' : '#FF4C51';
+  return isSet(item.value) ? '#28C76F' : '#EA5455';
 }
 
 function displayValue(item: ConfigItem) {
@@ -30,16 +30,14 @@ function displayValue(item: ConfigItem) {
 
 // ── Section groups ─────────────────────────────────────────────────────────────
 
-const SECTIONS = ['App', 'AWS / Cognito', 'AdMob · iOS', 'AdMob · Android'];
+const SECTIONS = ['App', 'Supabase', 'AdMob · iOS', 'AdMob · Android'];
 
 const ENV_TEMPLATE = `# Copy to .env and fill in real values
 EXPO_PUBLIC_ENV=production
 EXPO_PUBLIC_EAS_PROJECT_ID=
-EXPO_PUBLIC_AWS_REGION=us-east-1
-EXPO_PUBLIC_API_URL=https://api.awslearn.app
-EXPO_PUBLIC_CLOUDFRONT_URL=https://cdn.awslearn.app
-EXPO_PUBLIC_COGNITO_USER_POOL_ID=
-EXPO_PUBLIC_COGNITO_CLIENT_ID=
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+EXPO_PUBLIC_API_URL=
 EXPO_PUBLIC_ADMOB_IOS_BANNER=
 EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL=
 EXPO_PUBLIC_ADMOB_ANDROID_BANNER=

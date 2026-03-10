@@ -1,512 +1,228 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { useThemeColors } from '@/hooks/useThemeColor';
+import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
-import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
 
-// ─── Vuexy design tokens ──────────────────────────────────────────────────────
-const T = {
-  primary:      '#7367F0',
-  success:      '#28C76F',
-  error:        '#FF4C51',
-  warning:      '#FF9F43',
-  surface:      '#FFFFFF',
-  bg:           '#F8F7FA',
-  border:       '#DBDADE',
-  text:         '#2F2B3D',
-  textSecondary:'#444050',
-  muted:        '#A5A3AE',
-  primaryFaint: '#EBE9FD',
-} as const;
-
-// ─── Stat card config ─────────────────────────────────────────────────────────
-type StatKey = 'completedQuizzes' | 'averageScore' | 'currentStreak' | 'badges';
-
-interface StatCard {
-  icon: string;
-  iconColor: string;
-  iconBg: string;
-  key: StatKey;
-  label: string;
-  suffix?: string;
-  isArray?: boolean;
-}
-
-const STAT_CARDS: StatCard[] = [
-  {
-    icon: 'check-circle', iconColor: T.primary,  iconBg: '#EBE9FD',
-    key: 'completedQuizzes', label: 'Quizzes Done',
-  },
-  {
-    icon: 'award',        iconColor: T.warning,  iconBg: '#FFF3E8',
-    key: 'averageScore',  label: 'Avg Score', suffix: '%',
-  },
-  {
-    icon: 'zap',          iconColor: T.success,  iconBg: '#E8FAF0',
-    key: 'currentStreak', label: 'Day Streak',
-  },
-  {
-    icon: 'star',         iconColor: T.error,    iconBg: '#FFEBEB',
-    key: 'badges',        label: 'Badges', isArray: true,
-  },
-];
-
-// ─── Category icons ───────────────────────────────────────────────────────────
-const categoryIcons: Record<string, string> = {
-  bedrock: 'cpu', rag: 'database', agents: 'users', guardrails: 'shield',
-  'prompt-eng': 'edit-3', routing: 'shuffle', security: 'lock',
-  monitoring: 'activity', orchestration: 'git-branch', evaluation: 'bar-chart',
-  general: 'book',
-};
-
-const categoryAccent: Record<string, string> = {
-  bedrock:       T.primary,
-  rag:           T.success,
-  agents:        T.warning,
-  guardrails:    T.error,
-  'prompt-eng':  T.primary,
-  routing:       T.success,
-  security:      T.error,
-  monitoring:    T.warning,
-  orchestration: T.primary,
-  evaluation:    T.success,
-  general:       T.primary,
-};
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1).replace('-', ' ');
+
+function pct(score: number, total: number) {
+  if (!total) return 0;
+  return Math.round((score / total) * 100);
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-/** 2-column stat card */
-function StatCardItem({ cfg, value }: { cfg: StatCard; value: number }) {
-  return (
-    <View style={styles.statCard}>
-      <View style={[styles.statIconCircle, { backgroundColor: cfg.iconBg }]}>
-        <Feather name={cfg.icon as any} size={20} color={cfg.iconColor} />
-      </View>
-      <Text style={styles.statValue}>
-        {value}{cfg.suffix ?? ''}
-      </Text>
-      <Text style={styles.statLabel}>{cfg.label}</Text>
-    </View>
-  );
+function fmtDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch {
+    return iso.slice(0, 10);
+  }
 }
 
-/** Best score highlight card */
-function BestScoreCard({ pct, quizTitle }: { pct: number; quizTitle: string }) {
-  return (
-    <View style={styles.bestScoreCard}>
-      {/* Accent strip */}
-      <View style={styles.bestScoreStrip} />
-      <View style={styles.bestScoreBody}>
-        <View style={styles.bestScoreLeft}>
-          <View style={styles.bestScoreTrophyWrap}>
-            <Feather name="award" size={22} color="#F59E0B" />
-          </View>
-          <View>
-            <Text style={styles.bestScoreLabel}>Best Score</Text>
-            <Text style={styles.bestScoreQuiz} numberOfLines={1}>{quizTitle}</Text>
-          </View>
-        </View>
-        <Text style={styles.bestScorePct}>{pct}%</Text>
-      </View>
-    </View>
-  );
+function quizTitle(quizId: string) {
+  return quizzes.find((q) => q.id === quizId)?.title ?? quizId;
 }
 
-/** Category breakdown row */
-function CategoryRow({
-  category,
-  total,
-  completed,
+// ─── Stat card ────────────────────────────────────────────────────────────────
+
+function StatCard({
+  icon, label, value, accent, colors,
 }: {
-  category: string;
-  total: number;
-  completed: number;
+  icon: string; label: string; value: string; accent: string;
+  colors: ReturnType<typeof useThemeColors>;
 }) {
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const accent = categoryAccent[category] ?? T.primary;
-
   return (
-    <View style={styles.categoryCard}>
-      <View style={styles.categoryHeader}>
-        <View style={[styles.categoryIconWrap, { backgroundColor: `${accent}18` }]}>
-          <Feather
-            name={(categoryIcons[category] ?? 'book') as any}
-            size={16}
-            color={accent}
-          />
-        </View>
-        <Text style={styles.categoryName}>{capitalize(category)}</Text>
-        <Text style={styles.categoryCount}>{completed}/{total}</Text>
-        <Text style={[styles.categoryPct, { color: accent }]}>{pct}%</Text>
+    <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <View style={[styles.statIcon, { backgroundColor: accent + '18' }]}>
+        <Feather name={icon as any} size={18} color={accent} />
       </View>
-      <View style={styles.categoryBarWrap}>
-        <ProgressBar progress={total > 0 ? completed / total : 0} height={6} color={accent} />
-      </View>
-    </View>
-  );
-}
-
-/** Recent result card with score bar */
-function RecentResultCard({
-  quizTitle,
-  score,
-  total,
-}: {
-  quizTitle: string;
-  score: number;
-  total: number;
-}) {
-  const pct  = Math.round((score / total) * 100);
-  const pass = pct >= 70;
-
-  return (
-    <View style={styles.resultCard}>
-      {/* Title + badge */}
-      <View style={styles.resultHeader}>
-        <Text style={styles.resultTitle} numberOfLines={1}>{quizTitle}</Text>
-        <View style={[styles.resultBadge, pass ? styles.resultBadgePass : styles.resultBadgeFail]}>
-          <Text style={[styles.resultBadgeText, { color: pass ? T.success : T.error }]}>
-            {pass ? 'Pass' : 'Fail'}
-          </Text>
-        </View>
-      </View>
-
-      {/* Score bar row */}
-      <View style={styles.resultBarRow}>
-        <View style={styles.resultBarWrap}>
-          <ProgressBar
-            progress={score / total}
-            height={6}
-            color={pass ? T.success : T.error}
-          />
-        </View>
-        <Text style={[styles.resultPct, { color: pass ? T.success : T.error }]}>{pct}%</Text>
-      </View>
-
-      <Text style={styles.resultSubtitle}>{score}/{total} correct</Text>
+      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
+
 export default function ProgressScreen() {
-  const progress = useProgressStore((s) => s.progress);
-  const { isDesktop, contentContainerWeb } = useWebLayout();
+  const colors    = useThemeColors();
+  const userId    = useAuthStore((s) => s.user?.id);
+  const step      = useAuthStore((s) => s.step);
+  const progress  = useProgressStore((s) => s.progress);
+  const initFromSupabase = useProgressStore((s) => s.initFromSupabase);
 
-  // Build category breakdown
-  const categoryProgress = quizzes.reduce(
-    (acc, quiz) => {
-      if (!acc[quiz.category]) acc[quiz.category] = { total: 0, completed: 0 };
-      acc[quiz.category].total++;
-      return acc;
-    },
-    {} as Record<string, { total: number; completed: number }>,
-  );
+  // Load history from Supabase on first mount for real users
+  useEffect(() => {
+    if (step === 'authenticated' && userId) {
+      initFromSupabase(userId).catch(() => {});
+    }
+  }, [step, userId, initFromSupabase]);
 
-  // Best score from recent results
-  const bestResult =
-    progress.recentResults.length > 0
-      ? progress.recentResults.reduce((best, r) =>
-          r.score / r.totalQuestions > best.score / best.totalQuestions ? r : best,
-        )
-      : null;
-  const bestQuiz = bestResult ? quizzes.find((q) => q.id === bestResult.quizId) : null;
-  const bestPct  = bestResult
-    ? Math.round((bestResult.score / bestResult.totalQuestions) * 100)
-    : 0;
+  const results   = progress.recentResults ?? [];
+  const total     = quizzes.length;
+  const completed = progress.completedQuizzes;
+  const avgScore  = progress.averageScore;
+  const bestScore = results.reduce((best, r) => Math.max(best, pct(r.score, r.totalQuestions)), 0);
+  const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={isDesktop ? [] : ['top']}>
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, contentContainerWeb]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Page title */}
-        <Text style={styles.screenTitle}>Progress</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>My Progress</Text>
+        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Track your learning journey</Text>
+      </View>
 
-        {/* Best score highlight (only when results exist) */}
-        {bestResult && bestQuiz && (
-          <BestScoreCard
-            pct={bestPct}
-            quizTitle={bestQuiz.title ?? bestResult.quizId}
-          />
-        )}
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Stats grid — 2 columns */}
+        {/* ── Stats grid ──────────────────────────────────────────────── */}
         <View style={styles.statsGrid}>
-          {STAT_CARDS.map((cfg) => {
-            const raw = progress[cfg.key as keyof typeof progress];
-            const val = cfg.isArray ? (raw as unknown[]).length : (raw as number);
-            return <StatCardItem key={cfg.key} cfg={cfg} value={val} />;
-          })}
+          <StatCard icon="percent"     label="Completion"  value={`${completionPct}%`} accent="#7367F0" colors={colors} />
+          <StatCard icon="trending-up" label="Avg Score"   value={`${avgScore}%`}      accent="#28C76F" colors={colors} />
+          <StatCard icon="award"       label="Best Score"  value={`${bestScore}%`}     accent="#FF9F43" colors={colors} />
+          <StatCard icon="check-circle" label="Taken"      value={String(completed)}   accent="#00BAD1" colors={colors} />
         </View>
 
-        {/* Category breakdown */}
-        <Text style={styles.sectionHeader}>By Category</Text>
-        {Object.entries(categoryProgress).map(([category, data]) => (
-          <CategoryRow
-            key={category}
-            category={category}
-            total={data.total}
-            completed={data.completed}
-          />
-        ))}
+        {/* ── Overall completion bar ──────────────────────────────────── */}
+        <View style={[styles.completionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={styles.completionHeader}>
+            <Text style={[styles.completionTitle, { color: colors.text }]}>Overall Completion</Text>
+            <Text style={[styles.completionPct, { color: colors.primary }]}>{completionPct}%</Text>
+          </View>
+          <View style={[styles.trackBg, { backgroundColor: colors.surfaceBorder }]}>
+            <View style={[styles.trackFill, { width: `${completionPct}%` as any, backgroundColor: colors.primary }]} />
+          </View>
+          <Text style={[styles.completionSub, { color: colors.textSecondary }]}>
+            {completed} of {total} quizzes completed
+          </Text>
+        </View>
 
-        {/* Recent results */}
-        {progress.recentResults.length > 0 && (
-          <>
-            <Text style={styles.sectionHeader}>Recent Results</Text>
-            {progress.recentResults.slice(0, 5).map((result, idx) => {
-              const quiz = quizzes.find((q) => q.id === result.quizId);
+        {/* ── Quiz history ────────────────────────────────────────────── */}
+        <View style={styles.historySection}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quiz History</Text>
+
+          {results.length === 0 ? (
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <Feather name="bar-chart-2" size={32} color={colors.textSecondary} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No quizzes yet</Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+                Complete your first quiz to see your progress here
+              </Text>
+              <Pressable
+                onPress={() => router.push('/(tabs)/quizzes')}
+                style={[styles.browseBtn, { backgroundColor: colors.primary }]}
+              >
+                <Text style={styles.browseBtnText}>Browse Quizzes</Text>
+              </Pressable>
+            </View>
+          ) : (
+            results.map((r, idx) => {
+              const p      = pct(r.score, r.totalQuestions);
+              const passed = p >= 70;
+              const accent = passed ? '#28C76F' : '#FF4C51';
               return (
-                <RecentResultCard
-                  key={idx}
-                  quizTitle={quiz?.title ?? result.quizId}
-                  score={result.score}
-                  total={result.totalQuestions}
-                />
+                <View
+                  key={`${r.quizId}-${idx}`}
+                  style={[styles.resultRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+                >
+                  {/* Accent bar */}
+                  <View style={[styles.resultAccent, { backgroundColor: accent }]} />
+
+                  <View style={styles.resultBody}>
+                    <View style={styles.resultTop}>
+                      <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={1}>
+                        {quizTitle(r.quizId)}
+                      </Text>
+                      <View style={[styles.passBadge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
+                        <Text style={[styles.passBadgeText, { color: accent }]}>
+                          {passed ? 'PASS' : 'FAIL'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.resultMeta}>
+                      <Text style={[styles.resultScore, { color: accent }]}>{p}%</Text>
+                      <Text style={[styles.resultDetail, { color: colors.textSecondary }]}>
+                        {r.score}/{r.totalQuestions} correct
+                      </Text>
+                      <Text style={[styles.resultDate, { color: colors.textSecondary }]}>
+                        {fmtDate(r.completedAt)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
               );
-            })}
-          </>
-        )}
+            })
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: T.bg,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 48,
-  },
+  safe:   { flex: 1 },
+  scroll: { paddingBottom: 40, paddingHorizontal: 16, paddingTop: 16 },
 
-  // Page title
-  screenTitle: {
-    fontFamily: F.bold,
-    fontSize: 26,
-    color: T.text,
-    marginBottom: 16,
+  header: {
+    paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1,
   },
+  headerTitle: { fontFamily: F.bold,    fontSize: 22 },
+  headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
 
-  // Section headers
-  sectionHeader: {
-    fontFamily: F.bold,
-    fontSize: 18,
-    color: T.text,
-    marginTop: 24,
-    marginBottom: 12,
-  },
-
-  // ── Best score card ────────────────────────────────────────────────────────
-  bestScoreCard: {
-    backgroundColor: T.surface,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: T.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  bestScoreStrip: {
-    height: 4,
-    backgroundColor: T.warning,
-  },
-  bestScoreBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  bestScoreLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  bestScoreTrophyWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bestScoreLabel: {
-    fontFamily: F.medium,
-    fontSize: 12,
-    color: T.muted,
-    marginBottom: 2,
-  },
-  bestScoreQuiz: {
-    fontFamily: F.semiBold,
-    fontSize: 15,
-    color: T.text,
-    maxWidth: 180,
-  },
-  bestScorePct: {
-    fontFamily: F.bold,
-    fontSize: 28,
-    color: T.warning,
-  },
-
-  // ── Stats grid ─────────────────────────────────────────────────────────────
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
+  // Stats
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
   statCard: {
-    backgroundColor: T.surface,
-    borderRadius: 12,
-    padding: 16,
-    width: '47.5%',
-    alignItems: 'flex-start',
-    shadowColor: T.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    flex: 1, minWidth: '45%', padding: 14, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center', gap: 6,
   },
-  statIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  statValue: {
-    fontFamily: F.bold,
-    fontSize: 24,
-    color: T.text,
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontFamily: F.medium,
-    fontSize: 12,
-    color: T.muted,
-  },
+  statIcon:  { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontFamily: F.bold,    fontSize: 20 },
+  statLabel: { fontFamily: F.regular, fontSize: 11 },
 
-  // ── Category breakdown ─────────────────────────────────────────────────────
-  categoryCard: {
-    backgroundColor: T.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: T.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  categoryIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryName: {
-    flex: 1,
-    fontFamily: F.semiBold,
-    fontSize: 15,
-    color: T.text,
-  },
-  categoryCount: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    color: T.muted,
-    marginRight: 4,
-  },
-  categoryPct: {
-    fontFamily: F.bold,
-    fontSize: 13,
-    minWidth: 36,
-    textAlign: 'right',
-  },
-  categoryBarWrap: {
-    marginTop: 2,
-  },
+  // Completion
+  completionCard: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 24 },
+  completionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  completionTitle:  { fontFamily: F.semiBold, fontSize: 14 },
+  completionPct:    { fontFamily: F.bold,     fontSize: 14 },
+  trackBg:   { height: 8,  borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
+  trackFill: { height: '100%' as any, borderRadius: 4 },
+  completionSub: { fontFamily: F.regular, fontSize: 12, textAlign: 'center' },
 
-  // ── Recent results ─────────────────────────────────────────────────────────
-  resultCard: {
-    backgroundColor: T.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: T.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  // History
+  historySection: { gap: 10 },
+  sectionTitle:   { fontFamily: F.bold, fontSize: 16, marginBottom: 4 },
+
+  emptyCard: {
+    padding: 32, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center', gap: 8,
   },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 8,
+  emptyTitle: { fontFamily: F.semiBold, fontSize: 16, marginTop: 8 },
+  emptySub:   { fontFamily: F.regular,  fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  browseBtn:  { marginTop: 8, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  browseBtnText: { fontFamily: F.semiBold, fontSize: 14, color: '#fff' },
+
+  resultRow: {
+    flexDirection: 'row', borderRadius: 12, borderWidth: 1, overflow: 'hidden',
   },
-  resultTitle: {
-    fontFamily: F.semiBold,
-    flex: 1,
-    fontSize: 15,
-    color: T.text,
+  resultAccent: { width: 4 },
+  resultBody:   { flex: 1, padding: 14, gap: 6 },
+  resultTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  resultTitle:  { fontFamily: F.semiBold, fontSize: 14, flex: 1, marginRight: 8 },
+  passBadge: {
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5, borderWidth: 1, flexShrink: 0,
   },
-  resultBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  resultBadgePass: {
-    backgroundColor: '#E8FAF0',
-  },
-  resultBadgeFail: {
-    backgroundColor: '#FFEBEB',
-  },
-  resultBadgeText: {
-    fontFamily: F.bold,
-    fontSize: 12,
-  },
-  resultBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 4,
-  },
-  resultBarWrap: {
-    flex: 1,
-  },
-  resultPct: {
-    fontFamily: F.bold,
-    fontSize: 15,
-    minWidth: 40,
-    textAlign: 'right',
-  },
-  resultSubtitle: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    color: T.muted,
-  },
+  passBadgeText: { fontFamily: F.bold, fontSize: 10 },
+  resultMeta:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  resultScore:  { fontFamily: F.bold,    fontSize: 16 },
+  resultDetail: { fontFamily: F.regular, fontSize: 12 },
+  resultDate:   { fontFamily: F.regular, fontSize: 11, marginLeft: 'auto' },
 });

@@ -2,64 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Force light mode on web (Vuexy design system) ──────────────────────── */
+/* ── Light mode (web default) ────────────────────────────────────────────── */
 @media screen {
   :root {
     color-scheme: light;
   }
 
   html, body {
-    background-color: #F8F7FA;   /* Vuexy $body-bg */
-    color: #2F2B3D;
+    background: radial-gradient(120% 120% at 12% 18%, rgba(14,165,233,0.16), transparent),
+                radial-gradient(90% 90% at 80% 8%, rgba(16,185,129,0.12), transparent),
+                #F6F8FB;
+    color: #0F172A;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Override any system dark-mode preference on web */
-    color-scheme: light;
   }
 
-  /* ── Vuexy-style thin scrollbars ─────────────────────────────────────── */
+  /* Thin, modern scrollbars */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #DBDADE; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #A5A3AE; }
+  ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
 
-  /* ── Focus rings ─────────────────────────────────────────────────────── */
-  [role="button"]:focus-visible { outline: 2px solid #7367F0; outline-offset: 2px; border-radius: 6px; }
-
-  /* ── Vuexy sidebar: active item gradient (React Native `style` can't do CSS
-        gradient on native, so we use a web-only CSS override on the element
-        that React Navigation renders as a div on web) ─────────────────── */
-  /* Applied via inline style + boxShadow in AppTabBar — no extra CSS needed */
+  /* Focus rings */
+  [role="button"]:focus-visible {
+    outline: 2px solid #0EA5E9;
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
 }
 
 /**
- * Vuexy v10.11.1 Design Token CSS Variables — always light on web
+ * Design Token CSS Variables — light mode (aligned with refreshed web theme)
  */
 :root {
-  /* Primary */
-  --vx-primary:        #7367F0;
-  --vx-primary-rgb:    115, 103, 240;
+  --vx-primary:         #0EA5E9;
+  --vx-primary-rgb:     14, 165, 233;
+  --vx-primary-faint:   #E0F7FF;
 
-  /* Backgrounds */
-  --vx-bg:             #F8F7FA;
-  --vx-surface:        #FFFFFF;
+  --vx-bg:              #F6F8FB;
+  --vx-surface:         #FFFFFF;
+  --vx-border:          #E5E7EB;
 
-  /* Borders */
-  --vx-border:         #DBDADE;
+  --vx-text:            #0F172A;
+  --vx-muted:           #6B7280;
 
-  /* Text */
-  --vx-text:           #2F2B3D;
-  --vx-muted:          #A5A3AE;
+  --vx-success:         #10B981;
+  --vx-warning:         #F59E0B;
+  --vx-error:           #EF4444;
+}
 
-  /* Primary light */
-  --vx-primary-faint:  #EBE9FD;
+/**
+ * Dark mode CSS variables — glassy navy with teal/blue accents
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
 
-  /* Status */
-  --vx-success:        #28C76F;
-  --vx-warning:        #FF9F43;
-  --vx-error:          #FF4C51;
-  --vx-info:           #00BAD1;
+    --vx-bg:              #0B1221;
+    --vx-surface:         rgba(19,25,38,0.9);
+    --vx-border:          #1F2937;
+    --vx-text:            #E5E7EB;
+    --vx-muted:           #9CA3AF;
+    --vx-primary-faint:   rgba(14,165,233,0.12);
+  }
 
-  /* Brand */
-  --vx-aws:            #FF9900;
+  html, body {
+    background: radial-gradient(120% 120% at 18% 10%, rgba(14,165,233,0.18), transparent),
+                radial-gradient(80% 80% at 80% 16%, rgba(16,185,129,0.16), transparent),
+                #0B1221;
+    color: #E5E7EB;
+  }
+
+  ::-webkit-scrollbar-thumb { background: #1F2937; }
+  ::-webkit-scrollbar-thumb:hover { background: #374151; }
 }

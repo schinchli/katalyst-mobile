@@ -4,8 +4,11 @@ export interface User {
   name: string;
   avatar?: string;
   subscription: 'free' | 'premium';
+  unlockedCourses?: string[];
   createdAt: string;
 }
+
+export type CertLevel = 'foundational' | 'associate' | 'professional' | 'specialty';
 
 export interface Quiz {
   id: string;
@@ -16,15 +19,21 @@ export interface Quiz {
   questionCount: number;
   duration: number; // minutes
   isPremium: boolean;
+  price?: number;   // INR one-time unlock price
   icon: string;
+  certLevel?: CertLevel;
+  examCode?: string;
 }
 
 export interface Question {
   id: string;
   text: string;
   options: Option[];
-  explanation: string;
+  explanation?: string;
   correctOptionId: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  category?: string;
+  quizId?: string;
 }
 
 export interface Option {
@@ -47,12 +56,61 @@ export interface Progress {
   averageScore: number;
   currentStreak: number;
   longestStreak: number;
+  lastPlayedDate: string | null;
   badges: Badge[];
   recentResults: QuizResult[];
+  // Coin economy + level system (Elite Quiz parity)
+  coins: number;
+  totalCoinsEarned: number;
+  xp: number;
+  level: number;
 }
 
-export interface Badge {
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  avatarInitial: string;
+  score: number;       // total score points
+  coins: number;
+  xp?: number;
+  streak: number;
+  quizzesCompleted: number;
+  isCurrentUser?: boolean;
+}
+
+export type ContestStatus = 'live' | 'upcoming' | 'past';
+
+export interface Contest {
   id: string;
+  title: string;
+  description: string;
+  status: ContestStatus;
+  quizId: string;
+  quizTitle: string;
+  category: string;
+  icon: string;
+  entryFee: number;    // coins
+  prizeCoins: number;
+  startTime: string;   // ISO
+  endTime: string;     // ISO
+  participants: number;
+  maxParticipants: number;
+  topScore?: number;
+  winner?: string;
+}
+
+export type BadgeId =
+  | 'first-quiz'
+  | 'perfect-score'
+  | 'seven-day-streak'
+  | 'speed-demon'
+  | 'category-master'
+  | 'half-way'
+  | 'quiz-marathon';
+
+export interface Badge {
+  id: BadgeId;
   name: string;
   description: string;
   icon: string;
@@ -71,4 +129,22 @@ export type QuizCategory =
   | 'orchestration'
   | 'mlops'
   | 'evaluation'
-  | 'general';
+  | 'cost'
+  | 'cost-optimization'
+  | 'serverless'
+  | 'general'
+  // AWS Certifications
+  | 'clf-c02'
+  | 'aif-c01'
+  | 'saa-c03'
+  | 'dva-c02'
+  | 'soa-c03'
+  | 'dea-c01'
+  | 'mla-c01'
+  | 'sap-c02'
+  | 'dop-c02'
+  | 'aip-c01'
+  | 'ans-c01'
+  | 'scs-c03'
+  | 'pas-c01'
+  | 'mls-c01';

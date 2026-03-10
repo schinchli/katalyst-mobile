@@ -1,71 +1,78 @@
 /**
- * Vuexy v10.11.1 design token values for React Native
- *
- * Used by:
- *  - useThemeColors() hook — for props that can't use NativeWind (icon colors, etc.)
- *  - React Navigation tabBarStyle / headerStyle
- *
- * All values must stay in sync with:
- *  - tailwind.config.js (app-* color keys)
- *  - global.css (--vx-* CSS variables)
- *  - packages/theme/src/tokens.ts (single source of truth)
- *
- * When Vuexy updates: change values in packages/theme/src/tokens.ts FIRST,
- * then copy updated hex values here and into tailwind.config.js.
+ * Design tokens — aligned with refreshed web theme (blue/teal glassmorphism).
  */
 
-export const Colors = {
+export interface ThemeColors {
+  // Text
+  text:            string;
+  textSecondary:   string;
+  // Backgrounds
+  background:      string;
+  surface:         string;
+  surfaceBorder:   string;
+  // Primary (overridable via themeStore accent presets)
+  primary:         string;
+  primaryLight:    string;
+  primaryText:     string;  // WCAG AA accessible on surface
+  gradientFrom:    string;
+  gradientTo:      string;
+  gradientAccent:  string;
+  // Navigation aliases
+  tint:            string;
+  tabIconDefault:  string;
+  tabIconSelected: string;
+  // Status — functional only (no cyan info)
+  success:         string;
+  warning:         string;
+  error:           string;
+  info:            string;  // alias → primary
+  aws:             string;
+}
+
+export const Colors: { light: ThemeColors; dark: ThemeColors } = {
   light: {
-    // ── Text ──────────────────────────────────────────────────────────────
-    text:            '#23212A',  // Vuexy $headings-color
-    textSecondary:   '#6A6B76',  // Vuexy $text-muted
-
-    // ── Backgrounds ───────────────────────────────────────────────────────
-    background:      '#F8F7FA',  // Vuexy $body-bg
-    surface:         '#FFFFFF',  // Vuexy $card-bg
-    surfaceBorder:   '#DBDADE',  // Vuexy $border-color
-
-    // ── Primary (Vuexy purple) ─────────────────────────────────────────────
-    primary:         '#7367F0',  // Vuexy $primary
-    primaryLight:    '#EBE9FD',  // primary 10% tint
-
-    // ── Aliases ───────────────────────────────────────────────────────────
-    tint:            '#7367F0',
-    tabIconDefault:  '#9EA1BA',
-    tabIconSelected: '#7367F0',
-
-    // ── Status ────────────────────────────────────────────────────────────
-    success:         '#28C76F',  // Vuexy $success
-    warning:         '#FF9F43',  // Vuexy $warning
-    error:           '#FF4C51',  // Vuexy $danger
-    info:            '#00BAD1',  // Vuexy $info
-
-    // ── Brand ─────────────────────────────────────────────────────────────
-    aws:             '#FF9900',
+    text:            '#0F172A',
+    textSecondary:   '#6B7280',
+    background:      '#F6F8FB',
+    surface:         '#FFFFFF',
+    surfaceBorder:   '#E5E7EB',
+    primary:         '#0EA5E9',
+    primaryLight:    '#E0F7FF',
+    primaryText:     '#026AA2',
+    gradientFrom:    '#6C5BFF',
+    gradientTo:      '#36E5F0',
+    gradientAccent:  '#A855F7',
+    tint:            '#0EA5E9',
+    tabIconDefault:  '#9CA3AF',
+    tabIconSelected: '#0EA5E9',
+    success:         '#10B981',
+    warning:         '#F59E0B',
+    error:           '#EF4444',
+    info:            '#0EA5E9',
+    aws:             '#F59E0B',
   },
+
   dark: {
-    text:            '#E3E7FA',  // Vuexy $dark-headings-color
-    textSecondary:   '#9EA1BA',  // Vuexy $dark-text-muted
-
-    background:      '#25293C',  // Vuexy $dark-body-bg
-    surface:         '#2F3349',  // Vuexy $dark-card-bg
-    surfaceBorder:   '#4B4F66',  // Vuexy $dark-border-color
-
-    primary:         '#7367F0',  // primary same in dark
-    primaryLight:    '#43406B',  // primary-light in dark context
-
-    tint:            '#7367F0',
-    tabIconDefault:  '#6A6B76',
-    tabIconSelected: '#7367F0',
-
-    success:         '#28C76F',
-    warning:         '#FF9F43',
-    error:           '#FF4C51',
-    info:            '#00BAD1',
-
-    aws:             '#FF9900',
+    text:            '#E5E7EB',
+    textSecondary:   '#9CA3AF',
+    background:      '#0B1221',
+    surface:         'rgba(19,25,38,0.9)',
+    surfaceBorder:   '#1F2937',
+    primary:         '#0EA5E9',
+    primaryLight:    'rgba(14,165,233,0.14)',
+    primaryText:     '#38BDF8',
+    gradientFrom:    '#7C6CFF',
+    gradientTo:      '#3DDFF0',
+    gradientAccent:  '#C084FC',
+    tint:            '#0EA5E9',
+    tabIconDefault:  '#9CA3AF',
+    tabIconSelected: '#0EA5E9',
+    success:         '#10B981',
+    warning:         '#F59E0B',
+    error:           '#EF4444',
+    info:            '#0EA5E9',
+    aws:             '#F59E0B',
   },
-} as const;
+};
 
 export type ColorScheme = keyof typeof Colors;
-export type ThemeColors = typeof Colors.light;

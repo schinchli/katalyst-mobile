@@ -1,191 +1,150 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
-import type { Quiz, QuizCategory } from '@/types';
+import type { QuizCategory, Quiz } from '@/types';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
 
-// ─── Vuexy design tokens ──────────────────────────────────────────────────────
-const T = {
-  primary:      '#7367F0',
-  success:      '#28C76F',
-  warning:      '#FF9F43',
-  error:        '#FF4C51',
-  surface:      '#FFFFFF',
-  bg:           '#F8F7FA',
-  border:       '#DBDADE',
-  text:         '#2F2B3D',
-  textSecondary:'#444050',
-  muted:        '#A5A3AE',
-  primaryFaint: '#EBE9FD',
-} as const;
 
-// ─── Category config ──────────────────────────────────────────────────────────
-const categories: { key: QuizCategory | 'all'; label: string }[] = [
-  { key: 'all',           label: 'All' },
-  { key: 'bedrock',       label: 'Bedrock' },
-  { key: 'rag',           label: 'RAG' },
-  { key: 'agents',        label: 'Agents' },
-  { key: 'guardrails',    label: 'Guardrails' },
-  { key: 'prompt-eng',    label: 'Prompting' },
-  { key: 'routing',       label: 'Routing' },
-  { key: 'security',      label: 'Security' },
-  { key: 'monitoring',    label: 'Monitoring' },
-  { key: 'orchestration', label: 'Orchestration' },
-  { key: 'evaluation',    label: 'Evaluation' },
+// ─── Difficulty filters ───────────────────────────────────────────────────────
+const difficulties: { key: 'all' | 'beginner' | 'intermediate' | 'advanced'; label: string }[] = [
+  { key: 'all',          label: 'All Levels' },
+  { key: 'beginner',     label: 'Beginner' },
+  { key: 'intermediate', label: 'Intermediate' },
+  { key: 'advanced',     label: 'Advanced' },
 ];
 
-// Icon bg tint per category
-const categoryIconBg: Record<string, string> = {
-  bedrock:       '#EBE9FD',
-  rag:           '#E8FAF0',
-  agents:        '#FFF3E8',
-  guardrails:    '#FFEBEB',
-  'prompt-eng':  '#EBE9FD',
-  routing:       '#E8FAF0',
-  security:      '#FFEBEB',
-  monitoring:    '#FFF3E8',
-  orchestration: '#EBE9FD',
-  evaluation:    '#E8FAF0',
-  general:       '#EBE9FD',
-};
+// ─── Domain filters ───────────────────────────────────────────────────────────
+const categories: { key: QuizCategory | 'all'; label: string }[] = [
+  { key: 'all',     label: 'All Domains' },
+  { key: 'clf-c02', label: 'CLF-C02' },
+];
 
-// Icon color per category (matches tint family)
-const categoryIconColor: Record<string, string> = {
-  bedrock:       T.primary,
-  rag:           T.success,
-  agents:        T.warning,
-  guardrails:    T.error,
-  'prompt-eng':  T.primary,
-  routing:       T.success,
-  security:      T.error,
-  monitoring:    T.warning,
-  orchestration: T.primary,
-  evaluation:    T.success,
-  general:       T.primary,
-};
-
-// Left accent bar color per difficulty
-const difficultyAccent: Record<string, string> = {
-  beginner:     T.success,
-  intermediate: T.warning,
-  advanced:     T.primary,
-};
-
-// Difficulty badge bg
-const difficultyBadgeBg: Record<string, string> = {
-  beginner:     '#E8FAF0',
-  intermediate: '#FFF3E8',
-  advanced:     '#EBE9FD',
-};
-
-// ─── QuizCard (full StyleSheet, no NativeWind) ───────────────────────────────
-function QuizCard({ quiz, onPress }: { quiz: Quiz; onPress: () => void }) {
-  const accentColor = difficultyAccent[quiz.difficulty] ?? T.primary;
-  const iconBg      = categoryIconBg[quiz.category]    ?? T.primaryFaint;
-  const iconColor   = categoryIconColor[quiz.category] ?? T.primary;
-  const badgeBg     = difficultyBadgeBg[quiz.difficulty] ?? T.primaryFaint;
-  const badgeColor  = accentColor;
+// ─── Course Card ──────────────────────────────────────────────────────────────
+function CourseCard({ quiz, onPress, completedIds }: { quiz: Quiz; onPress: () => void; completedIds: Set<string> }) {
+  const colors    = useThemeColors();
+  const completed = completedIds.has(quiz.id);
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       accessibilityRole="button"
       accessibilityLabel={`Start ${quiz.title} quiz`}
+      style={({ pressed }) => [
+        s.courseCard,
+        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+        pressed && s.cardPressed,
+      ]}
     >
-      {/* Left accent bar */}
-      <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
-
-      {/* Icon container */}
-      <View style={[styles.iconContainer, { backgroundColor: iconBg }]}>
-        <Feather name={quiz.icon as any} size={22} color={iconColor} />
-      </View>
-
-      {/* Content */}
-      <View style={styles.cardContent}>
-        {/* Title row */}
-        <View style={styles.titleRow}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {quiz.title}
-          </Text>
-          {quiz.isPremium && (
-            <View style={styles.premiumBadge}>
-              <Feather name="lock" size={10} color="#F59E0B" />
-              <Text style={styles.premiumText}>PRO</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Description */}
-        <Text style={styles.cardDesc} numberOfLines={2}>
-          {quiz.description}
-        </Text>
-
-        {/* Footer row */}
-        <View style={styles.cardFooter}>
-          {/* Difficulty badge */}
-          <View style={[styles.diffBadge, { backgroundColor: badgeBg }]}>
-            <Text style={[styles.diffBadgeText, { color: badgeColor }]}>
-              {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
-            </Text>
+      {/* Header banner — neutral primary tint */}
+      <View style={[s.cardBanner, { backgroundColor: colors.primaryLight }]}>
+        {quiz.isPremium && (
+          <View style={[s.proBadge, { backgroundColor: colors.aws }]}>
+            <Text style={s.proBadgeText}>PRO</Text>
           </View>
-
-          {/* Question count */}
-          <View style={styles.metaItem}>
-            <Feather name="help-circle" size={12} color={T.muted} />
-            <Text style={styles.metaText}>{quiz.questionCount} Qs</Text>
+        )}
+        {completed && (
+          <View style={[s.completedBadge, { backgroundColor: colors.success + '22', borderColor: colors.success + '55' }]}>
+            <Feather name="check-circle" size={11} color={colors.success} />
+            <Text style={[s.completedBadgeText, { color: colors.success }]}>Done</Text>
           </View>
-
-          {/* Duration */}
-          <View style={styles.metaItem}>
-            <Feather name="clock" size={12} color={T.muted} />
-            <Text style={styles.metaText}>{quiz.duration} min</Text>
-          </View>
+        )}
+        <View style={[s.cardIconCircle, { backgroundColor: colors.primary + '28' }]}>
+          <Feather name={quiz.icon as any} size={28} color={colors.primary} />
         </View>
       </View>
 
-      {/* Chevron */}
-      <Feather name="chevron-right" size={18} color={T.muted} style={styles.chevron} />
+      {/* Body */}
+      <View style={s.cardBody}>
+        {/* Top content group */}
+        <View style={s.cardTop}>
+          <Text style={[s.cardTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
+          <Text style={[s.cardDesc, { color: colors.textSecondary }]} numberOfLines={3}>{quiz.description}</Text>
+        </View>
+
+        {/* Start button — pinned to bottom */}
+        <View style={[s.startBtn, { backgroundColor: colors.primary }]}>
+          <Text style={s.startBtnText}>Start →</Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
+// ─── Main screen ──────────────────────────────────────────────────────────────
 export default function QuizzesScreen() {
   const colors = useThemeColors();
   const { isDesktop, contentContainerWeb } = useWebLayout();
   const [selectedCategory, setSelectedCategory] = useState<QuizCategory | 'all'>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
+  const results = useProgressStore((s) => s.progress.recentResults);
 
-  const filtered =
-    selectedCategory === 'all'
-      ? quizzes
-      : quizzes.filter((q) => q.category === selectedCategory);
+  const completedIds = new Set(results.map((r) => r.quizId));
+
+  const filtered = quizzes.filter((q) => {
+    const catMatch  = selectedCategory === 'all' || q.category === selectedCategory;
+    const diffMatch = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
+    return catMatch && diffMatch;
+  });
+
+  const totalCategories = new Set(quizzes.map((q) => q.category)).size;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={isDesktop ? [] : ['top']}>
-      {/* Header */}
-      <View style={[styles.header, contentContainerWeb]}>
-        <Text style={styles.screenTitle}>Quizzes</Text>
-        <Text style={styles.screenSubtitle}>{quizzes.length} quizzes available</Text>
+    <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
+
+      {/* ── Header ── */}
+      <View style={[s.header, contentContainerWeb]}>
+        <View>
+          <Text style={[s.screenTitle, { color: colors.text }]}>All Courses</Text>
+        </View>
+        <View style={[s.headerStatsRow]}>
+          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
+            <Text style={[s.headerStatVal, { color: colors.primary }]}>{quizzes.length}</Text>
+            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Quizzes</Text>
+          </View>
+          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
+            <Text style={[s.headerStatVal, { color: colors.primary }]}>{totalCategories}</Text>
+            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Topics</Text>
+          </View>
+          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
+            <Text style={[s.headerStatVal, { color: colors.primary }]}>{completedIds.size}</Text>
+            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Done</Text>
+          </View>
+        </View>
       </View>
 
-      {/* Category filter pills */}
+      {/* ── Difficulty filter pills ── */}
+      <View style={s.diffRow}>
+        {difficulties.map((d) => {
+          const active = selectedDifficulty === d.key;
+          return (
+            <Pressable
+              key={d.key}
+              onPress={() => setSelectedDifficulty(d.key)}
+              style={[
+                s.diffPill,
+                active
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              ]}
+            >
+              <Text style={[s.diffPillText, { color: active ? '#fff' : colors.text }]}>{d.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* ── Category filter pills ── */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.pillRow}
-        style={styles.pillScroll}
+        contentContainerStyle={s.pillRow}
+        style={s.pillScroll}
       >
         {categories.map((cat) => {
           const active = selectedCategory === cat.key;
@@ -194,13 +153,15 @@ export default function QuizzesScreen() {
               key={cat.key}
               onPress={() => setSelectedCategory(cat.key)}
               style={[
-                styles.pill,
-                active ? styles.pillActive : styles.pillInactive,
+                s.pill,
+                active
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
             >
-              <Text style={[styles.pillText, active ? styles.pillTextActive : styles.pillTextInactive]}>
+              <Text style={[s.pillText, { color: active ? '#FFFFFF' : colors.text }]}>
                 {cat.label}
               </Text>
             </Pressable>
@@ -208,27 +169,36 @@ export default function QuizzesScreen() {
         })}
       </ScrollView>
 
-      {/* Quiz list */}
+      {/* ── Results count ── */}
+      <Text style={[s.resultCount, { color: colors.textSecondary }]}>
+        {filtered.length} {filtered.length === 1 ? 'course' : 'courses'} available
+      </Text>
+
+      {/* ── Course grid ── */}
       <ScrollView
-        contentContainerStyle={[styles.listContent, contentContainerWeb]}
+        contentContainerStyle={[s.grid, contentContainerWeb]}
         showsVerticalScrollIndicator={false}
       >
         {filtered.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconWrap}>
-              <Feather name="search" size={32} color={T.muted} />
+          <View style={s.emptyState}>
+            <View style={[s.emptyIconWrap, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
+              <Feather name="search" size={32} color={colors.textSecondary} />
             </View>
-            <Text style={styles.emptyTitle}>No quizzes found</Text>
-            <Text style={styles.emptySubtitle}>Try a different category filter</Text>
+            <Text style={[s.emptyTitle, { color: colors.textSecondary }]}>No quizzes found</Text>
+            <Text style={[s.emptySubtitle, { color: colors.textSecondary }]}>Try a different category filter</Text>
           </View>
         ) : (
-          filtered.map((quiz) => (
-            <QuizCard
-              key={quiz.id}
-              quiz={quiz}
-              onPress={() => router.push(`/quiz/${quiz.id}`)}
-            />
-          ))
+          <View style={[s.gridRow, isDesktop && s.gridRowDesktop]}>
+            {filtered.map((quiz) => (
+              <View key={quiz.id} style={[s.gridCell, isDesktop && s.gridCellDesktop]}>
+                <CourseCard
+                  quiz={quiz}
+                  onPress={() => router.push(`/quiz/${quiz.id}`)}
+                  completedIds={completedIds}
+                />
+              </View>
+            ))}
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -236,198 +206,142 @@ export default function QuizzesScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: T.bg,
-  },
+const s = StyleSheet.create({
+  safeArea: { flex: 1 },
 
-  // Header
+  // ── Header ──
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 4,
-  },
-  screenTitle: {
-    fontFamily: F.bold,
-    fontSize: 26,
-    color: T.text,
-    marginBottom: 2,
-  },
-  screenSubtitle: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    color: T.muted,
-    marginBottom: 12,
-  },
-
-  // Filter pills
-  pillScroll: {
-    flexGrow: 0,
-    marginBottom: 4,
-  },
-  pillRow: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    gap: 8,
+    paddingBottom: 8,
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  pill: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  pillActive: {
-    backgroundColor: T.primary,
-    borderColor: T.primary,
-  },
-  pillInactive: {
-    backgroundColor: T.surface,
-    borderColor: T.border,
-  },
-  pillText: {
-    fontFamily: F.semiBold,
-    fontSize: 13,
-  },
-  pillTextActive: {
-    color: '#FFFFFF',
-  },
-  pillTextInactive: {
-    color: T.textSecondary,
-  },
-
-  // List
-  listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 4,
-    paddingBottom: 40,
-  },
-
-  // Card
-  card: {
-    flexDirection: 'row',
+  screenTitle: { fontFamily: F.bold, fontSize: 22, lineHeight: 28 },
+  headerStatsRow: { flexDirection: 'row', gap: 6 },
+  headerStat: {
     alignItems: 'center',
-    backgroundColor: T.surface,
-    borderRadius: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-    shadowColor: T.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  cardPressed: {
-    opacity: 0.92,
-  },
-  accentBar: {
-    width: 4,
-    alignSelf: 'stretch',
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 10,
+    minWidth: 48,
+  },
+  headerStatVal:   { fontFamily: F.bold,    fontSize: 16, lineHeight: 20 },
+  headerStatLabel: { fontFamily: F.regular, fontSize: 10, marginTop: 1 },
+
+  // ── Difficulty row ──
+  diffRow:     { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 8 },
+  diffPill:    { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  diffPillText:{ fontFamily: F.semiBold, fontSize: 12 },
+
+  // ── Pills ──
+  pillScroll: { flexGrow: 0 },
+  pillRow:    { paddingHorizontal: 20, paddingVertical: 10, gap: 8, flexDirection: 'row' },
+  pill:       { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  pillText:   { fontFamily: F.semiBold, fontSize: 13 },
+
+  // ── Result count ──
+  resultCount: {
+    fontFamily: F.regular,
+    fontSize: 12,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+
+  // ── Grid ──
+  grid: { paddingHorizontal: 16, paddingBottom: 40 },
+  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  gridRowDesktop: { gap: 16 },
+  gridCell: { width: '47.5%', alignSelf: 'stretch' },
+  gridCellDesktop: { width: '30%' },
+
+  // ── Course card ──
+  courseCard: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#4B465C',
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  cardPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
+
+  cardBanner: {
+    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
-    flexShrink: 0,
+    position: 'relative',
   },
-  cardContent: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-  },
-  titleRow: {
-    flexDirection: 'row',
+  cardIconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 3,
+    justifyContent: 'center',
   },
-  cardTitle: {
-    flex: 1,
-    fontFamily: F.semiBold,
-    fontSize: 15,
-    color: T.text,
+  proBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  premiumBadge: {
+  proBadgeText: { fontFamily: F.bold, fontSize: 10, color: '#fff', letterSpacing: 0.3 },
+  completedBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 1,
   },
-  premiumText: {
-    fontFamily: F.bold,
-    fontSize: 10,
-    color: '#D97706',
-  },
-  cardDesc: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    color: T.muted,
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  diffBadge: {
+  completedBadgeText: { fontFamily: F.semiBold, fontSize: 10 },
+
+  cardBody: { padding: 12, flex: 1, justifyContent: 'space-between' },
+  cardTop:  { gap: 6 },
+
+  catChip: {
+    alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
-  diffBadgeText: {
-    fontFamily: F.semiBold,
-    fontSize: 11,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  metaText: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    color: T.muted,
-  },
-  chevron: {
-    marginRight: 12,
-    flexShrink: 0,
+  catChipText: { fontFamily: F.semiBold, fontSize: 10 },
+
+  cardTitle: {
+    fontFamily: F.bold,
+    fontSize: 14,
+    lineHeight: 20,
   },
 
-  // Empty state
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 64,
-    paddingBottom: 32,
+  cardDesc: {
+    fontFamily: F.regular,
+    fontSize: 12,
+    lineHeight: 18,
   },
-  emptyIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: T.bg,
-    borderWidth: 1,
-    borderColor: T.border,
+
+  startBtn: {
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginTop: 2,
   },
-  emptyTitle: {
-    fontFamily: F.semiBold,
-    fontSize: 16,
-    color: T.textSecondary,
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    color: T.muted,
-  },
+  startBtnText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
+
+  // ── Empty state ──
+  emptyState:    { alignItems: 'center', paddingTop: 64, paddingBottom: 32 },
+  emptyIconWrap: { width: 72, height: 72, borderRadius: 36, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  emptyTitle:    { fontFamily: F.semiBold, fontSize: 16, marginBottom: 6 },
+  emptySubtitle: { fontFamily: F.regular,  fontSize: 13 },
 });

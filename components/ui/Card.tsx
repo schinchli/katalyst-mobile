@@ -16,11 +16,11 @@ export function Card({ children, onPress, style, padding = 16, ...props }: CardP
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     padding,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowColor: '#4B465C',
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   };
 
   if (onPress) {

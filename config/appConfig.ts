@@ -3,7 +3,7 @@
  * ──────────────────────────────
  * Before shipping: copy .env.example → .env and fill in real values.
  * All EXPO_PUBLIC_* vars are embedded at build time (client-visible).
- * Private keys (EAS token, store creds, AWS secret keys) → GitHub Secrets only.
+ * Private keys (EAS token, store creds, Razorpay secret) → GitHub Secrets only.
  *
  * Developer config panel: Profile → Developer Settings (visible in __DEV__ only)
  */
@@ -12,20 +12,14 @@ export const AppConfig = {
   env: (process.env.EXPO_PUBLIC_ENV ?? 'development') as 'development' | 'staging' | 'production',
   version: '1.0.0',
 
-  // ── AWS ────────────────────────────────────────────────────────────────────
-  aws: {
-    region:        process.env.EXPO_PUBLIC_AWS_REGION        ?? 'us-east-1',
-    apiUrl:        process.env.EXPO_PUBLIC_API_URL           ?? 'https://dev.api.awslearn.app',
-    cloudfrontUrl: process.env.EXPO_PUBLIC_CLOUDFRONT_URL    ?? 'https://dev.cdn.awslearn.app',
-    cognito: {
-      userPoolId:  process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID ?? '',
-      clientId:    process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID    ?? '',
-    },
+  // ── Supabase ────────────────────────────────────────────────────────────────
+  supabase: {
+    url:          process.env.EXPO_PUBLIC_SUPABASE_URL          ?? '',
+    anonKey:      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY     ?? '',
+    functionsUrl: process.env.EXPO_PUBLIC_API_URL               ?? 'https://swydybtzyjxftzfzqqnv.supabase.co/functions/v1',
   },
 
   // ── AdMob ──────────────────────────────────────────────────────────────────
-  // Note: app.json plugin IDs are the Google test IDs (ca-app-pub-3940...)
-  // The ad unit IDs below are for individual banner/interstitial placements.
   admob: {
     ios: {
       bannerId:        process.env.EXPO_PUBLIC_ADMOB_IOS_BANNER         ?? '',
@@ -68,18 +62,17 @@ export interface ConfigItem {
 
 export const CONFIG_CHECKLIST: ConfigItem[] = [
   // App
-  { section: 'App',          label: 'EAS Project ID',          value: AppConfig.eas.projectId,                     required: true,  envKey: 'EXPO_PUBLIC_EAS_PROJECT_ID' },
-  // AWS
-  { section: 'AWS / Cognito', label: 'API URL',                value: AppConfig.aws.apiUrl,                        required: false, envKey: 'EXPO_PUBLIC_API_URL' },
-  { section: 'AWS / Cognito', label: 'CloudFront URL',         value: AppConfig.aws.cloudfrontUrl,                 required: false, envKey: 'EXPO_PUBLIC_CLOUDFRONT_URL' },
-  { section: 'AWS / Cognito', label: 'Cognito User Pool ID',   value: AppConfig.aws.cognito.userPoolId,            required: true,  envKey: 'EXPO_PUBLIC_COGNITO_USER_POOL_ID' },
-  { section: 'AWS / Cognito', label: 'Cognito Client ID',      value: AppConfig.aws.cognito.clientId,              required: true,  envKey: 'EXPO_PUBLIC_COGNITO_CLIENT_ID' },
+  { section: 'App',         label: 'EAS Project ID',        value: AppConfig.eas.projectId,           required: true,  envKey: 'EXPO_PUBLIC_EAS_PROJECT_ID' },
+  // Supabase
+  { section: 'Supabase',    label: 'Supabase URL',           value: AppConfig.supabase.url,            required: true,  envKey: 'EXPO_PUBLIC_SUPABASE_URL' },
+  { section: 'Supabase',    label: 'Supabase Anon Key',      value: AppConfig.supabase.anonKey,        required: true,  envKey: 'EXPO_PUBLIC_SUPABASE_ANON_KEY' },
+  { section: 'Supabase',    label: 'Functions URL',          value: AppConfig.supabase.functionsUrl,   required: false, envKey: 'EXPO_PUBLIC_API_URL' },
   // AdMob iOS
-  { section: 'AdMob · iOS',  label: 'Banner Unit ID',          value: AppConfig.admob.ios.bannerId,                required: true,  envKey: 'EXPO_PUBLIC_ADMOB_IOS_BANNER' },
-  { section: 'AdMob · iOS',  label: 'Interstitial Unit ID',    value: AppConfig.admob.ios.interstitialId,          required: true,  envKey: 'EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL' },
+  { section: 'AdMob · iOS', label: 'Banner Unit ID',         value: AppConfig.admob.ios.bannerId,      required: true,  envKey: 'EXPO_PUBLIC_ADMOB_IOS_BANNER' },
+  { section: 'AdMob · iOS', label: 'Interstitial Unit ID',   value: AppConfig.admob.ios.interstitialId, required: true, envKey: 'EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL' },
   // AdMob Android
-  { section: 'AdMob · Android', label: 'Banner Unit ID',       value: AppConfig.admob.android.bannerId,            required: true,  envKey: 'EXPO_PUBLIC_ADMOB_ANDROID_BANNER' },
-  { section: 'AdMob · Android', label: 'Interstitial Unit ID', value: AppConfig.admob.android.interstitialId,      required: true,  envKey: 'EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL' },
+  { section: 'AdMob · Android', label: 'Banner Unit ID',     value: AppConfig.admob.android.bannerId,      required: true, envKey: 'EXPO_PUBLIC_ADMOB_ANDROID_BANNER' },
+  { section: 'AdMob · Android', label: 'Interstitial Unit ID', value: AppConfig.admob.android.interstitialId, required: true, envKey: 'EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL' },
 ];
 
 export const getMissingCount = () =>
