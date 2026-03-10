@@ -691,6 +691,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 16,
     padding: 14,
+    gap: 10,
   },
   sectionHeader: {
     flexDirection: 'row',

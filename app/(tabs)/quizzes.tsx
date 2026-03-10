@@ -377,10 +377,10 @@ const s = StyleSheet.create({
 
   // ── Grid ──
   grid: { paddingHorizontal: 18, paddingBottom: 48, paddingTop: 6 },
-  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  gridRowDesktop: { gap: 16 },
-  gridCell: { flexBasis: '48%', minWidth: 160, alignSelf: 'stretch' },
-  gridCellDesktop: { flexBasis: '30%', maxWidth: '30%' as any },
+  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'space-between' },
+  gridRowDesktop: { gap: 18 },
+  gridCell: { flexBasis: '48%', minWidth: 170, alignSelf: 'stretch', marginBottom: 6 },
+  gridCellDesktop: { flexBasis: '30%', maxWidth: '31%' as any },
 
   // ── Course card ──
   courseCard: {
