@@ -125,8 +125,9 @@ function ThemePicker({ colors, userId }: { colors: ReturnType<typeof useThemeCol
           {presets.map(([key, cfg]) => {
             const isActive = accent === key;
             return (
-              <View
+              <Pressable
                 key={key}
+                onPress={() => { setUsePlatform(false); setAccent(key); }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isActive }}
                 style={[
@@ -135,28 +136,22 @@ function ThemePicker({ colors, userId }: { colors: ReturnType<typeof useThemeCol
                     backgroundColor: isActive ? cfg.primary + '18' : 'transparent',
                   },
                 ]}
-              >
-                <LinearGradient
-                  colors={[cfg.gradientFrom, cfg.gradientTo]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                >
+                  <LinearGradient
+                    colors={[cfg.gradientFrom, cfg.gradientTo]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                   style={[styles.themeCircle, { backgroundColor: cfg.primary }]}
-                >
-                  {isActive && <Feather name="check" size={11} color="#fff" />}
-                </LinearGradient>
-                <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
-                  {cfg.label}
-                </Text>
-                <Pressable
-                  onPress={() => { setUsePlatform(false); setAccent(key); }}
-                  accessibilityRole="button"
-                  style={{ padding: 4 }}
-                >
+                  >
+                    {isActive && <Feather name="check" size={11} color="#fff" />}
+                  </LinearGradient>
+                  <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
+                    {cfg.label}
+                  </Text>
                   <Feather name={isActive ? 'check' : 'plus'} size={14} color={isActive ? cfg.primary : colors.textSecondary} />
                 </Pressable>
-              </View>
-            );
-          })}
+              );
+            })}
         </View>
         <Text style={[styles.themeHint, { color: colors.textSecondary }]}>
           Platform theme syncs from admin; choose Custom to override on this device.
@@ -463,14 +458,14 @@ const styles = StyleSheet.create({
   menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 15,
+    gap: 14,
   },
   menuIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -481,7 +476,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    marginLeft: 58,
+    marginLeft: 68,
   },
 
   /* ── Theme picker ── */

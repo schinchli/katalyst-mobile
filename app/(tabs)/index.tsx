@@ -236,62 +236,46 @@ function LearnPreviewRow() {
 
 function FlashcardStrip() {
   const colors = useThemeColors();
-  const [category, setCategory] = useState<FlashcardCategory>('aws-practitioner');
   const [flipped, setFlipped]   = useState<Record<string, boolean>>({});
-  const cards = flashcards.filter((c) => c.category === category).slice(0, 5);
-  const activeColor = category === 'aws-practitioner' ? colors.primary : colors.warning;
+  const categories: FlashcardCategory[] = ['aws-practitioner', 'genai-practitioner'];
 
   return (
     <View style={styles.flashContainer}>
-      <View style={styles.flashTabs}>
-        {(['aws-practitioner', 'genai-practitioner'] as FlashcardCategory[]).map((key) => {
-          const label = key === 'aws-practitioner' ? 'AWS Practitioner' : 'GenAI Practitioner';
-          const active = category === key;
-          return (
-            <Pressable
-              key={key}
-              onPress={() => setCategory(key)}
-              style={[
-                styles.flashTab,
-                { borderColor: active ? activeColor : colors.surfaceBorder,
-                  backgroundColor: active ? activeColor + '15' : 'transparent' },
-              ]}
-            >
-              <Text style={[styles.flashTabText, { color: active ? activeColor : colors.text }]}>{label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.flashRow}
-      >
-        {cards.map((c) => {
-          const isFlipped = flipped[c.id];
-          return (
-            <Pressable
-              key={c.id}
-              onPress={() => setFlipped((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
-              style={[
-                styles.flashCard,
-                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-              ]}
-            >
-              <View style={[styles.flashBadge, { backgroundColor: activeColor + '15' }]}>
-                <Text style={[styles.flashBadgeText, { color: activeColor }]}>{c.tag ?? 'Core'}</Text>
-              </View>
-              <Text style={[styles.flashFront, { color: colors.text }]} numberOfLines={2}>
-                {isFlipped ? c.back : c.front}
-              </Text>
-              <Text style={[styles.flashHint, { color: colors.textSecondary }]}>
-                {isFlipped ? 'Tap to see term' : 'Tap to see answer'}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      {categories.map((cat) => {
+        const label = cat === 'aws-practitioner' ? 'AWS Practitioner' : 'GenAI Practitioner';
+        const catColor = cat === 'aws-practitioner' ? colors.primary : colors.warning;
+        const cards = flashcards.filter((c) => c.category === cat).slice(0, 5);
+        return (
+          <View key={cat} style={styles.flashSection}>
+            <Text style={[styles.flashSectionTitle, { color: colors.text }]}>{label}</Text>
+            <View style={styles.flashColumn}>
+              {cards.map((c) => {
+                const isFlipped = flipped[c.id];
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setFlipped((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
+                    style={[
+                      styles.flashCard,
+                      { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+                    ]}
+                  >
+                    <View style={[styles.flashBadge, { backgroundColor: catColor + '15' }]}>
+                      <Text style={[styles.flashBadgeText, { color: catColor }]}>{c.tag ?? 'Core'}</Text>
+                    </View>
+                    <Text style={[styles.flashFront, { color: colors.text }]} numberOfLines={3}>
+                      {isFlipped ? c.back : c.front}
+                    </Text>
+                    <Text style={[styles.flashHint, { color: colors.textSecondary }]}>
+                      {isFlipped ? 'Tap to see term' : 'Tap to see answer'}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -457,11 +441,6 @@ export default function HomeScreen() {
           })()}
         </View>
 
-        {/* Recent Results */}
-        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <RecentResultsStrip />
-        </View>
-
         {/* Quizzes preview */}
         <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <SectionHeader
@@ -469,11 +448,27 @@ export default function HomeScreen() {
             onViewAll={() => router.push('/(tabs)/quizzes')}
           />
           {quizzes.slice(0, 5).map((quiz) => (
-            <QuizCard
+            <Pressable
               key={quiz.id}
-              quiz={quiz}
               onPress={() => router.push(`/quiz/${quiz.id}`)}
-            />
+              style={({ pressed }) => [
+                styles.featureCard,
+                { borderColor: colors.surfaceBorder, backgroundColor: colors.surface, opacity: pressed ? 0.92 : 1 },
+              ]}
+            >
+              <View style={[styles.featureIcon, { backgroundColor: colors.primaryLight }]}>
+                <Feather name={quiz.icon as any} size={18} color={colors.primary} />
+              </View>
+              <View style={styles.featureBody}>
+                <Text style={[styles.featureTitle, { color: colors.text }]} numberOfLines={1}>{quiz.title}</Text>
+                <Text style={[styles.featureMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {quiz.questionCount} Q · {quiz.difficulty.toUpperCase()}
+                </Text>
+              </View>
+              <View style={[styles.featurePill, { backgroundColor: colors.primary }]}>
+                <Text style={styles.featurePillText}>Start</Text>
+              </View>
+            </Pressable>
           ))}
         </View>
 
@@ -755,25 +750,46 @@ const styles = StyleSheet.create({
   learnTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginTop: 2 },
   learnTagText: { fontFamily: F.semiBold, fontSize: 10, letterSpacing: 0.3 },
 
+  // ── Featured list cards ───────────────────────────────────────────────────
+  featureCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  featureIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureBody: { flex: 1, gap: 2 },
+  featureTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 19 },
+  featureMeta: { fontFamily: F.regular, fontSize: 11 },
+  featurePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featurePillText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
+
   // ── Flashcards ────────────────────────────────────────────────────────────
   flashContainer: { gap: 12 },
-  flashTabs: { flexDirection: 'row', gap: 10 },
-  flashTab: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  flashTabText: { fontFamily: F.semiBold, fontSize: 12 },
-  flashRow: { gap: 12 },
+  flashSection: { gap: 8 },
+  flashSectionTitle: { fontFamily: F.bold, fontSize: 14 },
+  flashColumn: { gap: 10 },
   flashCard: {
-    minWidth: 180,
-    maxWidth: 240,
+    width: '100%',
     borderRadius: 14,
     borderWidth: 1,
     padding: 12,
     gap: 8,
-    marginRight: 4,
   },
   flashBadge: {
     alignSelf: 'flex-start',
@@ -791,7 +807,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   dailyAccent: {
-    height: 3,
+    height: 0,
   },
 
   // Daily card internals
