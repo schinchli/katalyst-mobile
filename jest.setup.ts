@@ -1,6 +1,35 @@
 // Jest setup for Expo monorepo
 // Mocks Expo winter runtime globals that aren't available in Node/Jest
 
+// Mock react-native-worklets (reanimated v4 dep) — native runtime not available in Jest
+jest.mock('react-native-worklets', () => {
+  const noop = () => {};
+  const identity = (v: unknown) => v;
+  return {
+    isWorklet:                   () => false,
+    makeShareable:               identity,
+    makeShareableCloneRecursive: identity,
+    makeShareableCloneOnUIRecursive: identity,
+    shareableMappingCache:       { set: noop, has: () => false, get: () => null },
+    createSerializable:          identity,
+    isSerializableRef:           () => false,
+    serializableMappingCache:    { set: noop, has: () => false, get: () => null },
+    isSynchronizable:            () => false,
+    createSynchronizable:        identity,
+    runOnUI:                     (fn: unknown) => fn,
+    runOnJS:                     (fn: unknown) => fn,
+    executeOnUIRuntimeSync:      (fn: unknown) => fn,
+    callMicrotasks:              noop,
+    getStaticFeatureFlag:        () => false,
+    setDynamicFeatureFlag:       noop,
+    RuntimeKind:                 { UI: 'UI', JS: 'JS' },
+    getRuntimeKind:              () => 'JS',
+    createWorkletRuntime:        noop,
+    runOnRuntime:                noop,
+    isShareableRef:              () => false,
+  };
+});
+
 // Mock the import.meta registry
 if (typeof (globalThis as Record<string, unknown>).__ExpoImportMetaRegistry === 'undefined') {
   Object.defineProperty(globalThis, '__ExpoImportMetaRegistry', {

@@ -96,8 +96,8 @@ export const useProgressStore = create<ProgressState>()(
         // Look up quiz metadata for difficulty (needed for server-side reward calc)
         const quizMeta = quizzes.find((q) => q.id === result.quizId);
 
-        // Fire-and-forget: sync to AWS DynamoDB in the background.
-        // Works only when Amplify is configured and the user is authenticated.
+        // Fire-and-forget: sync result to Supabase Edge Function.
+        // Silently swallowed when offline or in guest mode.
         submitQuiz({
           quizId:         result.quizId,
           answers:        result.answers,
