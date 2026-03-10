@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -20,9 +20,12 @@ const difficulties: { key: 'all' | 'beginner' | 'intermediate' | 'advanced'; lab
 ];
 
 // ─── Domain filters ───────────────────────────────────────────────────────────
-const categories: { key: QuizCategory | 'all'; label: string }[] = [
-  { key: 'all',     label: 'All Domains' },
-  { key: 'clf-c02', label: 'CLF-C02' },
+const categoryOptions: { key: QuizCategory | 'all'; label: string }[] = [
+  { key: 'all', label: 'All Domains' },
+  ...Array.from(new Set(quizzes.map((q) => q.category))).map((cat) => ({
+    key: cat,
+    label: cat.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+  })) as { key: QuizCategory; label: string }[],
 ];
 
 // ─── Course Card ──────────────────────────────────────────────────────────────
@@ -90,6 +93,7 @@ function CourseCard({ quiz, onPress, completedIds }: { quiz: Quiz; onPress: () =
 export default function QuizzesScreen() {
   const colors = useThemeColors();
   const { isDesktop, contentContainerWeb } = useWebLayout();
+  const { width } = useWindowDimensions();
   const [selectedCategory, setSelectedCategory] = useState<QuizCategory | 'all'>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,6 +115,7 @@ export default function QuizzesScreen() {
 
   const totalCategories = new Set(quizzes.map((q) => q.category)).size;
   const recentHistory   = progress.recentResults.slice(0, 4);
+  const cellWidth = isDesktop ? '30%' : width >= 700 ? '48%' : width >= 480 ? '48%' : '100%';
 
   return (
     <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
@@ -197,7 +202,7 @@ export default function QuizzesScreen() {
         contentContainerStyle={s.pillRow}
         style={s.pillScroll}
       >
-        {categories.map((cat) => {
+        {categoryOptions.map((cat) => {
           const active = selectedCategory === cat.key;
           return (
             <Pressable
@@ -275,7 +280,13 @@ export default function QuizzesScreen() {
         ) : (
           <View style={[s.gridRow, isDesktop && s.gridRowDesktop]}>
             {filtered.map((quiz) => (
-              <View key={quiz.id} style={[s.gridCell, isDesktop && s.gridCellDesktop]}>
+              <View
+                key={quiz.id}
+                style={[
+                  s.gridCell,
+                  { flexBasis: cellWidth as any, maxWidth: cellWidth as any },
+                ]}
+              >
                 <CourseCard
                   quiz={quiz}
                   onPress={() => router.push(`/quiz/${quiz.id}`)}
