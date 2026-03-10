@@ -198,9 +198,9 @@ function QuickActionsRow() {
   );
 }
 
-function LearnPreviewRow() {
+function LearnPreviewRow({ limit = 5 }: { limit?: number }) {
   const colors = useThemeColors();
-  const items  = PLAYLIST.slice(0, 5);
+  const items  = PLAYLIST.filter((v) => !['rag-bedrock', 'bedrock-agents'].includes(v.id)).slice(0, limit);
   return (
     <View style={styles.learnWrap}>
       {items.map((v) => (
@@ -222,9 +222,6 @@ function LearnPreviewRow() {
               <Text style={[styles.learnMeta, { color: colors.textSecondary }]} numberOfLines={1}>
                 {v.author} · {v.views} · {v.duration}
               </Text>
-              <View style={[styles.learnTag, { backgroundColor: v.tagColor + '15' }]}>
-                <Text style={[styles.learnTagText, { color: v.tagColor }]}>{v.tag}</Text>
-              </View>
             </View>
             <Feather name="chevron-right" size={16} color={colors.textSecondary} />
           </View>
@@ -237,6 +234,10 @@ function LearnPreviewRow() {
 function FlashcardStrip({ isWide }: { isWide?: boolean }) {
   const colors = useThemeColors();
   const [flipped, setFlipped]   = useState<Record<string, boolean>>({});
+  const [activeIdx, setActiveIdx] = useState<Record<FlashcardCategory, number>>({
+    'aws-practitioner': 0,
+    'genai-practitioner': 0,
+  });
   const categories: FlashcardCategory[] = ['aws-practitioner', 'genai-practitioner'];
 
   return (
@@ -245,33 +246,49 @@ function FlashcardStrip({ isWide }: { isWide?: boolean }) {
         const label = cat === 'aws-practitioner' ? 'AWS Practitioner' : 'GenAI Practitioner';
         const catColor = cat === 'aws-practitioner' ? colors.primary : colors.warning;
         const cards = flashcards.filter((c) => c.category === cat).slice(0, 5);
+        const index = activeIdx[cat] ?? 0;
+        const card = cards[index];
+
+        const nextCard = () => {
+          const nextIdx = (index + 1) % cards.length;
+          setActiveIdx((prev) => ({ ...prev, [cat]: nextIdx }));
+          setFlipped((prev) => ({ ...prev, [card.id]: false }));
+        };
+
+        if (!card) return null;
+
         return (
           <View key={cat} style={[styles.flashSection, isWide && styles.flashSectionWide]}>
             <Text style={[styles.flashSectionTitle, { color: colors.text }]}>{label}</Text>
             <View style={styles.flashColumn}>
-              {cards.map((c) => {
-                const isFlipped = flipped[c.id];
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => setFlipped((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
-                    style={[
-                      styles.flashCard,
-                      { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-                    ]}
-                  >
-                    <View style={[styles.flashBadge, { backgroundColor: catColor + '15' }]}>
-                      <Text style={[styles.flashBadgeText, { color: catColor }]}>{c.tag ?? 'Core'}</Text>
-                    </View>
-                    <Text style={[styles.flashFront, { color: colors.text }]} numberOfLines={3}>
-                      {isFlipped ? c.back : c.front}
-                    </Text>
-                    <Text style={[styles.flashHint, { color: colors.textSecondary }]}>
-                      {isFlipped ? 'Tap to see term' : 'Tap to see answer'}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+              <Pressable
+                onPress={() => setFlipped((prev) => ({ ...prev, [card.id]: !prev[card.id] }))}
+                style={[
+                  styles.flashCard,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+                ]}
+              >
+                <View style={[styles.flashBadge, { backgroundColor: catColor + '15' }]}>
+                  <Text style={[styles.flashBadgeText, { color: catColor }]}>{card.tag ?? 'Core'}</Text>
+                </View>
+                <Text style={[styles.flashFront, { color: colors.text }]} numberOfLines={4}>
+                  {flipped[card.id] ? card.back : card.front}
+                </Text>
+                <Text style={[styles.flashHint, { color: colors.textSecondary }]}>
+                  {flipped[card.id] ? 'Tap to see term' : 'Tap to see answer'}
+                </Text>
+              </Pressable>
+
+              <View style={styles.flashNavRow}>
+                <Text style={[styles.flashCounter, { color: colors.textSecondary }]}>{index + 1}/{cards.length}</Text>
+                <Pressable
+                  onPress={nextCard}
+                  style={[styles.flashNext, { backgroundColor: catColor }]}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.flashNextText}>Next</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         );
@@ -437,7 +454,7 @@ export default function HomeScreen() {
             title="Featured Quizzes"
             onViewAll={() => router.push('/(tabs)/quizzes')}
           />
-          {quizzes.slice(0, 5).map((quiz) => (
+          {quizzes.slice(0, 3).map((quiz) => (
             <Pressable
               key={quiz.id}
               onPress={() => router.push(`/quiz/${quiz.id}`)}
@@ -468,7 +485,7 @@ export default function HomeScreen() {
             title="Learn Videos"
             onViewAll={() => router.push('/(tabs)/learn')}
           />
-          <LearnPreviewRow />
+          <LearnPreviewRow limit={3} />
         </View>
 
         {/* Flashcards */}
@@ -737,7 +754,7 @@ const styles = StyleSheet.create({
   learnDuration: { fontFamily: F.medium, fontSize: 10 },
   learnBody: { flex: 1, gap: 4 },
   learnTitle: { fontFamily: F.semiBold, fontSize: 13, lineHeight: 18 },
-  learnMeta: { fontFamily: F.regular, fontSize: 11 },
+  learnMeta: { fontFamily: F.regular, fontSize: 11, lineHeight: 16 },
   learnTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginTop: 2 },
   learnTagText: { fontFamily: F.semiBold, fontSize: 10, letterSpacing: 0.3 },
 
@@ -793,6 +810,10 @@ const styles = StyleSheet.create({
   flashBadgeText: { fontFamily: F.semiBold, fontSize: 10, letterSpacing: 0.3 },
   flashFront: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
   flashHint: { fontFamily: F.regular, fontSize: 11 },
+  flashNavRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+  flashCounter: { fontFamily: F.medium, fontSize: 11 },
+  flashNext: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+  flashNextText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
 
   // ── Daily Quiz card ────────────────────────────────────────────────────────
   dailyCard: {
