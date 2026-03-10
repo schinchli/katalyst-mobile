@@ -9,7 +9,7 @@ import { useThemeStore } from '@/stores/themeStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { Colors } from '@/constants/Colors';
-import { syncPlatformThemeFromSupabase } from '@/services/themeSyncService';
+import { syncPlatformThemeFromSupabase, syncUserThemeFromSupabase } from '@/services/themeSyncService';
 import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
@@ -101,7 +101,11 @@ export default function RootLayout() {
     if (loaded) {
       // Initialize auth before hiding splash so user is never shown a flash of wrong screen
       initAuth()
-        .then(() => syncPlatformThemeFromSupabase().catch(() => {}))
+        .then(async () => {
+          await syncPlatformThemeFromSupabase().catch(() => {});
+          const userId = useAuthStore.getState().user?.id;
+          if (userId) await syncUserThemeFromSupabase(userId).catch(() => {});
+        })
         .finally(() => SplashScreen.hideAsync());
     }
   }, [loaded]);

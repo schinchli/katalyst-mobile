@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore, LEVEL_NAMES, xpToNextLevel } from '@/stores/progressStore';
 import { useThemeStore, ACCENT_PRESETS, type AccentPreset } from '@/stores/themeStore';
 import { useWebLayout } from '@/hooks/useWebLayout';
+import { saveUserThemeToSupabase } from '@/services/themeSyncService';
 import { F } from '@/constants/Typography';
 
 const BANNER_H = 100;
@@ -65,7 +66,7 @@ function MenuSection({
   );
 }
 
-function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
+function ThemePicker({ colors, userId }: { colors: ReturnType<typeof useThemeColors>; userId?: string | null }) {
   const accent     = useThemeStore((s) => s.accent);
   const darkMode   = useThemeStore((s) => s.darkMode);
   const usePlatform = useThemeStore((s) => s.usePlatform);
@@ -158,6 +159,16 @@ function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) 
         <Text style={[styles.themeHint, { color: colors.textSecondary }]}>
           Platform theme syncs from admin; choose Custom to override on this device.
         </Text>
+
+        {!usePlatform && userId && (
+          <Pressable
+            onPress={() => saveUserThemeToSupabase(userId).catch(() => {})}
+            style={({ pressed }) => [styles.saveThemeBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 }]}
+          >
+            <Feather name="save" size={14} color="#fff" />
+            <Text style={styles.saveThemeText}>Save Theme to Account</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -279,7 +290,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── Brand color picker ── */}
-        <ThemePicker colors={colors} />
+        <ThemePicker colors={colors} userId={user?.id} />
 
         {/* ── Menus ── */}
         <MenuSection title="ACCOUNT"      items={ACCOUNT_ITEMS} colors={colors} />
@@ -542,6 +553,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 14,
     marginTop: -2,
+  },
+  saveThemeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginHorizontal: 14,
+    marginBottom: 12,
+    paddingVertical: 11,
+    borderRadius: 10,
+  },
+  saveThemeText: {
+    fontFamily: F.semiBold,
+    fontSize: 13,
+    color: '#fff',
   },
 
   /* ── Sign out ── */
