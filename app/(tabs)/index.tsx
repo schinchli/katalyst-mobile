@@ -234,19 +234,19 @@ function LearnPreviewRow() {
   );
 }
 
-function FlashcardStrip() {
+function FlashcardStrip({ isWide }: { isWide?: boolean }) {
   const colors = useThemeColors();
   const [flipped, setFlipped]   = useState<Record<string, boolean>>({});
   const categories: FlashcardCategory[] = ['aws-practitioner', 'genai-practitioner'];
 
   return (
-    <View style={styles.flashContainer}>
+    <View style={[styles.flashContainer, isWide && styles.flashContainerRow]}>
       {categories.map((cat) => {
         const label = cat === 'aws-practitioner' ? 'AWS Practitioner' : 'GenAI Practitioner';
         const catColor = cat === 'aws-practitioner' ? colors.primary : colors.warning;
         const cards = flashcards.filter((c) => c.category === cat).slice(0, 5);
         return (
-          <View key={cat} style={styles.flashSection}>
+          <View key={cat} style={[styles.flashSection, isWide && styles.flashSectionWide]}>
             <Text style={[styles.flashSectionTitle, { color: colors.text }]}>{label}</Text>
             <View style={styles.flashColumn}>
               {cards.map((c) => {
@@ -338,28 +338,18 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {/* Progress + Topics + Quiz list: side by side on wide screens */}
-          <View style={styles.desktopBodyRow}>
-            {/* Left col: recent results */}
-            <View style={styles.desktopLeftCol}>
-              <RecentResultsStrip />
-            </View>
-
-            {/* Right col: quiz list */}
-            <View style={styles.desktopRightCol}>
-              <SectionHeader
-                title="Start Practicing"
-                onViewAll={() => router.push('/(tabs)/quizzes')}
-              />
-              {quizzes.slice(0, 5).map((quiz) => (
-                <QuizCard
-                  key={quiz.id}
-                  quiz={quiz}
-                  onPress={() => router.push(`/quiz/${quiz.id}`)}
-                />
-              ))}
-            </View>
-          </View>
+          {/* Quiz list */}
+          <SectionHeader
+            title="Start Practicing"
+            onViewAll={() => router.push('/(tabs)/quizzes')}
+          />
+          {quizzes.slice(0, 5).map((quiz) => (
+            <QuizCard
+              key={quiz.id}
+              quiz={quiz}
+              onPress={() => router.push(`/quiz/${quiz.id}`)}
+            />
+          ))}
 
           <SectionHeader
             title="Learn Videos"
@@ -368,7 +358,7 @@ export default function HomeScreen() {
           <LearnPreviewRow />
 
           <SectionHeader title="Flashcards" />
-          <FlashcardStrip />
+          <FlashcardStrip isWide />
         </ScrollView>
       </SafeAreaView>
     );
@@ -781,7 +771,9 @@ const styles = StyleSheet.create({
 
   // ── Flashcards ────────────────────────────────────────────────────────────
   flashContainer: { gap: 12 },
+  flashContainerRow: { flexDirection: 'row', gap: 16 },
   flashSection: { gap: 8 },
+  flashSectionWide: { flex: 1 },
   flashSectionTitle: { fontFamily: F.bold, fontSize: 14 },
   flashColumn: { gap: 10 },
   flashCard: {

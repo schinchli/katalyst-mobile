@@ -179,21 +179,21 @@ const styles = StyleSheet.create({
   headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
 
   // Stats
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 18 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
   statCard: {
-    flex: 1, minWidth: '45%', minHeight: 118, padding: 15, borderRadius: 14, borderWidth: 1,
-    alignItems: 'center', gap: 6,
+    flex: 1, minWidth: '46%', minHeight: 98, padding: 12, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center', gap: 4,
   },
-  statIcon:  { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontFamily: F.bold,    fontSize: 20 },
+  statIcon:  { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontFamily: F.bold,    fontSize: 18 },
   statLabel: { fontFamily: F.regular, fontSize: 11 },
 
   // Completion
-  completionCard: { padding: 18, borderRadius: 14, borderWidth: 1, marginBottom: 24 },
-  completionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  completionCard: { padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 18 },
+  completionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   completionTitle:  { fontFamily: F.semiBold, fontSize: 14 },
   completionPct:    { fontFamily: F.bold,     fontSize: 14 },
-  trackBg:   { height: 9,  borderRadius: 5, overflow: 'hidden', marginBottom: 9 },
+  trackBg:   { height: 8,  borderRadius: 5, overflow: 'hidden', marginBottom: 8 },
   trackFill: { height: '100%' as any, borderRadius: 5 },
   completionSub: { fontFamily: F.regular, fontSize: 12, textAlign: 'center' },
 
@@ -201,20 +201,17 @@ const styles = StyleSheet.create({
   historySection: { gap: 12 },
   sectionTitle:   { fontFamily: F.bold, fontSize: 16, marginBottom: 4 },
 
-  emptyCard: {
-    padding: 32, borderRadius: 14, borderWidth: 1,
-    alignItems: 'center', gap: 8,
-  },
+  emptyCard: { padding: 26, borderRadius: 12, borderWidth: 1, alignItems: 'center', gap: 8 },
   emptyTitle: { fontFamily: F.semiBold, fontSize: 16, marginTop: 8 },
   emptySub:   { fontFamily: F.regular,  fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  browseBtn:  { marginTop: 8, minHeight: 44, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  browseBtn:  { marginTop: 8, minHeight: 42, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   browseBtnText: { fontFamily: F.semiBold, fontSize: 14, color: '#fff' },
 
   resultRow: {
-    flexDirection: 'row', borderRadius: 14, borderWidth: 1, overflow: 'hidden',
+    flexDirection: 'row', borderRadius: 12, borderWidth: 1, overflow: 'hidden',
   },
   resultAccent: { width: 4 },
-  resultBody:   { flex: 1, padding: 15, gap: 7 },
+  resultBody:   { flex: 1, padding: 12, gap: 6 },
   resultTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   resultTitle:  { fontFamily: F.semiBold, fontSize: 14, flex: 1, marginRight: 8 },
   passBadge: {

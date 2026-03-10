@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import { PLAYLIST, type VideoItem } from '@/data/videos';
 import { WebView } from 'react-native-webview';
+import * as WebBrowser from 'expo-web-browser';
 
 // ─── Playlist data (mirrors web /dashboard/learn) ─────────────────────────────
 
@@ -20,6 +21,12 @@ export default function LearnScreen() {
 
   const openVideo = (video: VideoItem) => setActiveVideo(video);
   const closeVideo = () => setActiveVideo(null);
+  const handleWebError = async () => {
+    if (activeVideo) {
+      closeVideo();
+      await WebBrowser.openBrowserAsync(`https://www.youtube.com/watch?v=${activeVideo.youtubeId}`);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
@@ -44,10 +51,12 @@ export default function LearnScreen() {
           <View style={styles.playerWrap}>
             {activeVideo && (
               <WebView
-                source={{ uri: `https://www.youtube.com/embed/${activeVideo.youtubeId}?playsinline=1&autoplay=1&modestbranding=1` }}
+                source={{ uri: `https://www.youtube.com/embed/${activeVideo.youtubeId}?playsinline=1&autoplay=1&modestbranding=1&rel=0&origin=https://www.youtube.com` }}
                 style={styles.webview}
                 allowsInlineMediaPlayback
                 mediaPlaybackRequiresUserAction={false}
+                allowsFullscreenVideo
+                onError={handleWebError}
               />
             )}
           </View>
