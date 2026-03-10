@@ -413,11 +413,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginHorizontal: 20,
+    marginHorizontal: 0,
     marginBottom: 24,
   },
   statCard: {
-    width: '47%',
+    width: '48%',
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 8,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
 
   /* ── Menu ── */
   menuSection: {
-    marginHorizontal: 20,
+    marginHorizontal: 0,
     marginBottom: 16,
   },
   sectionLabel: {

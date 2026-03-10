@@ -224,8 +224,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0, overflow: 'hidden',
   },
-  thumbGradient: { ...StyleSheet.absoluteFillObject },
-  thumbIcon: { zIndex: 1 },
+  thumbGradient: { ...StyleSheet.absoluteFillObject, opacity: 0.75 },
+  thumbIcon: { zIndex: 2 },
   durationBadge: {
     position: 'absolute', bottom: 5, right: 6,
     backgroundColor: 'rgba(0,0,0,0.72)',

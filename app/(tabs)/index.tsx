@@ -198,7 +198,7 @@ function QuickActionsRow() {
 
 function LearnPreviewRow() {
   const colors = useThemeColors();
-  const items  = PLAYLIST.slice(0, 3);
+  const items  = PLAYLIST.slice(0, 5);
   return (
     <View style={styles.learnWrap}>
       {items.map((v) => (
@@ -232,7 +232,7 @@ function FlashcardStrip() {
   const colors = useThemeColors();
   const [category, setCategory] = useState<FlashcardCategory>('aws-practitioner');
   const [flipped, setFlipped]   = useState<Record<string, boolean>>({});
-  const cards = flashcards.filter((c) => c.category === category).slice(0, 6);
+  const cards = flashcards.filter((c) => c.category === category).slice(0, 5);
   const activeColor = category === 'aws-practitioner' ? colors.primary : colors.warning;
 
   return (
@@ -404,16 +404,19 @@ export default function HomeScreen() {
         </View>
 
         {/* Stats — 2×2 grid on mobile */}
-        <View style={styles.statsGrid}>
-          {STAT_DEFS.map((def) => (
-            <View key={def.label} style={styles.statGridCell}>
-              <StatCard def={def} progress={progress} />
-            </View>
-          ))}
+        <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <SectionHeader title="Your Stats" />
+          <View style={styles.statsGrid}>
+            {STAT_DEFS.map((def) => (
+              <View key={def.label} style={styles.statGridCell}>
+                <StatCard def={def} progress={progress} />
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* Daily Quiz Card */}
-        <View style={styles.sectionGap}>
+        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <SectionHeader title="Daily Quiz" />
           {(() => {
             const dailyQuiz = getDailyQuiz(quizzes);
@@ -449,17 +452,17 @@ export default function HomeScreen() {
         </View>
 
         {/* Recent Results */}
-        <View style={styles.sectionGap}>
+        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <RecentResultsStrip />
         </View>
 
         {/* Quizzes preview */}
-        <View style={styles.sectionGap}>
+        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <SectionHeader
             title="Featured Quizzes"
             onViewAll={() => router.push('/(tabs)/quizzes')}
           />
-          {quizzes.slice(0, 4).map((quiz) => (
+          {quizzes.slice(0, 5).map((quiz) => (
             <QuizCard
               key={quiz.id}
               quiz={quiz}
@@ -469,7 +472,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Learn preview */}
-        <View style={styles.sectionGap}>
+        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <SectionHeader
             title="Learn Videos"
             onViewAll={() => router.push('/(tabs)/learn')}
@@ -478,7 +481,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Flashcards */}
-        <View style={styles.sectionGap}>
+        <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <SectionHeader title="Flashcards" />
           <FlashcardStrip />
         </View>
@@ -698,6 +701,11 @@ const styles = StyleSheet.create({
   // ── Section header ─────────────────────────────────────────────────────────
   sectionGap: {
     marginTop: 22,
+  },
+  sectionCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
   },
   sectionHeader: {
     flexDirection: 'row',
