@@ -52,9 +52,11 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentConfig> = {
 interface ThemeState {
   accent:       AccentPreset;
   darkMode:     boolean;
+  usePlatform:  boolean;
   setAccent:    (preset: AccentPreset) => void;
   toggleDark:   () => void;
   setDarkMode:  (value: boolean) => void;
+  setUsePlatform: (value: boolean) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -62,9 +64,11 @@ export const useThemeStore = create<ThemeState>()(
     (set) => ({
       accent:      'aurora',
       darkMode:    false,
+      usePlatform: true,
       setAccent:   (accent)  => set({ accent }),
       toggleDark:  ()        => set((s) => ({ darkMode: !s.darkMode })),
       setDarkMode: (darkMode) => set({ darkMode }),
+      setUsePlatform: (usePlatform) => set({ usePlatform }),
     }),
     {
       name:    'theme-store',

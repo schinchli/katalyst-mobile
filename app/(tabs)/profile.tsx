@@ -68,6 +68,9 @@ function MenuSection({
 function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
   const accent     = useThemeStore((s) => s.accent);
   const darkMode   = useThemeStore((s) => s.darkMode);
+  const usePlatform = useThemeStore((s) => s.usePlatform);
+  const setAccent  = useThemeStore((s) => s.setAccent);
+  const setUsePlatform = useThemeStore((s) => s.setUsePlatform);
   const toggleDark = useThemeStore((s) => s.toggleDark);
   const presetKeys: AccentPreset[] = ['aurora', 'sand', 'midnight'];
   const presets = presetKeys.map((k) => [k, ACCENT_PRESETS[k]]) as [AccentPreset, typeof ACCENT_PRESETS[AccentPreset]][];
@@ -94,7 +97,29 @@ function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) 
           </View>
         </Pressable>
 
-        {/* Accent color grid (admin-managed global presets) */}
+        {/* Platform vs custom */}
+        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingTop: 12 }}>
+          <Pressable
+            onPress={() => setUsePlatform(true)}
+            style={[
+              styles.modeBtn,
+              { borderColor: usePlatform ? colors.primary : colors.surfaceBorder, backgroundColor: usePlatform ? colors.primaryLight : 'transparent' },
+            ]}
+          >
+            <Text style={[styles.modeBtnText, { color: colors.text }]}>Use Platform</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setUsePlatform(false)}
+            style={[
+              styles.modeBtn,
+              { borderColor: !usePlatform ? colors.primary : colors.surfaceBorder, backgroundColor: !usePlatform ? colors.primaryLight : 'transparent' },
+            ]}
+          >
+            <Text style={[styles.modeBtnText, { color: colors.text }]}>Custom</Text>
+          </Pressable>
+        </View>
+
+        {/* Accent color grid */}
         <View style={styles.themeGrid}>
           {presets.map(([key, cfg]) => {
             const isActive = accent === key;
@@ -121,12 +146,17 @@ function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) 
                 <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
                   {cfg.label}
                 </Text>
+                {!usePlatform && (
+                  <Pressable onPress={() => setAccent(key)} accessibilityRole="button">
+                    <Feather name={isActive ? 'check' : 'plus'} size={14} color={isActive ? cfg.primary : colors.textSecondary} />
+                  </Pressable>
+                )}
               </View>
             );
           })}
         </View>
         <Text style={[styles.themeHint, { color: colors.textSecondary }]}>
-          Theme pack is controlled by admin and synced from Supabase.
+          Platform theme syncs from admin; choose Custom to override on this device.
         </Text>
       </View>
     </View>
@@ -497,6 +527,14 @@ const styles = StyleSheet.create({
     fontFamily: F.medium,
     fontSize: 12,
   },
+  modeBtn: {
+    flex: 1,
+    borderWidth: 1.2,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  modeBtnText: { fontFamily: F.semiBold, fontSize: 12 },
   themeHint: {
     fontFamily: F.regular,
     fontSize: 11,

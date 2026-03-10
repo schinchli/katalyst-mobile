@@ -24,7 +24,7 @@ export async function syncPlatformThemeFromSupabase(): Promise<void> {
 
   const cfg = data.value as PlatformThemeConfig;
   const nextAccent = PRESET_TO_ACCENT[cfg.presetId ?? ''] ?? 'aurora';
-  const { accent, setAccent } = useThemeStore.getState();
+  const { accent, usePlatform, setAccent } = useThemeStore.getState();
+  if (!usePlatform) return;
   if (accent !== nextAccent) setAccent(nextAccent);
 }
-
