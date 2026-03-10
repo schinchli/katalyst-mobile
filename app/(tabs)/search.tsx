@@ -190,7 +190,7 @@ function BookmarkCard({ entry, onRemove }: { entry: QuestionEntry; onRemove: () 
             style={[styles.removeBtn, { backgroundColor: '#EA545518' }]}
           >
             <Feather name="bookmark" size={13} color="#EA5455" />
-            <Text style={styles.removeBtnText}>Remove</Text>
+            <Text style={styles.removeBtnText} numberOfLines={1}>Remove</Text>
           </Pressable>
         </View>
       </View>
@@ -238,7 +238,7 @@ export default function SearchScreen() {
               ]}
             >
               <Feather name={icon} size={15} color={active ? colors.primary : colors.textSecondary} />
-              <Text style={[styles.segmentText, { color: active ? colors.primary : colors.textSecondary }]}>
+              <Text style={[styles.segmentText, { color: active ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
                 {label}
               </Text>
             </Pressable>
@@ -396,8 +396,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
     paddingVertical: 13,
-    gap: 6,
+    gap: 7,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
@@ -406,24 +407,24 @@ const styles = StyleSheet.create({
   // ── Search bar ──
   searchBarWrap: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    height: 44,
+    paddingHorizontal: 13,
+    height: 48,
   },
   searchIcon: { marginRight: 8 },
   searchInput: { flex: 1, fontSize: 15, paddingVertical: 0 },
 
-  scroll:       { padding: 16, paddingBottom: 48 },
+  scroll:       { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 52 },
   resultsCount: { fontFamily: F.medium, fontSize: 13, marginBottom: 12 },
 
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   sectionHeaderSpaced: { marginTop: 20 },
   sectionIconWrap: {
     width: 26, height: 26, borderRadius: 7,
@@ -434,42 +435,42 @@ const styles = StyleSheet.create({
 
   hitRow: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: 10, borderWidth: 1,
-    padding: 12, marginBottom: 8, gap: 12,
+    borderRadius: 12, borderWidth: 1,
+    padding: 13, marginBottom: 10, gap: 12,
   },
   hitIconWrap: {
-    width: 36, height: 36, borderRadius: 9,
+    width: 38, height: 38, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  hitBody:  { flex: 1, gap: 2 },
+  hitBody:  { flex: 1, gap: 3 },
   hitTitle: { fontFamily: F.medium, fontSize: 14, lineHeight: 20 },
   hitSub:   { fontFamily: F.regular, fontSize: 12, lineHeight: 16 },
-  diffBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, flexShrink: 0 },
+  diffBadge: { minHeight: 24, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 7, flexShrink: 0, justifyContent: 'center' },
   diffBadgeText: { fontFamily: F.semiBold, fontSize: 11 },
 
   browseLabel: { fontFamily: F.bold, fontSize: 16, marginTop: 20, marginBottom: 10 },
 
   // ── Bookmarks ──
-  pageHeader:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  pageHeader:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18 },
   pageTitle:      { fontFamily: F.bold, fontSize: 22 },
   countBadge:     { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   countBadgeText: { fontFamily: F.bold, fontSize: 13 },
 
   bookmarkCard: {
-    flexDirection: 'row', borderRadius: 12, borderWidth: 1,
-    marginBottom: 12, overflow: 'hidden',
+    flexDirection: 'row', borderRadius: 14, borderWidth: 1,
+    marginBottom: 13, overflow: 'hidden',
     shadowColor: '#000', shadowOpacity: 0.05,
     shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   accentBar:   { width: 4, flexShrink: 0 },
-  bmContent:   { flex: 1, padding: 14, gap: 8 },
+  bmContent:   { flex: 1, padding: 15, gap: 9 },
   bmQuizRow:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
   bmIconWrap:  { width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   bmQuizName:  { fontFamily: F.medium, fontSize: 12, flex: 1 },
   bmText:      { fontFamily: F.medium, fontSize: 14, lineHeight: 21 },
   bmFooter:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   bmHint:      { fontFamily: F.semiBold, fontSize: 12 },
-  removeBtn:   { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  removeBtn:   { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 28, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 7 },
   removeBtnText: { fontFamily: F.semiBold, fontSize: 11, color: '#EA5455' },
 
   // ── Empty state ──
@@ -477,6 +478,6 @@ const styles = StyleSheet.create({
   emptyIconWrap:{ width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle:   { fontFamily: F.bold, fontSize: 18, textAlign: 'center' },
   emptySubtitle:{ fontFamily: F.regular, fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
+  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, minHeight: 46, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
   emptyBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 14 },
 });

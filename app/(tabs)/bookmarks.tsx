@@ -92,7 +92,7 @@ function BookmarkCard({
             style={[styles.removeBtn, { backgroundColor: '#EA545518' }]}
           >
             <Feather name="bookmark" size={14} color="#EA5455" />
-            <Text style={styles.removeBtnText}>Remove</Text>
+            <Text style={styles.removeBtnText} numberOfLines={1}>Remove</Text>
           </Pressable>
         </View>
       </View>
@@ -177,13 +177,13 @@ export default function BookmarksScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll:   { padding: 20, paddingBottom: 48 },
+  scroll:   { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 52 },
 
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   title: {
     fontFamily: F.bold,
@@ -202,9 +202,9 @@ const styles = StyleSheet.create({
   // ── Card ───────────────────────────────────────────────────────────────────
   card: {
     flexDirection: 'row',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 13,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    padding: 14,
-    gap: 8,
+    padding: 15,
+    gap: 9,
   },
 
   quizRow: {
@@ -241,9 +241,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   diffBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    minHeight: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 7,
+    justifyContent: 'center',
   },
   diffBadgeText: {
     fontFamily: F.semiBold,
@@ -270,9 +272,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
+    minHeight: 28,
+    paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 7,
   },
   removeBtnText: {
     fontFamily: F.semiBold,
@@ -311,9 +314,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 8,
+    minHeight: 46,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   emptyBtnText: {
     fontFamily: F.semiBold,

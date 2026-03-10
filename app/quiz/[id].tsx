@@ -348,7 +348,7 @@ export default function QuizScreen() {
                 style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.warning, opacity: pressed ? 0.88 : 1 }]}
               >
                 <Feather name="lock" size={18} color="#fff" />
-                <Text style={s.actionBtnText}>Unlock — ₹{quiz.price ?? 149}</Text>
+                <Text style={s.actionBtnText} numberOfLines={1}>Unlock — ₹{quiz.price ?? 149}</Text>
               </Pressable>
             ) : (
               <Pressable
@@ -366,7 +366,7 @@ export default function QuizScreen() {
                 style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
               >
                 <Feather name="play-circle" size={18} color="#fff" />
-                <Text style={s.actionBtnText}>Start Practice</Text>
+                <Text style={s.actionBtnText} numberOfLines={1}>Start Practice</Text>
               </Pressable>
             )}
 
@@ -379,7 +379,7 @@ export default function QuizScreen() {
               style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
             >
               <Feather name="layers" size={18} color="#fff" />
-              <Text style={s.actionBtnText}>Study with Flashcards</Text>
+              <Text style={s.actionBtnText} numberOfLines={1}>Study with Flashcards</Text>
             </Pressable>
           </View>
 
@@ -824,9 +824,9 @@ const s = StyleSheet.create({
   diffChipText: { fontFamily: F.semiBold, fontSize: 11 },
 
   // Metadata boxes
-  metaRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  metaRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
   metaBox: {
-    flex: 1, alignItems: 'center', padding: 14, borderRadius: 10, borderWidth: 1,
+    flex: 1, alignItems: 'center', minHeight: 112, padding: 14, borderRadius: 12, borderWidth: 1,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 }, elevation: 1,
   },
@@ -839,7 +839,7 @@ const s = StyleSheet.create({
 
   // What's included card
   featuresCard: {
-    borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 14,
+    borderRadius: 14, borderWidth: 1, padding: 16, marginBottom: 16,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 }, elevation: 1,
   },
@@ -851,21 +851,28 @@ const s = StyleSheet.create({
   // Practice note
   practiceNote: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 11, paddingHorizontal: 14, borderRadius: 10, marginBottom: 16,
+    gap: 8, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, marginBottom: 16,
   },
   practiceText: { fontFamily: F.semiBold, fontSize: 13, flexShrink: 1 },
 
   // Action buttons row (Start Practice + Study with Flashcards side by side)
   actionRow: {
-    flexDirection: 'row', gap: 10,
+    flexDirection: 'column',
+    gap: 12,
   },
   actionBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, height: 48, borderRadius: 10,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 54,
+    borderRadius: 14,
+    paddingHorizontal: 16,
     shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
   },
-  actionBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 13 },
+  actionBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 14, textAlign: 'center', flexShrink: 1 },
 
   // Flashcard mode header badge
   flashModeBadge: {
@@ -1007,11 +1014,11 @@ const s = StyleSheet.create({
   // ── Lifeline bar ──
   lifelineRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
-    gap: 8, paddingHorizontal: 16, paddingBottom: 8,
+    gap: 9, paddingHorizontal: 16, paddingBottom: 10,
   },
   lifelineBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    minHeight: 38, borderWidth: 1.2, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 11,
   },
   lifelineBtnText:  { fontFamily: F.medium,   fontSize: 12 },
   lifelineSymbol:   { fontFamily: F.bold,     fontSize: 14 },
@@ -1024,10 +1031,10 @@ const s = StyleSheet.create({
   // ── Bottom nav ──
   bottomNav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, gap: 12, borderTopWidth: 1, paddingBottom: 32,
+    paddingHorizontal: 16, paddingTop: 14, gap: 12, borderTopWidth: 1, paddingBottom: 28,
   },
   navBtn: {
-    height: 46, paddingHorizontal: 20, borderRadius: 10,
+    height: 50, paddingHorizontal: 18, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center', minWidth: 140,
   },
   navBtnOutline: { borderWidth: 1 },

@@ -256,51 +256,51 @@ export default function LearnScreen() {
 
 const styles = StyleSheet.create({
   safe:   { flex: 1 },
-  scroll: { paddingBottom: 40, paddingHorizontal: 16, paddingTop: 16 },
+  scroll: { paddingBottom: 52, paddingHorizontal: 16, paddingTop: 16 },
 
   header: {
-    paddingHorizontal: 20, paddingVertical: 16,
+    paddingHorizontal: 20, paddingVertical: 17,
     borderBottomWidth: 1,
   },
   headerTitle: { fontFamily: F.bold,    fontSize: 22 },
   headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
 
   card: {
-    borderRadius: 12, borderWidth: 1, marginBottom: 14,
+    borderRadius: 14, borderWidth: 1, marginBottom: 14,
     overflow: 'hidden', flexDirection: 'row',
   },
   cardAccent: { width: 4 },
-  cardBody:   { flex: 1, padding: 14, gap: 10 },
+  cardBody:   { flex: 1, padding: 15, gap: 10 },
 
   cardTop: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
 
   thumb: {
-    width: 90, height: 62, borderRadius: 8,
+    width: 96, height: 66, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0, overflow: 'hidden',
   },
   thumbGradient: { ...StyleSheet.absoluteFillObject },
   thumbIcon: { zIndex: 1 },
   durationBadge: {
-    position: 'absolute', bottom: 4, right: 5,
+    position: 'absolute', bottom: 5, right: 6,
     backgroundColor: 'rgba(0,0,0,0.72)',
-    borderRadius: 3, paddingHorizontal: 4, paddingVertical: 1,
+    borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1,
   },
   durationText: { fontFamily: F.bold, fontSize: 10, color: '#fff' },
 
-  cardInfo:  { flex: 1, gap: 4 },
+  cardInfo:  { flex: 1, gap: 5 },
   tagBadge:  { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5 },
   tagText:   { fontFamily: F.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
   cardTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
   cardMeta:  { fontFamily: F.regular,  fontSize: 11 },
 
-  expandRow:   { gap: 8 },
+  expandRow:   { gap: 9 },
   description: { fontFamily: F.regular, fontSize: 13, lineHeight: 20 },
 
-  chaptersBox: { borderTopWidth: 1, paddingTop: 10, gap: 6 },
+  chaptersBox: { borderTopWidth: 1, paddingTop: 11, gap: 7 },
   chaptersTitle: { fontFamily: F.semiBold, fontSize: 13, marginBottom: 2 },
   chapterRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  chapterNum: { width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  chapterNum: { width: 30, height: 30, borderRadius: 7, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   chapterNumText: { fontFamily: F.bold, fontSize: 11 },
   chapterLabel: { fontFamily: F.regular, fontSize: 13, flex: 1 },
   chapterTime: { fontFamily: F.semiBold, fontSize: 11, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
 
   watchBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, paddingVertical: 9, borderRadius: 8,
+    gap: 8, minHeight: 42, paddingVertical: 9, borderRadius: 10,
   },
   watchBtnText: { fontFamily: F.semiBold, fontSize: 13, color: '#fff' },
 

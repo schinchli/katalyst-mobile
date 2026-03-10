@@ -88,13 +88,13 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
-    marginBottom: 10,
+    marginBottom: 12,
     overflow: 'hidden',
     shadowColor: '#4B465C',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    shadowOpacity: 0.09,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   cardPressed: { opacity: 0.88, transform: [{ scale: 0.99 }] },
 
@@ -104,24 +104,24 @@ const s = StyleSheet.create({
   },
 
   iconWrap: {
-    width: 46,
-    height: 46,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 14,
+    marginLeft: 15,
     flexShrink: 0,
   },
 
   content: {
     flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 13,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
   },
 
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 6,
     marginBottom: 3,
   },
@@ -135,14 +135,14 @@ const s = StyleSheet.create({
   desc: {
     fontFamily: F.regular,
     fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 8,
+    lineHeight: 18,
+    marginBottom: 9,
   },
 
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 9,
   },
   diffBadge: {
     flexDirection: 'row',
@@ -172,12 +172,12 @@ const s = StyleSheet.create({
   },
 
   chevronWrap: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 15,
     flexShrink: 0,
   },
 });

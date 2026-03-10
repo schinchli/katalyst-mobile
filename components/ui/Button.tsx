@@ -13,7 +13,7 @@ interface ButtonProps {
   style?: ViewStyle;
 }
 
-const HEIGHT:    Record<string, number> = { sm: 40, md: 48, lg: 52 };
+const HEIGHT:    Record<string, number> = { sm: 42, md: 50, lg: 54 };
 const FONT_SIZE: Record<string, number> = { sm: 13, md: 15, lg: 16 };
 
 export function Button({
@@ -62,19 +62,19 @@ export function Button({
         />
       ) : null}
       {loading && <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primaryText} size="small" />}
-      <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]}>{title}</Text>
+      <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]} numberOfLines={1}>{title}</Text>
     </Pressable>
   );
 }
 
 const s = StyleSheet.create({
   base: {
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
   },
   label: {
     fontFamily: F.semiBold,

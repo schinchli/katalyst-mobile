@@ -89,15 +89,19 @@ export function QuestionView({
               ]}
               accessibilityRole="button"
             >
-              <Text style={[s.optionLabel, { color: labelColor }]}>{letter}.</Text>
+              <View style={[s.optionLabelPill, { backgroundColor: isSelected ? colors.primaryLight : colors.background }]}>
+                <Text style={[s.optionLabel, { color: labelColor }]}>{letter}</Text>
+              </View>
               <Text style={[s.optionText, { color: colors.text }]}>{option.text}</Text>
 
-              {showResult && isCorrect && (
-                <Feather name="check-circle" size={18} color={SUCCESS_BORDER} />
-              )}
-              {showResult && isSelected && !isCorrect && (
-                <Feather name="x-circle" size={18} color={ERROR_BORDER} />
-              )}
+              <View style={s.optionStatusSlot}>
+                {showResult && isCorrect && (
+                  <Feather name="check-circle" size={18} color={SUCCESS_BORDER} />
+                )}
+                {showResult && isSelected && !isCorrect && (
+                  <Feather name="x-circle" size={18} color={ERROR_BORDER} />
+                )}
+              </View>
             </Pressable>
           );
         })}
@@ -147,20 +151,37 @@ const s = StyleSheet.create({
   optionsList: { gap: 10 },
   option: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 16,
+    alignItems: 'flex-start',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    gap: 10,
+    gap: 12,
     shadowColor: '#4B465C',
     shadowOpacity: 0.04,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
   },
-  optionLabel: { fontFamily: F.bold, fontSize: 15, minWidth: 22 },
-  optionText:  { fontFamily: F.medium, fontSize: 15, lineHeight: 22, flex: 1 },
+  optionLabelPill: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+    flexShrink: 0,
+  },
+  optionLabel: { fontFamily: F.bold, fontSize: 14 },
+  optionText:  { fontFamily: F.medium, fontSize: 15, lineHeight: 22, flex: 1, paddingTop: 2 },
+  optionStatusSlot: {
+    width: 20,
+    minHeight: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+    flexShrink: 0,
+  },
 
   explanationBox: {
     padding: 16,

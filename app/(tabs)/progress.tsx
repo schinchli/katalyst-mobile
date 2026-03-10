@@ -169,52 +169,52 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   safe:   { flex: 1 },
-  scroll: { paddingBottom: 40, paddingHorizontal: 16, paddingTop: 16 },
+  scroll: { paddingBottom: 52, paddingHorizontal: 16, paddingTop: 16 },
 
   header: {
-    paddingHorizontal: 20, paddingVertical: 16,
+    paddingHorizontal: 20, paddingVertical: 17,
     borderBottomWidth: 1,
   },
   headerTitle: { fontFamily: F.bold,    fontSize: 22 },
   headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
 
   // Stats
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 18 },
   statCard: {
-    flex: 1, minWidth: '45%', padding: 14, borderRadius: 12, borderWidth: 1,
+    flex: 1, minWidth: '45%', minHeight: 118, padding: 15, borderRadius: 14, borderWidth: 1,
     alignItems: 'center', gap: 6,
   },
-  statIcon:  { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  statIcon:  { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   statValue: { fontFamily: F.bold,    fontSize: 20 },
   statLabel: { fontFamily: F.regular, fontSize: 11 },
 
   // Completion
-  completionCard: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 24 },
+  completionCard: { padding: 18, borderRadius: 14, borderWidth: 1, marginBottom: 24 },
   completionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   completionTitle:  { fontFamily: F.semiBold, fontSize: 14 },
   completionPct:    { fontFamily: F.bold,     fontSize: 14 },
-  trackBg:   { height: 8,  borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
-  trackFill: { height: '100%' as any, borderRadius: 4 },
+  trackBg:   { height: 9,  borderRadius: 5, overflow: 'hidden', marginBottom: 9 },
+  trackFill: { height: '100%' as any, borderRadius: 5 },
   completionSub: { fontFamily: F.regular, fontSize: 12, textAlign: 'center' },
 
   // History
-  historySection: { gap: 10 },
+  historySection: { gap: 12 },
   sectionTitle:   { fontFamily: F.bold, fontSize: 16, marginBottom: 4 },
 
   emptyCard: {
-    padding: 32, borderRadius: 12, borderWidth: 1,
+    padding: 32, borderRadius: 14, borderWidth: 1,
     alignItems: 'center', gap: 8,
   },
   emptyTitle: { fontFamily: F.semiBold, fontSize: 16, marginTop: 8 },
   emptySub:   { fontFamily: F.regular,  fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  browseBtn:  { marginTop: 8, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  browseBtn:  { marginTop: 8, minHeight: 44, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   browseBtnText: { fontFamily: F.semiBold, fontSize: 14, color: '#fff' },
 
   resultRow: {
-    flexDirection: 'row', borderRadius: 12, borderWidth: 1, overflow: 'hidden',
+    flexDirection: 'row', borderRadius: 14, borderWidth: 1, overflow: 'hidden',
   },
   resultAccent: { width: 4 },
-  resultBody:   { flex: 1, padding: 14, gap: 6 },
+  resultBody:   { flex: 1, padding: 15, gap: 7 },
   resultTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   resultTitle:  { fontFamily: F.semiBold, fontSize: 14, flex: 1, marginRight: 8 },
   passBadge: {

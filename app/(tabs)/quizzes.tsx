@@ -212,34 +212,35 @@ const s = StyleSheet.create({
   // ── Header ──
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 8,
+    paddingTop: 18,
+    paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 12,
   },
   screenTitle: { fontFamily: F.bold, fontSize: 22, lineHeight: 28 },
-  headerStatsRow: { flexDirection: 'row', gap: 6 },
+  headerStatsRow: { flexDirection: 'row', gap: 8 },
   headerStat: {
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    minWidth: 48,
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 11,
+    minWidth: 52,
   },
   headerStatVal:   { fontFamily: F.bold,    fontSize: 16, lineHeight: 20 },
   headerStatLabel: { fontFamily: F.regular, fontSize: 10, marginTop: 1 },
 
   // ── Difficulty row ──
-  diffRow:     { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 8 },
-  diffPill:    { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  diffRow:     { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 9 },
+  diffPill:    { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 36, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   diffPillText:{ fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Pills ──
   pillScroll: { flexGrow: 0 },
   pillRow:    { paddingHorizontal: 20, paddingVertical: 10, gap: 8, flexDirection: 'row' },
-  pill:       { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  pill:       { minHeight: 34, paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, borderWidth: 1, justifyContent: 'center' },
   pillText:   { fontFamily: F.semiBold, fontSize: 13 },
 
   // ── Result count ──
@@ -247,40 +248,40 @@ const s = StyleSheet.create({
     fontFamily: F.regular,
     fontSize: 12,
     paddingHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 10,
   },
 
   // ── Grid ──
-  grid: { paddingHorizontal: 16, paddingBottom: 40 },
-  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  grid: { paddingHorizontal: 18, paddingBottom: 48 },
+  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridRowDesktop: { gap: 16 },
-  gridCell: { width: '47.5%', alignSelf: 'stretch' },
+  gridCell: { width: '47%', alignSelf: 'stretch' },
   gridCellDesktop: { width: '30%' },
 
   // ── Course card ──
   courseCard: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
     shadowColor: '#4B465C',
-    shadowOpacity: 0.10,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.11,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   cardPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
 
   cardBanner: {
-    height: 80,
+    height: 84,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   cardIconCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -307,8 +308,8 @@ const s = StyleSheet.create({
   },
   completedBadgeText: { fontFamily: F.semiBold, fontSize: 10 },
 
-  cardBody: { padding: 12, flex: 1, justifyContent: 'space-between' },
-  cardTop:  { gap: 6 },
+  cardBody: { padding: 14, flex: 1, justifyContent: 'space-between' },
+  cardTop:  { gap: 7 },
 
   catChip: {
     alignSelf: 'flex-start',
@@ -320,22 +321,22 @@ const s = StyleSheet.create({
 
   cardTitle: {
     fontFamily: F.bold,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
   },
 
   cardDesc: {
     fontFamily: F.regular,
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 19,
   },
 
   startBtn: {
-    height: 36,
-    borderRadius: 8,
+    height: 40,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
+    marginTop: 4,
   },
   startBtnText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
 

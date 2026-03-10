@@ -112,11 +112,11 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
                 style={({ pressed, hovered }: any) => ({
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 12,
                   paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                  marginBottom: 2,
+                  paddingVertical: 11,
+                  borderRadius: 12,
+                  marginBottom: 4,
                   backgroundColor: isFocused
                     ? colors.primary
                     : (hovered || pressed)
@@ -136,6 +136,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
                     color: isFocused ? '#FFFFFF' : colors.text,
                     flex: 1,
                   }}
+                  numberOfLines={1}
                 >
                   {cfg.label}
                 </Text>
@@ -168,9 +169,9 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         backgroundColor: colors.surface,
         borderTopWidth: 1,
         borderTopColor: colors.surfaceBorder,
-        height: 90,
-        paddingBottom: 26,
-        paddingTop: 6,
+        height: 92,
+        paddingBottom: 24,
+        paddingTop: 8,
         shadowColor: '#4B465C',
         shadowOpacity: 0.08,
         shadowRadius: 12,
@@ -184,7 +185,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
           <Pressable
             key={route.key}
             onPress={() => navigate(route, isFocused)}
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 6 }}
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 7 }}
           >
             {/* Active indicator bar */}
             {isFocused && (
@@ -200,9 +201,9 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
             )}
             {/* Icon with pill background when active */}
             <View style={{
-              width: 40,
-              height: 30,
-              borderRadius: 10,
+              width: 44,
+              height: 32,
+              borderRadius: 11,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isFocused ? colors.primaryLight : 'transparent',
@@ -216,10 +217,11 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
             <Text
               style={{
                 fontFamily: isFocused ? F.semiBold : F.regular,
-                fontSize: 10,
+                fontSize: 11,
                 color: isFocused ? colors.primary : colors.textSecondary,
-                marginTop: 1,
+                marginTop: 2,
               }}
+              numberOfLines={1}
             >
               {cfg.label}
             </Text>

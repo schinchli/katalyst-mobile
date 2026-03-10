@@ -71,7 +71,7 @@ function GreetingHeader({ userName, coins, level, badges }: { userName: string; 
           style={({ pressed }) => [styles.ctaButton, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
         >
           <Feather name="play" size={15} color="#FFFFFF" />
-          <Text style={styles.ctaButtonText}>Start</Text>
+          <Text style={styles.ctaButtonText} numberOfLines={1}>Start</Text>
         </Pressable>
       </View>
     </View>
@@ -186,7 +186,7 @@ function QuickActionsRow() {
           <View style={[styles.quickIconWrap, { backgroundColor: a.color + '18' }]}>
             <Feather name={a.icon as any} size={20} color={a.color} />
           </View>
-          <Text style={[styles.quickBtnLabel, { color: colors.text }]}>{a.label}</Text>
+          <Text style={[styles.quickBtnLabel, { color: colors.text }]} numberOfLines={1}>{a.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -360,25 +360,26 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    padding: 20,
-    paddingBottom: 48,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 52,
   },
 
   // ── Header card ────────────────────────────────────────────────────────────
   headerCard: {
-    borderRadius: 12,
-    marginBottom: 20,
+    borderRadius: 16,
+    marginBottom: 22,
     overflow: 'hidden',
   },
   headerAccentStrip: {
     height: 4,
   },
   headerInner: {
-    padding: 16,
+    padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 14,
   },
   headerLeft: {
     flex: 1,
@@ -420,10 +421,11 @@ const styles = StyleSheet.create({
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 8,
+    gap: 7,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 11,
     shadowColor: '#5E50EE',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.45,
@@ -466,16 +468,18 @@ const styles = StyleSheet.create({
   // ── Quick actions row ───────────────────────────────────────────────────────
   quickRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     marginBottom: 0,
   },
   quickBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 9,
+    minHeight: 110,
     paddingVertical: 16,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    borderRadius: 14,
     borderWidth: 1,
     shadowColor: '#4B465C',
     shadowOpacity: 0.06,
@@ -484,13 +488,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   quickIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 42,
+    height: 42,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickBtnLabel: { fontFamily: F.semiBold, fontSize: 12 },
+  quickBtnLabel: { fontFamily: F.semiBold, fontSize: 12, lineHeight: 16, textAlign: 'center' },
 
   // ── Stats (mobile 2×2 grid) ────────────────────────────────────────────────
   statsGrid: {
@@ -503,13 +507,13 @@ const styles = StyleSheet.create({
     width: '47.5%',
   },
   statCard: {
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
   },
   statIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -528,7 +532,7 @@ const styles = StyleSheet.create({
 
   // ── Recent results strip ───────────────────────────────────────────────────
   recentCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   recentRow: {
@@ -536,7 +540,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingVertical: 14,
     gap: 8,
   },
   recentTitle: {
@@ -556,13 +560,13 @@ const styles = StyleSheet.create({
 
   // ── Section header ─────────────────────────────────────────────────────────
   sectionGap: {
-    marginTop: 20,
+    marginTop: 22,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 13,
   },
   sectionAccentBar: {
     width: 3,
@@ -580,7 +584,7 @@ const styles = StyleSheet.create({
 
   // ── Daily Quiz card ────────────────────────────────────────────────────────
   dailyCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   dailyAccent: {
@@ -589,7 +593,7 @@ const styles = StyleSheet.create({
 
   // Daily card internals
   dailyBody: {
-    padding: 16,
+    padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -622,10 +626,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dailyStartBtn: {
-    borderRadius: 8,
+    borderRadius: 10,
+    minHeight: 40,
     paddingHorizontal: 14,
     paddingVertical: 9,
     flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dailyStartText: {
     fontFamily: F.semiBold,
