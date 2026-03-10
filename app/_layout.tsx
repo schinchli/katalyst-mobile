@@ -9,6 +9,7 @@ import { useThemeStore } from '@/stores/themeStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { Colors } from '@/constants/Colors';
+import { syncPlatformThemeFromSupabase } from '@/services/themeSyncService';
 import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
@@ -99,7 +100,9 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       // Initialize auth before hiding splash so user is never shown a flash of wrong screen
-      initAuth().finally(() => SplashScreen.hideAsync());
+      initAuth()
+        .then(() => syncPlatformThemeFromSupabase().catch(() => {}))
+        .finally(() => SplashScreen.hideAsync());
     }
   }, [loaded]);
 

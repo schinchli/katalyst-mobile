@@ -118,6 +118,10 @@ export interface Badge {
 }
 
 export type QuizCategory =
+  | 'genai'
+  | 'compute'
+  | 'networking'
+  | 'databases'
   | 'bedrock'
   | 'rag'
   | 'agents'

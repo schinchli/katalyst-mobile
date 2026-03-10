@@ -68,9 +68,8 @@ function MenuSection({
 function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
   const accent     = useThemeStore((s) => s.accent);
   const darkMode   = useThemeStore((s) => s.darkMode);
-  const setAccent  = useThemeStore((s) => s.setAccent);
   const toggleDark = useThemeStore((s) => s.toggleDark);
-  const presetKeys: AccentPreset[] = ['aurora', 'ocean', 'forest', 'sunset', 'midnight', 'sand', 'rose', 'slate', 'indigo', 'amber', 'emerald'];
+  const presetKeys: AccentPreset[] = ['aurora', 'sand', 'midnight'];
   const presets = presetKeys.map((k) => [k, ACCENT_PRESETS[k]]) as [AccentPreset, typeof ACCENT_PRESETS[AccentPreset]][];
 
   return (
@@ -95,21 +94,19 @@ function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) 
           </View>
         </Pressable>
 
-        {/* Accent color grid */}
+        {/* Accent color grid (admin-managed global presets) */}
         <View style={styles.themeGrid}>
           {presets.map(([key, cfg]) => {
             const isActive = accent === key;
             return (
-              <Pressable
+              <View
                 key={key}
-                onPress={() => setAccent(key)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isActive }}
-                style={({ pressed }) => [
+                style={[
                   styles.themeBtn,
                   { borderColor: isActive ? cfg.primary : colors.surfaceBorder,
                     backgroundColor: isActive ? cfg.primary + '18' : 'transparent',
-                    opacity: pressed ? 0.8 : 1,
                   },
                 ]}
               >
@@ -124,10 +121,13 @@ function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) 
                 <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
                   {cfg.label}
                 </Text>
-              </Pressable>
+              </View>
             );
           })}
         </View>
+        <Text style={[styles.themeHint, { color: colors.textSecondary }]}>
+          Theme pack is controlled by admin and synced from Supabase.
+        </Text>
       </View>
     </View>
   );
@@ -496,6 +496,14 @@ const styles = StyleSheet.create({
   themeLabel: {
     fontFamily: F.medium,
     fontSize: 12,
+  },
+  themeHint: {
+    fontFamily: F.regular,
+    fontSize: 11,
+    lineHeight: 16,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    marginTop: -2,
   },
 
   /* ── Sign out ── */
