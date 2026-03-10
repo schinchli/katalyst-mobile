@@ -1,136 +1,59 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
+import { PLAYLIST, type VideoItem } from '@/data/videos';
+import { WebView } from 'react-native-webview';
 
 // ─── Playlist data (mirrors web /dashboard/learn) ─────────────────────────────
 
-interface VideoItem {
-  id: string;
-  youtubeId: string;
-  title: string;
-  author: string;
-  duration: string;
-  views: string;
-  tag: string;
-  tagColor: string;
-  description: string;
-  chapters?: { time: string; label: string }[];
-}
-
-const PLAYLIST: VideoItem[] = [
-  {
-    id: 'bedrock-intro',
-    youtubeId: 'BY4YlxhSKr8',
-    title: "A Beginner's Guide to Amazon Bedrock",
-    author: 'AWS Official',
-    duration: '22:14',
-    views: '84k',
-    tag: 'Bedrock',
-    tagColor: '#7367F0',
-    description:
-      "A comprehensive beginner's guide to Amazon Bedrock — covers Knowledge Bases, Guardrails, and Security best practices for enterprise deployments.",
-    chapters: [
-      { time: '0:00',  label: 'Introduction to Amazon Bedrock' },
-      { time: '3:45',  label: 'Foundation Models Overview' },
-      { time: '7:20',  label: 'Amazon Bedrock Knowledge Bases' },
-      { time: '12:10', label: 'Guardrails for Amazon Bedrock' },
-      { time: '17:30', label: 'Security & IAM Best Practices' },
-      { time: '20:45', label: 'Next Steps & Resources' },
-    ],
-  },
-  {
-    id: 'rag-bedrock',
-    youtubeId: 'N0tlOXZwrSs',
-    title: 'Building RAG Applications with Amazon Bedrock',
-    author: 'AWS Developers',
-    duration: '18:32',
-    views: '52k',
-    tag: 'RAG',
-    tagColor: '#00BAD1',
-    description:
-      'Learn how to build RAG pipelines using Amazon Bedrock Knowledge Bases, OpenSearch Serverless, and Claude foundation models.',
-    chapters: [
-      { time: '0:00',  label: 'What is RAG?' },
-      { time: '4:10',  label: 'Knowledge Bases Setup' },
-      { time: '9:00',  label: 'Vector Embeddings & Search' },
-      { time: '13:45', label: 'Query & Response Flow' },
-      { time: '16:30', label: 'Production Best Practices' },
-    ],
-  },
-  {
-    id: 'bedrock-agents',
-    youtubeId: 'iMxfwZWl3EY',
-    title: 'Amazon Bedrock Agents — Build AI Agents',
-    author: 'AWS Official',
-    duration: '15:48',
-    views: '39k',
-    tag: 'Agents',
-    tagColor: '#FF9F43',
-    description:
-      'Deep dive into Amazon Bedrock Agents — how to create, configure, and deploy autonomous AI agents that execute multi-step tasks.',
-    chapters: [
-      { time: '0:00',  label: 'Agents Architecture Overview' },
-      { time: '3:20',  label: 'Creating Your First Agent' },
-      { time: '8:15',  label: 'Action Groups & Lambda' },
-      { time: '12:00', label: 'Testing & Monitoring' },
-    ],
-  },
-  {
-    id: 'prompt-engineering',
-    youtubeId: 'dOxUroR57xs',
-    title: 'Prompt Engineering for AWS GenAI',
-    author: 'AWS re:Invent',
-    duration: '28:05',
-    views: '121k',
-    tag: 'Prompting',
-    tagColor: '#28C76F',
-    description:
-      'Master prompt engineering techniques for Claude and other foundation models on Amazon Bedrock. Covers chain-of-thought, few-shot, and advanced patterns.',
-    chapters: [
-      { time: '0:00',  label: 'Prompt Engineering Basics' },
-      { time: '5:30',  label: 'Chain-of-Thought Prompting' },
-      { time: '12:00', label: 'Few-Shot & Zero-Shot' },
-      { time: '18:40', label: 'Advanced Techniques' },
-      { time: '24:10', label: 'Real-world Examples' },
-    ],
-  },
-  {
-    id: 'guardrails-security',
-    youtubeId: 'fqpSMDX2Xho',
-    title: 'Guardrails & Security in Amazon Bedrock',
-    author: 'AWS Security',
-    duration: '20:17',
-    views: '28k',
-    tag: 'Security',
-    tagColor: '#FF4C51',
-    description:
-      'Learn how to implement Guardrails in Amazon Bedrock to prevent harmful content, filter PII, and enforce content policies.',
-    chapters: [
-      { time: '0:00',  label: 'Why Guardrails Matter' },
-      { time: '4:30',  label: 'Content Filtering' },
-      { time: '9:15',  label: 'PII Detection & Redaction' },
-      { time: '14:00', label: 'Topic Denial Policies' },
-      { time: '17:45', label: 'Monitoring & Audit Logs' },
-    ],
-  },
-];
+// Playlist shared with Home previews via data/videos.ts
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function LearnScreen() {
   const colors = useThemeColors();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeVideo, setActiveVideo] = useState<VideoItem | null>(null);
 
-  const openVideo = async (youtubeId: string) => {
-    await WebBrowser.openBrowserAsync(`https://www.youtube.com/watch?v=${youtubeId}`);
-  };
+  const openVideo = (video: VideoItem) => setActiveVideo(video);
+  const closeVideo = () => setActiveVideo(null);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
+      <Modal
+        visible={!!activeVideo}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeVideo}
+      >
+        <SafeAreaView style={[styles.modalRoot, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <View>
+              <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Now Playing</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={2}>
+                {activeVideo?.title}
+              </Text>
+            </View>
+            <Pressable onPress={closeVideo} hitSlop={10} accessibilityRole="button">
+              <Feather name="x" size={22} color={colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.playerWrap}>
+            {activeVideo && (
+              <WebView
+                source={{ uri: `https://www.youtube.com/embed/${activeVideo.youtubeId}?playsinline=1&autoplay=1&modestbranding=1` }}
+                style={styles.webview}
+                allowsInlineMediaPlayback
+                mediaPlaybackRequiresUserAction={false}
+              />
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
+
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Video Library</Text>
@@ -156,13 +79,13 @@ export default function LearnScreen() {
                 <View style={styles.cardTop}>
                   {/* Thumbnail */}
                   <Pressable
-                    onPress={() => openVideo(video.youtubeId)}
+                    onPress={() => openVideo(video)}
                     style={({ pressed }) => [
                       styles.thumb,
-                      { backgroundColor: video.tagColor + '18', opacity: pressed ? 0.85 : 1 },
+                      { backgroundColor: '#0f172a', opacity: pressed ? 0.85 : 1 },
                     ]}
                   >
-                    <View style={[styles.thumbGradient, { backgroundColor: video.tagColor + '22' }]} />
+                    <View style={[styles.thumbGradient, { backgroundColor: video.tagColor + '35' }]} />
                     <Feather name="play-circle" size={30} color={video.tagColor} style={styles.thumbIcon} />
                     <View style={styles.durationBadge}>
                       <Text style={styles.durationText}>{video.duration}</Text>
@@ -216,9 +139,9 @@ export default function LearnScreen() {
                     </View>
                   )}
                   <View style={styles.expandToggle}>
-                    <Text style={[styles.expandText, { color: colors.primary }]}>
-                      {isExpanded ? 'Show less' : 'Show details'}
-                    </Text>
+                  <Text style={[styles.expandText, { color: colors.primary }]}>
+                    {isExpanded ? 'Show less' : 'Show details'}
+                  </Text>
                     <Feather
                       name={isExpanded ? 'chevron-up' : 'chevron-down'}
                       size={14}
@@ -229,14 +152,14 @@ export default function LearnScreen() {
 
                 {/* Watch button */}
                 <Pressable
-                  onPress={() => openVideo(video.youtubeId)}
+                  onPress={() => openVideo(video)}
                   style={({ pressed }) => [
                     styles.watchBtn,
                     { backgroundColor: video.tagColor, opacity: pressed ? 0.88 : 1 },
                   ]}
                 >
                   <Feather name="youtube" size={15} color="#fff" />
-                  <Text style={styles.watchBtnText}>Watch on YouTube</Text>
+                  <Text style={styles.watchBtnText}>Play in app</Text>
                 </Pressable>
               </View>
             </View>
@@ -264,6 +187,20 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontFamily: F.bold,    fontSize: 22 },
   headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
+
+  modalRoot: { flex: 1 },
+  modalHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalLabel: { fontFamily: F.semiBold, fontSize: 12, letterSpacing: 0.2 },
+  modalTitle: { fontFamily: F.bold, fontSize: 16, marginTop: 3 },
+  playerWrap: { flex: 1, paddingHorizontal: 12, paddingBottom: 18, borderRadius: 14, overflow: 'hidden' },
+  webview: { flex: 1 },
 
   card: {
     borderRadius: 14, borderWidth: 1, marginBottom: 14,

@@ -323,7 +323,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   root:   { flex: 1 },
-  scroll: { paddingBottom: 48 },
+  scroll: { paddingBottom: 48, paddingHorizontal: 18, paddingTop: 6 },
 
   /* ── Header ── */
   headerCard: {
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
 
   /* ── Sign out ── */
   signOutWrap: {
-    marginHorizontal: 20,
+    marginHorizontal: 0,
     marginTop: 4,
     marginBottom: 8,
   },

@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -13,6 +14,8 @@ import { getContests } from '@/data/contests';
 import { getDailyQuiz } from '@/utils/dailyChallenge';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
+import { PLAYLIST } from '@/data/videos';
+import { flashcards, type FlashcardCategory } from '@/data/flashcards';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CARD_SHADOW = {
@@ -193,6 +196,100 @@ function QuickActionsRow() {
   );
 }
 
+function LearnPreviewRow() {
+  const colors = useThemeColors();
+  const items  = PLAYLIST.slice(0, 3);
+  return (
+    <View style={styles.learnWrap}>
+      {items.map((v) => (
+        <Pressable
+          key={v.id}
+          onPress={() => router.push('/(tabs)/learn')}
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.learnCard,
+            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.9 : 1 },
+          ]}
+        >
+          <View style={[styles.learnThumb, { backgroundColor: v.tagColor + '18' }]}>
+            <Feather name="play" size={16} color={v.tagColor} />
+            <Text style={[styles.learnDuration, { color: colors.text }]}>{v.duration}</Text>
+          </View>
+          <View style={styles.learnBody}>
+            <Text style={[styles.learnTitle, { color: colors.text }]} numberOfLines={2}>{v.title}</Text>
+            <Text style={[styles.learnMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+              {v.author} · {v.views} views
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function FlashcardStrip() {
+  const colors = useThemeColors();
+  const [category, setCategory] = useState<FlashcardCategory>('aws-practitioner');
+  const [flipped, setFlipped]   = useState<Record<string, boolean>>({});
+  const cards = flashcards.filter((c) => c.category === category).slice(0, 6);
+  const activeColor = category === 'aws-practitioner' ? colors.primary : colors.warning;
+
+  return (
+    <View style={styles.flashContainer}>
+      <View style={styles.flashTabs}>
+        {(['aws-practitioner', 'genai-practitioner'] as FlashcardCategory[]).map((key) => {
+          const label = key === 'aws-practitioner' ? 'AWS Practitioner' : 'GenAI Practitioner';
+          const active = category === key;
+          return (
+            <Pressable
+              key={key}
+              onPress={() => setCategory(key)}
+              style={[
+                styles.flashTab,
+                { borderColor: active ? activeColor : colors.surfaceBorder,
+                  backgroundColor: active ? activeColor + '15' : 'transparent' },
+              ]}
+            >
+              <Text style={[styles.flashTabText, { color: active ? activeColor : colors.text }]}>{label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.flashRow}
+      >
+        {cards.map((c) => {
+          const isFlipped = flipped[c.id];
+          return (
+            <Pressable
+              key={c.id}
+              onPress={() => setFlipped((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
+              style={[
+                styles.flashCard,
+                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              ]}
+            >
+              <View style={[styles.flashBadge, { backgroundColor: activeColor + '15' }]}>
+                <Text style={[styles.flashBadgeText, { color: activeColor }]}>{c.tag ?? 'Core'}</Text>
+              </View>
+              <Text style={[styles.flashFront, { color: colors.text }]} numberOfLines={2}>
+                {isFlipped ? c.back : c.front}
+              </Text>
+              <Text style={[styles.flashHint, { color: colors.textSecondary }]}>
+                {isFlipped ? 'Tap to see term' : 'Tap to see answer'}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
 function LiveContestBanner() {
   const colors = useThemeColors();
   const live   = getContests('live')[0];
@@ -273,6 +370,15 @@ export default function HomeScreen() {
               ))}
             </View>
           </View>
+
+          <SectionHeader
+            title="Learn Videos"
+            onViewAll={() => router.push('/(tabs)/learn')}
+          />
+          <LearnPreviewRow />
+
+          <SectionHeader title="Flashcards" />
+          <FlashcardStrip />
         </ScrollView>
       </SafeAreaView>
     );
@@ -345,6 +451,36 @@ export default function HomeScreen() {
         {/* Recent Results */}
         <View style={styles.sectionGap}>
           <RecentResultsStrip />
+        </View>
+
+        {/* Quizzes preview */}
+        <View style={styles.sectionGap}>
+          <SectionHeader
+            title="Featured Quizzes"
+            onViewAll={() => router.push('/(tabs)/quizzes')}
+          />
+          {quizzes.slice(0, 4).map((quiz) => (
+            <QuizCard
+              key={quiz.id}
+              quiz={quiz}
+              onPress={() => router.push(`/quiz/${quiz.id}`)}
+            />
+          ))}
+        </View>
+
+        {/* Learn preview */}
+        <View style={styles.sectionGap}>
+          <SectionHeader
+            title="Learn Videos"
+            onViewAll={() => router.push('/(tabs)/learn')}
+          />
+          <LearnPreviewRow />
+        </View>
+
+        {/* Flashcards */}
+        <View style={styles.sectionGap}>
+          <SectionHeader title="Flashcards" />
+          <FlashcardStrip />
         </View>
 
       </ScrollView>
@@ -581,6 +717,61 @@ const styles = StyleSheet.create({
     fontFamily: F.semiBold,
     fontSize: 13,
   },
+
+  // ── Learn preview ─────────────────────────────────────────────────────────
+  learnWrap: {
+    gap: 10,
+  },
+  learnCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  learnThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  learnDuration: { fontFamily: F.medium, fontSize: 10 },
+  learnBody: { flex: 1, gap: 2 },
+  learnTitle: { fontFamily: F.semiBold, fontSize: 13, lineHeight: 18 },
+  learnMeta: { fontFamily: F.regular, fontSize: 11 },
+
+  // ── Flashcards ────────────────────────────────────────────────────────────
+  flashContainer: { gap: 12 },
+  flashTabs: { flexDirection: 'row', gap: 10 },
+  flashTab: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  flashTabText: { fontFamily: F.semiBold, fontSize: 12 },
+  flashRow: { gap: 12 },
+  flashCard: {
+    width: 200,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    gap: 8,
+    marginRight: 4,
+  },
+  flashBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  flashBadgeText: { fontFamily: F.semiBold, fontSize: 10, letterSpacing: 0.3 },
+  flashFront: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
+  flashHint: { fontFamily: F.regular, fontSize: 11 },
 
   // ── Daily Quiz card ────────────────────────────────────────────────────────
   dailyCard: {
