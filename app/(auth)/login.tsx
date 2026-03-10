@@ -209,7 +209,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   fields: {
-    gap: 14,
+    gap: 12,
+    marginTop: 10,
+    marginBottom: 6,
   },
   forgotRow: {
     alignSelf: 'flex-end',
@@ -235,9 +237,7 @@ const styles = StyleSheet.create({
     color: '#EA5455',
     flex: 1,
   },
-  signInBtn: {
-    marginTop: 20,
-  },
+  signInBtn: { marginTop: 12 },
   signUpRow: {
     flexDirection: 'row',
     justifyContent: 'center',

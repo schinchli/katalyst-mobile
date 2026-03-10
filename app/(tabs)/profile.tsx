@@ -147,11 +147,13 @@ function ThemePicker({ colors, userId }: { colors: ReturnType<typeof useThemeCol
                 <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
                   {cfg.label}
                 </Text>
-                {!usePlatform && (
-                  <Pressable onPress={() => setAccent(key)} accessibilityRole="button">
-                    <Feather name={isActive ? 'check' : 'plus'} size={14} color={isActive ? cfg.primary : colors.textSecondary} />
-                  </Pressable>
-                )}
+                <Pressable
+                  onPress={() => { setUsePlatform(false); setAccent(key); }}
+                  accessibilityRole="button"
+                  style={{ padding: 4 }}
+                >
+                  <Feather name={isActive ? 'check' : 'plus'} size={14} color={isActive ? cfg.primary : colors.textSecondary} />
+                </Pressable>
               </View>
             );
           })}

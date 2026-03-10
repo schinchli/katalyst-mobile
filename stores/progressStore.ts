@@ -158,24 +158,24 @@ export const useProgressStore = create<ProgressState>()(
             if (!earned.has(id)) { newBadges.push(makeBadge(id)); earned.add(id); }
           }
 
-          // Completion badges — awarded regardless of pass/fail
-          if (completed === 1)                                           award('first-quiz');
-          if (result.score === result.totalQuestions)                    award('perfect-score');
-          if (streak >= 7)                                               award('seven-day-streak');
-          if (result.timeTaken > 0 && result.timeTaken < 60)            award('speed-demon');
-          if (completed >= 6)                                            award('half-way');
-          if (completed >= quizzes.length)                               award('quiz-marathon');
+          // Badges only when quiz is passed (>= 70%)
+          if (passed) {
+            if (completed === 1)                                           award('first-quiz');
+            if (result.score === result.totalQuestions)                    award('perfect-score');
+            if (streak >= 7)                                               award('seven-day-streak');
+            if (result.timeTaken > 0 && result.timeTaken < 60)             award('speed-demon');
+            if (completed >= 6)                                            award('half-way');
+            if (completed >= quizzes.length)                               award('quiz-marathon');
 
-          // Category master: all quizzes in same category completed
-          // Use all historical results (not just the recent-20 window) to avoid
-          // missing older completions that were pushed out of the rolling slice.
-          const completedIds = new Set([result, ...prev.recentResults].map((r) => r.quizId));
-          if (quizMeta) {
-            const catQuizIds = quizzes
-              .filter((q) => q.category === quizMeta.category)
-              .map((q) => q.id);
-            if (catQuizIds.every((qid) => completedIds.has(qid))) {
-              award('category-master');
+            // Category master: all quizzes in same category completed
+            const completedIds = new Set([result, ...prev.recentResults].map((r) => r.quizId));
+            if (quizMeta) {
+              const catQuizIds = quizzes
+                .filter((q) => q.category === quizMeta.category)
+                .map((q) => q.id);
+              if (catQuizIds.every((qid) => completedIds.has(qid))) {
+                award('category-master');
+              }
             }
           }
 
