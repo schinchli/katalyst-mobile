@@ -103,12 +103,14 @@ function StatCard({
       <View style={[styles.statIconContainer, { backgroundColor: colors.primaryLight }]}>
         <Feather name={def.icon as any} size={16} color={colors.primary} />
       </View>
-      <Text style={[styles.statValue, { color: colors.text }]}>
-        {def.getValue(progress)}
-      </Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-        {def.label}
-      </Text>
+      <View style={styles.statTextCol}>
+        <Text style={[styles.statValue, { color: colors.text }]}>
+          {def.getValue(progress)}
+        </Text>
+        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+          {def.label}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -183,7 +185,7 @@ function QuickActionsRow() {
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.quickBtn,
-            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.88 : 1 },
+            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.88 : 1, flexDirection: 'row', alignItems: 'center' },
           ]}
         >
           <View style={[styles.quickIconWrap, { backgroundColor: a.color + '18' }]}>
@@ -614,11 +616,11 @@ const styles = StyleSheet.create({
   quickBtn: {
     flexBasis: '30%',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 9,
-    minHeight: 110,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    justifyContent: 'flex-start',
+    gap: 12,
+    minHeight: 72,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     borderRadius: 14,
     borderWidth: 1,
     shadowColor: '#4B465C',
@@ -628,13 +630,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   quickIconWrap: {
-    width: 42,
-    height: 42,
+    width: 38,
+    height: 38,
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickBtnLabel: { fontFamily: F.semiBold, fontSize: 12, lineHeight: 16, textAlign: 'center' },
+  quickBtnLabel: { fontFamily: F.semiBold, fontSize: 13, lineHeight: 16, textAlign: 'left', flex: 1 },
 
   // ── Stats (mobile 2×2 grid) ────────────────────────────────────────────────
   statsGrid: {
@@ -649,26 +651,20 @@ const styles = StyleSheet.create({
   statCard: {
     borderRadius: 14,
     padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   statIconContainer: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
-  statValue: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    lineHeight: 26,
-  },
-  statLabel: {
-    fontFamily: F.medium,
-    fontSize: 11,
-    marginTop: 1,
-    lineHeight: 15,
-  },
+  statTextCol: { flex: 1, gap: 2 },
+  statValue: { fontFamily: F.bold, fontSize: 18, lineHeight: 22 },
+  statLabel: { fontFamily: F.medium, fontSize: 11, lineHeight: 15 },
 
   // ── Recent results strip ───────────────────────────────────────────────────
   recentCard: {
