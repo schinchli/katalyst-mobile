@@ -31,6 +31,7 @@ interface AuthState {
   initAuth: () => Promise<void>;
   signInUser: (email: string, password: string) => Promise<void>;
   signUpUser: (name: string, email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   confirmEmail: (email: string, code: string) => Promise<void>;
   resendCode: (email: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -177,6 +178,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
     if (error) throw new Error(error.message);
     set({ step: 'confirm_signup', pendingEmail: email });
+  },
+
+  signInWithGoogle: async () => {
+    const { error, data } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) throw new Error(error.message);
+    // For mobile, Supabase handles redirect; session listener in initAuth will pick up user.
+    if (!data) throw new Error('Redirect to Google failed');
   },
 
   confirmEmail: async (email, code) => {

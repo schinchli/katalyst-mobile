@@ -458,14 +458,14 @@ const styles = StyleSheet.create({
   menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 15,
-    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
   },
   menuIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    marginLeft: 68,
+    marginLeft: 66,
   },
 
   /* ── Theme picker ── */
@@ -569,8 +569,8 @@ const styles = StyleSheet.create({
   /* ── Sign out ── */
   signOutWrap: {
     marginHorizontal: 0,
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 16,
   },
   signOutBtn: {
     flexDirection: 'row',

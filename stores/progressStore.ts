@@ -181,11 +181,13 @@ export const useProgressStore = create<ProgressState>()(
 
           // ── Coin & XP calculation ─────────────────────────────────────────
           // Coins awarded for every completion; XP only on pass (≥ 70%)
-          const totalNewCoins =
-            result.score * 10                                             // 10 per correct answer
-            + 20                                                          // completion bonus
-            + (result.score === result.totalQuestions ? 50 : 0)          // perfect score bonus
-            + newBadges.length * 100;                                     // badge rewards
+          // Coins only on pass to avoid rewarding failed attempts
+          const totalNewCoins = passed
+            ? result.score * 10                                           // 10 per correct answer
+              + 20                                                        // completion bonus
+              + (result.score === result.totalQuestions ? 50 : 0)        // perfect score bonus
+              + newBadges.length * 100                                    // badge rewards
+            : 0;
 
           const diffMult = quizMeta?.difficulty === 'advanced' ? 2
             : quizMeta?.difficulty === 'intermediate' ? 1.5 : 1;

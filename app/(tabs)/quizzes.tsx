@@ -174,56 +174,57 @@ export default function QuizzesScreen() {
         </View>
       </View>
 
-      {/* ── Difficulty filter pills ── */}
-      <View style={s.diffRow}>
-        {difficulties.map((d) => {
-          const active = selectedDifficulty === d.key;
-          return (
-            <Pressable
-              key={d.key}
-              onPress={() => setSelectedDifficulty(d.key)}
-              style={[
-                s.diffPill,
-                active
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-              ]}
-            >
-              <Text style={[s.diffPillText, { color: active ? '#fff' : colors.text }]}>{d.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {/* ── Filter pills ── */}
+      <View style={s.filtersWrap}>
+        <View style={s.diffRow}>
+          {difficulties.map((d) => {
+            const active = selectedDifficulty === d.key;
+            return (
+              <Pressable
+                key={d.key}
+                onPress={() => setSelectedDifficulty(d.key)}
+                style={[
+                  s.diffPill,
+                  active
+                    ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                    : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+                ]}
+              >
+                <Text style={[s.diffPillText, { color: active ? '#fff' : colors.text }]}>{d.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
-      {/* ── Category filter pills ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.pillRow}
-        style={s.pillScroll}
-      >
-        {categoryOptions.map((cat) => {
-          const active = selectedCategory === cat.key;
-          return (
-            <Pressable
-              key={cat.key}
-              onPress={() => setSelectedCategory(cat.key)}
-              style={[
-                s.pill,
-                active
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-              ]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-            >
-              <Text style={[s.pillText, { color: active ? '#FFFFFF' : colors.text }]}>
-                {cat.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.pillRow}
+          style={s.pillScroll}
+        >
+          {categoryOptions.map((cat) => {
+            const active = selectedCategory === cat.key;
+            return (
+              <Pressable
+                key={cat.key}
+                onPress={() => setSelectedCategory(cat.key)}
+                style={[
+                  s.pill,
+                  active
+                    ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                    : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                <Text style={[s.pillText, { color: active ? '#FFFFFF' : colors.text }]}>
+                  {cat.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* ── Course grid ── */}
       <ScrollView
@@ -329,7 +330,7 @@ const s = StyleSheet.create({
   headerStatLabel: { fontFamily: F.regular, fontSize: 10, marginTop: 1 },
 
   // ── Overview ──
-  overviewWrap: { paddingHorizontal: 20, gap: 14, marginTop: 2 },
+  overviewWrap: { paddingHorizontal: 16, gap: 10, marginTop: 0 },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -353,14 +354,15 @@ const s = StyleSheet.create({
   progressSub:   { fontFamily: F.regular, fontSize: 11 },
 
   // ── Difficulty row ──
-  diffRow:     { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 9 },
-  diffPill:    { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 36, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  filtersWrap: { paddingHorizontal: 12, gap: 6 },
+  diffRow:     { flexDirection: 'row', gap: 6 },
+  diffPill:    { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 34, paddingVertical: 6, borderRadius: 18, borderWidth: 1 },
   diffPillText:{ fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Pills ──
   pillScroll: { flexGrow: 0 },
-  pillRow:    { paddingHorizontal: 20, paddingVertical: 10, gap: 8, flexDirection: 'row' },
-  pill:       { minHeight: 34, paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, borderWidth: 1, justifyContent: 'center' },
+  pillRow:    { paddingHorizontal: 16, paddingVertical: 6, gap: 8, flexDirection: 'row' },
+  pill:       { minHeight: 32, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 18, borderWidth: 1, justifyContent: 'center' },
   pillText:   { fontFamily: F.semiBold, fontSize: 13 },
 
   // ── Result count ──
@@ -376,9 +378,9 @@ const s = StyleSheet.create({
   historyMeta:  { fontFamily: F.regular, fontSize: 11 },
 
   // ── Grid ──
-  grid: { paddingHorizontal: 18, paddingBottom: 48, paddingTop: 6 },
-  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'space-between' },
-  gridRowDesktop: { gap: 18 },
+  grid: { paddingHorizontal: 14, paddingBottom: 48, paddingTop: 4 },
+  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+  gridRowDesktop: { gap: 16 },
   gridCell: { flexBasis: '48%', minWidth: 170, alignSelf: 'stretch', marginBottom: 6 },
   gridCellDesktop: { flexBasis: '30%', maxWidth: '31%' as any },
 

@@ -17,51 +17,9 @@ import * as WebBrowser from 'expo-web-browser';
 export default function LearnScreen() {
   const colors = useThemeColors();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [activeVideo, setActiveVideo] = useState<VideoItem | null>(null);
-
-  const openVideo = (video: VideoItem) => setActiveVideo(video);
-  const closeVideo = () => setActiveVideo(null);
-  const handleWebError = async () => {
-    if (activeVideo) {
-      closeVideo();
-      await WebBrowser.openBrowserAsync(`https://www.youtube.com/watch?v=${activeVideo.youtubeId}`);
-    }
-  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-      <Modal
-        visible={!!activeVideo}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={closeVideo}
-      >
-        <SafeAreaView style={[styles.modalRoot, { backgroundColor: colors.background }]}>
-          <View style={styles.modalHeader}>
-            <View>
-              <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Now Playing</Text>
-              <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={2}>
-                {activeVideo?.title}
-              </Text>
-            </View>
-            <Pressable onPress={closeVideo} hitSlop={10} accessibilityRole="button">
-              <Feather name="x" size={22} color={colors.text} />
-            </Pressable>
-          </View>
-          <View style={styles.playerWrap}>
-            {activeVideo && (
-              <WebView
-                source={{ uri: `https://www.youtube.com/embed/${activeVideo.youtubeId}?playsinline=1&autoplay=1&modestbranding=1&rel=0&origin=https://www.youtube.com` }}
-                style={styles.webview}
-                allowsInlineMediaPlayback
-                mediaPlaybackRequiresUserAction={false}
-                allowsFullscreenVideo
-                onError={handleWebError}
-              />
-            )}
-          </View>
-        </SafeAreaView>
-      </Modal>
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
@@ -87,19 +45,13 @@ export default function LearnScreen() {
                 {/* Top row: thumbnail + info */}
                 <View style={styles.cardTop}>
                   {/* Thumbnail */}
-                  <Pressable
-                    onPress={() => openVideo(video)}
-                    style={({ pressed }) => [
-                      styles.thumb,
-                      { backgroundColor: '#0f172a', opacity: pressed ? 0.85 : 1 },
-                    ]}
-                  >
+                  <View style={[styles.thumb, { backgroundColor: '#0f172a' }]}>
                     <View style={[styles.thumbGradient, { backgroundColor: video.tagColor + '35' }]} />
                     <Feather name="play-circle" size={30} color={video.tagColor} style={styles.thumbIcon} />
                     <View style={styles.durationBadge}>
                       <Text style={styles.durationText}>{video.duration}</Text>
                     </View>
-                  </Pressable>
+                  </View>
 
                   {/* Info */}
                   <View style={styles.cardInfo}>
@@ -159,17 +111,11 @@ export default function LearnScreen() {
                   </View>
                 </Pressable>
 
-                {/* Watch button */}
-                <Pressable
-                  onPress={() => openVideo(video)}
-                  style={({ pressed }) => [
-                    styles.watchBtn,
-                    { backgroundColor: video.tagColor, opacity: pressed ? 0.88 : 1 },
-                  ]}
-                >
-                  <Feather name="youtube" size={15} color="#fff" />
-                  <Text style={styles.watchBtnText}>Play in app</Text>
-                </Pressable>
+                {/* External watch hint */}
+                <View style={[styles.watchBtn, { backgroundColor: video.tagColor + '18', borderWidth: 0 }]}>
+                  <Feather name="youtube" size={15} color={video.tagColor} />
+                  <Text style={[styles.watchBtnText, { color: video.tagColor }]}>Opens on YouTube</Text>
+                </View>
               </View>
             </View>
           );
@@ -196,28 +142,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontFamily: F.bold,    fontSize: 22 },
   headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
-
-  modalRoot: { flex: 1 },
-  modalHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalLabel: { fontFamily: F.semiBold, fontSize: 12, letterSpacing: 0.2 },
-  modalTitle: { fontFamily: F.bold, fontSize: 16, marginTop: 3 },
-  playerWrap: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    paddingHorizontal: 12,
-    paddingBottom: 18,
-    borderRadius: 14,
-    overflow: 'hidden',
-    backgroundColor: '#000',
-  },
-  webview: { flex: 1 },
 
   card: {
     borderRadius: 14, borderWidth: 1, marginBottom: 14,

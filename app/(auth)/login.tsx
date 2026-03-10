@@ -13,6 +13,7 @@ import { F } from '@/constants/Typography';
 export default function LoginScreen() {
   const colors          = useThemeColors();
   const signInUser      = useAuthStore((s) => s.signInUser);
+  const signInWithGoogle= useAuthStore((s) => s.signInWithGoogle);
   const setGuestUser    = useAuthStore((s) => s.setGuestUser);
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -104,6 +105,16 @@ export default function LoginScreen() {
             ) : null}
 
             <Button title="Sign In" onPress={handleLogin} loading={loading} size="lg" style={styles.signInBtn} />
+            <Pressable
+              onPress={signInWithGoogle}
+              style={({ pressed }) => [
+                styles.oauthBtn,
+                { borderColor: colors.surfaceBorder, backgroundColor: colors.surface, opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Feather name="globe" size={18} color={colors.text} />
+              <Text style={[styles.oauthText, { color: colors.text }]}>Continue with Google</Text>
+            </Pressable>
 
             <View style={styles.signUpRow}>
               <Text style={[styles.signUpPrompt, { color: colors.textSecondary }]}>Don't have an account?</Text>
@@ -247,6 +258,17 @@ const styles = StyleSheet.create({
   },
   signUpPrompt: { fontFamily: F.regular, fontSize: 14 },
   signUpLink:   { fontFamily: F.semiBold, fontSize: 14 },
+  oauthBtn: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  oauthText: { fontFamily: F.semiBold, fontSize: 14 },
 
   /* ── Separator ── */
   separatorRow: {

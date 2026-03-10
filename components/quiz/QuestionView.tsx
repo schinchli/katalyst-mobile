@@ -152,11 +152,11 @@ const s = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    gap: 12,
+    gap: 10,
     shadowColor: '#4B465C',
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -172,7 +172,7 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   optionLabel: { fontFamily: F.bold, fontSize: 14 },
-  optionText:  { fontFamily: F.medium, fontSize: 15, lineHeight: 22, flex: 1, flexShrink: 1 },
+  optionText:  { fontFamily: F.medium, fontSize: 15, lineHeight: 20, flex: 1, flexShrink: 1, flexWrap: 'wrap' },
   optionStatusSlot: {
     width: 20,
     minHeight: 22,

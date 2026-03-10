@@ -16,6 +16,7 @@ import { useThemeColors } from '@/hooks/useThemeColor';
 import { useQuizStore } from '@/stores/quizStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
+import { useRateLimitStore } from '@/stores/rateLimitStore';
 import { useAuthStore } from '@/stores/authStore';
 import { openCheckout, openCourseUnlock } from '@/services/razorpayService';
 import { quizzes, quizQuestions } from '@/data/quizzes';
@@ -83,6 +84,7 @@ export default function QuizScreen() {
   const user              = useAuthStore((s) => s.user);
   const upgradeToPremium  = useAuthStore((s) => s.upgradeToPremium);
   const unlockCourse      = useAuthStore((s) => s.unlockCourse);
+  const checkRateLimit    = useRateLimitStore((s) => s.checkAndConsume);
 
   const currentQuestion    = questions[currentQuestionIndex];
   const answeredCount      = Object.keys(selectedAnswers).length;
@@ -353,6 +355,14 @@ export default function QuizScreen() {
             ) : (
               <Pressable
                 onPress={() => {
+                  const ok = checkRateLimit();
+                  if (!ok.ok) {
+                    Alert.alert('Limit reached', ok.reason, [
+                      { text: 'Upgrade', onPress: () => setShowPremiumGate(true) },
+                      { text: 'OK', style: 'cancel' },
+                    ]);
+                    return;
+                  }
                   reset();
                   setShowFeedback(false);
                   setRunningScore(0);

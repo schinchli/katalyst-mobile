@@ -26,20 +26,6 @@ const CARD_SHADOW = {
   elevation: 2,
 };
 
-// ─── Stat card definition ─────────────────────────────────────────────────────
-interface StatDef {
-  icon: string;
-  label: string;
-  getValue: (p: ReturnType<typeof useProgressStore.getState>['progress']) => string;
-}
-
-const STAT_DEFS: StatDef[] = [
-  { icon: 'zap',          label: 'Day Streak', getValue: (p) => String(p.currentStreak) },
-  { icon: 'check-circle', label: 'Completed',  getValue: (p) => String(p.completedQuizzes) },
-  { icon: 'trending-up',  label: 'Avg Score',  getValue: (p) => `${p.averageScore}%` },
-  { icon: 'award',        label: 'Badges',     getValue: (p) => String(p.badges?.length ?? 0) },
-];
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function GreetingHeader({ userName, coins, level, badges }: { userName: string; coins: number; level: number; badges: number }) {
@@ -81,84 +67,22 @@ function GreetingHeader({ userName, coins, level, badges }: { userName: string; 
   );
 }
 
-function StatCard({
-  def,
-  progress,
-  flex,
-}: {
-  def: StatDef;
-  progress: ReturnType<typeof useProgressStore.getState>['progress'];
-  flex?: boolean;
-}) {
-  const colors = useThemeColors();
-  return (
-    <View
-      style={[
-        styles.statCard,
-        { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
-        CARD_SHADOW,
-        flex && { flex: 1 },
-      ]}
-    >
-      <View style={[styles.statIconContainer, { backgroundColor: colors.primaryLight }]}>
-        <Feather name={def.icon as any} size={16} color={colors.primary} />
-      </View>
-      <View style={styles.statTextCol}>
-        <Text style={[styles.statValue, { color: colors.text }]}>
-          {def.getValue(progress)}
-        </Text>
-        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-          {def.label}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function RecentResultsStrip() {
-  const colors  = useThemeColors();
-  const results = useProgressStore((s) => s.progress.recentResults).slice(0, 3);
-  if (results.length === 0) return null;
-  return (
-    <>
-      <SectionHeader title="Recent Results" />
-      <View style={[styles.recentCard, { backgroundColor: colors.surface }, CARD_SHADOW]}>
-        {results.map((r, i) => {
-          const quiz = quizzes.find((q) => q.id === r.quizId);
-          const pct  = Math.round((r.score / r.totalQuestions) * 100);
-          const pass = pct >= 70;
-          return (
-            <View
-              key={`${r.quizId}-${r.completedAt}`}
-              style={[styles.recentRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.surfaceBorder }]}
-            >
-              <Text style={[styles.recentTitle, { color: colors.text }]} numberOfLines={1}>
-                {quiz?.title ?? r.quizId}
-              </Text>
-              <View style={[styles.recentBadge, { backgroundColor: (pass ? colors.success : colors.error) + '18' }]}>
-                <Text style={[styles.recentBadgeText, { color: pass ? colors.success : colors.error }]}>
-                  {pct}%
-                </Text>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-    </>
-  );
-}
+// Recent results section removed from home per user request
 
 function SectionHeader({
   title,
   onViewAll,
+  icon,
 }: {
   title: string;
   onViewAll?: () => void;
+  icon?: string;
 }) {
   const colors = useThemeColors();
   return (
     <View style={styles.sectionHeader}>
       <View style={[styles.sectionAccentBar, { backgroundColor: colors.primary }]} />
+      {icon && <Feather name={icon as any} size={16} color={colors.textSecondary} />}
       <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
       {onViewAll && (
         <Pressable onPress={onViewAll} hitSlop={8} accessibilityRole="button">
@@ -346,18 +270,10 @@ export default function HomeScreen() {
           {/* Header */}
           <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} badges={progress.badges?.length ?? 0} />
 
-          {/* Stats row — 4 equal columns on desktop */}
-          <View style={styles.statsRowDesktop}>
-            {STAT_DEFS.map((def) => (
-              <View key={def.label} style={styles.statColDesktop}>
-                <StatCard def={def} progress={progress} />
-              </View>
-            ))}
-          </View>
-
           {/* Quiz list */}
           <SectionHeader
             title="Start Practicing"
+            icon="play"
             onViewAll={() => router.push('/(tabs)/quizzes')}
           />
           {quizzes.slice(0, 5).map((quiz) => (
@@ -370,11 +286,13 @@ export default function HomeScreen() {
 
           <SectionHeader
             title="Learn Videos"
+            icon="youtube"
             onViewAll={() => router.push('/(tabs)/learn')}
           />
           <LearnPreviewRow />
 
           <SectionHeader title="Flashcards" />
+          <SectionHeader title="Flashcards" icon="layers" />
           <FlashcardStrip isWide />
         </ScrollView>
       </SafeAreaView>
@@ -398,18 +316,6 @@ export default function HomeScreen() {
         {/* Quick actions */}
         <View style={styles.sectionGap}>
           <QuickActionsRow />
-        </View>
-
-        {/* Stats — 2×2 grid on mobile */}
-        <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SectionHeader title="Your Stats" />
-          <View style={styles.statsGrid}>
-            {STAT_DEFS.map((def) => (
-              <View key={def.label} style={styles.statGridCell}>
-                <StatCard def={def} progress={progress} />
-              </View>
-            ))}
-          </View>
         </View>
 
         {/* Daily Quiz Card */}
@@ -452,6 +358,7 @@ export default function HomeScreen() {
         <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <SectionHeader
             title="Featured Quizzes"
+            icon="play"
             onViewAll={() => router.push('/(tabs)/quizzes')}
           />
           {quizzes.slice(0, 3).map((quiz) => (
@@ -483,6 +390,7 @@ export default function HomeScreen() {
         <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <SectionHeader
             title="Learn Videos"
+            icon="youtube"
             onViewAll={() => router.push('/(tabs)/learn')}
           />
           <LearnPreviewRow limit={3} />
@@ -490,7 +398,7 @@ export default function HomeScreen() {
 
         {/* Flashcards */}
         <View style={[styles.sectionGap, styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SectionHeader title="Flashcards" />
+          <SectionHeader title="Flashcards" icon="layers" />
           <FlashcardStrip />
         </View>
 
