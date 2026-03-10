@@ -2,14 +2,13 @@ import { View, Text, ScrollView, Alert, Pressable, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Card } from '@/components/ui/Card';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore, LEVEL_NAMES, xpToNextLevel } from '@/stores/progressStore';
 import { useThemeStore, ACCENT_PRESETS, type AccentPreset } from '@/stores/themeStore';
-import { getMissingCount } from '@/config/appConfig';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
 
@@ -43,26 +42,25 @@ function MenuSection({
   return (
     <View style={styles.menuSection}>
       <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{title}</Text>
-      <Card padding={0} style={styles.menuCard}>
+      <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         {items.map((item, idx) => (
           <View key={item.label}>
-            <Card
+            <Pressable
               onPress={() => { if (item.route) router.push(item.route as any); }}
-              padding={16}
-              style={styles.menuRow}
+              style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.8 : 1 }]}
             >
               <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
-                <Feather name={item.icon as any} size={17} color={colors.primary} />
+                <Feather name={item.icon as any} size={15} color={colors.primary} />
               </View>
               <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
-              <Feather name="chevron-right" size={16} color={colors.textSecondary} />
-            </Card>
+              <Feather name="chevron-right" size={15} color={colors.textSecondary} />
+            </Pressable>
             {idx < items.length - 1 && (
               <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
             )}
           </View>
         ))}
-      </Card>
+      </View>
     </View>
   );
 }
@@ -72,7 +70,8 @@ function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) 
   const darkMode   = useThemeStore((s) => s.darkMode);
   const setAccent  = useThemeStore((s) => s.setAccent);
   const toggleDark = useThemeStore((s) => s.toggleDark);
-  const presets    = Object.entries(ACCENT_PRESETS) as [AccentPreset, typeof ACCENT_PRESETS[AccentPreset]][];
+  const presetKeys: AccentPreset[] = ['aurora', 'ocean', 'forest', 'sunset', 'midnight', 'sand', 'rose', 'slate', 'indigo', 'amber', 'emerald'];
+  const presets = presetKeys.map((k) => [k, ACCENT_PRESETS[k]]) as [AccentPreset, typeof ACCENT_PRESETS[AccentPreset]][];
 
   return (
     <View style={styles.menuSection}>
@@ -114,9 +113,14 @@ function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) 
                   },
                 ]}
               >
-                <View style={[styles.themeCircle, { backgroundColor: cfg.primary }]}>
+                <LinearGradient
+                  colors={[cfg.gradientFrom, cfg.gradientTo]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.themeCircle, { backgroundColor: cfg.primary }]}
+                >
                   {isActive && <Feather name="check" size={11} color="#fff" />}
-                </View>
+                </LinearGradient>
                 <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
                   {cfg.label}
                 </Text>
@@ -133,8 +137,7 @@ export default function ProfileScreen() {
   const colors   = useThemeColors();
   const user     = useAuthStore((s) => s.user);
   const signOut  = useAuthStore((s) => s.signOut);
-  const progress       = useProgressStore((s) => s.progress);
-  const loadDemoData   = useProgressStore((s) => s.loadDemoData);
+  const progress = useProgressStore((s) => s.progress);
   const { isDesktop, contentContainerWeb } = useWebLayout();
 
   const handleSignOut = () => {
@@ -189,7 +192,12 @@ export default function ProfileScreen() {
         {/* ── Profile Header ── */}
         <View style={styles.headerCard}>
           {/* Banner */}
-          <View style={[styles.headerBanner, { backgroundColor: colors.primary }]} />
+          <LinearGradient
+            colors={[colors.gradientFrom, colors.gradientTo, colors.gradientAccent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerBanner}
+          />
 
           {/* Avatar */}
           <View style={[styles.avatarRing, { backgroundColor: colors.background }]}>
@@ -261,32 +269,6 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        {/* ── Developer Settings (DEV only) ── */}
-        {__DEV__ && (
-          <>
-            <Pressable
-              onPress={loadDemoData}
-              style={({ pressed }) => [styles.devRow, { opacity: pressed ? 0.6 : 1 }]}
-              accessibilityRole="button"
-            >
-              <Feather name="database" size={15} color="#28C76F" />
-              <Text style={[styles.devText, { color: '#28C76F' }]}>Load Demo Data</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/dev-config' as any)}
-              style={({ pressed }) => [styles.devRow, { opacity: pressed ? 0.6 : 1 }]}
-              accessibilityRole="button"
-            >
-              <Feather name="settings" size={15} color={colors.primary} />
-              <Text style={[styles.devText, { color: colors.primary }]}>Developer Settings</Text>
-              {getMissingCount() > 0 && (
-                <View style={[styles.devBadge, { backgroundColor: colors.error + '1A' }]}>
-                  <Text style={[styles.devBadgeText, { color: colors.error }]}>{getMissingCount()}</Text>
-                </View>
-              )}
-            </Pressable>
-          </>
-        )}
 
         {/* ── Version ── */}
         <Text style={[styles.version, { color: colors.textSecondary }]}>Katalyst v1.0.0 · KataHQ</Text>
@@ -431,30 +413,32 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   menuCard: {
+    borderRadius: 14,
+    borderWidth: 1,
     overflow: 'hidden',
   },
   menuRow: {
-    borderRadius: 0,
-    borderWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     gap: 12,
   },
   menuIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuLabel: {
     flex: 1,
     fontFamily: F.medium,
-    fontSize: 15,
+    fontSize: 14,
   },
   divider: {
     height: 1,
-    marginLeft: 62,
+    marginLeft: 58,
   },
 
   /* ── Theme picker ── */

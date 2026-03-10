@@ -13,25 +13,22 @@ import { getLeaderboard } from '@/data/leaderboard';
 export type Period = 'daily' | 'monthly' | 'alltime';
 
 export function useLeaderboard(period: Period) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isRealUser = useAuthStore((s) => s.step === 'authenticated');
 
   return useQuery({
     queryKey: ['leaderboard', period],
     queryFn: async (): Promise<LeaderboardResponse> => {
-      if (!isAuthenticated) {
-        // Guest mode: return mock data
-        return { period, entries: getLeaderboard(period === 'alltime' ? 'alltime' : period), userRank: null };
+      if (isRealUser) {
+        const data = await fetchLeaderboard(period);
+        if (data) return data;
       }
-      const data = await fetchLeaderboard(period);
-      if (!data) {
-        // API unavailable — fallback to mock
-        return { period, entries: getLeaderboard(period === 'alltime' ? 'alltime' : period), userRank: null };
-      }
-      return data;
+      // Guest mode or API unavailable — return mock data (no AWS call)
+      return { period, entries: getLeaderboard(period === 'alltime' ? 'alltime' : period), userRank: null };
     },
-    staleTime:      60 * 1000,        // 1 min
-    gcTime:         5 * 60 * 1000,    // 5 min
-    retry:          1,
+    staleTime:            10 * 60 * 1000,  // 10 min — leaderboard changes slowly
+    gcTime:               30 * 60 * 1000,  // 30 min cache
+    retry:                1,
     refetchOnWindowFocus: false,
+    refetchOnMount:       false,
   });
 }

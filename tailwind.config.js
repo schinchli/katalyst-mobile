@@ -25,61 +25,59 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ── Primary (Vuexy purple — identical in light + dark) ──────────────
-        'app-primary':             '#7367F0',
+        // ── Primary (fresh blue/teal stack) ─────────────────────────────────
+        'app-primary':             '#0EA5E9',
+        'app-primary-2':           '#10B981',
 
         // ── Backgrounds ──────────────────────────────────────────────────────
-        'app-bg':                  '#F8F7FA',   // light  — admin --vx-body-bg
-        'app-bg-dark':             '#283046',   // dark   — admin --vx-sidebar-bg (semi-dark)
+        'app-bg':                  '#F6F8FB',
+        'app-bg-dark':             '#0B1221',
 
         // ── Surface (card / sheet backgrounds) ───────────────────────────────
-        'app-surface':             '#FFFFFF',   // light  — admin --vx-card-bg
-        'app-surface-dark':        '#2F3349',   // dark   — one shade lighter than bg
+        'app-surface':             '#FFFFFF',
+        'app-surface-dark':        'rgba(19,25,38,0.9)',
 
         // ── Borders / dividers ────────────────────────────────────────────────
-        'app-border':              '#EBE9F1',   // light  — admin --vx-border
-        'app-border-dark':         '#3B4059',   // dark   — subtle on #283046
+        'app-border':              '#E5E7EB',
+        'app-border-dark':         '#1F2937',
 
         // ── Text — two shades only ────────────────────────────────────────────
-        'app-text':                '#4B465C',   // light  — admin --vx-text (unified)
-        'app-text-dark':           '#E3E7FA',   // dark   — high contrast on #283046
-        'app-muted':               '#A3A0B3',   // light  — admin --vx-text-muted
-        'app-muted-dark':          '#A3A0B3',   // dark   — same value, consistent
+        'app-text':                '#0F172A',
+        'app-text-dark':           '#E5E7EB',
+        'app-muted':               '#6B7280',
+        'app-muted-dark':          '#9CA3AF',
 
         // ── Primary light (tinted states) ────────────────────────────────────
-        'app-primary-faint':       '#EBE9FD',   // light  — admin --vx-primary-light
-        'app-primary-faint-dark':  '#352E6B',   // dark   — primary tint on #283046
+        'app-primary-faint':       '#E0F7FF',
+        'app-primary-faint-dark':  'rgba(14,165,233,0.14)',
 
-        // ── Status (functional only — no cyan info) ───────────────────────────
-        'app-success':             '#28C76F',   // admin --vx-success ✓
-        'app-success-tint':        '#D1F7E2',   // 12% success on white
-        'app-warning':             '#FF9F43',   // admin --vx-warning ✓
-        'app-warning-tint':        '#FEF3C7',   // 12% warning on white
-        'app-error':               '#EA5455',   // admin --vx-danger (was #FF4C51)
-        'app-error-tint':          '#FCEAEA',   // 12% error on white
-        'app-info':                '#7367F0',   // cyan removed — alias for primary
-
-        // ── Brand ─────────────────────────────────────────────────────────────
-        'app-aws':                 '#FF9900',   // AWS orange
+        // ── Status (functional only) ─────────────────────────────────────────
+        'app-success':             '#10B981',
+        'app-success-tint':        '#D1F7E2',
+        'app-warning':             '#F59E0B',
+        'app-warning-tint':        '#FEF3C7',
+        'app-error':               '#EF4444',
+        'app-error-tint':          '#FCEAEA',
+        'app-info':                '#0EA5E9',
 
         // ── Tab bar ───────────────────────────────────────────────────────────
-        'app-tab-inactive':        '#A3A0B3',   // matches app-muted
+        'app-tab-inactive':        '#9CA3AF',
       },
 
       fontFamily: {
-        sans: ['PublicSans-Regular', 'system-ui', 'sans-serif'],
+        sans: ['SpaceGrotesk', 'Inter', 'PublicSans-Regular', 'system-ui', 'sans-serif'],
         mono: ['SpaceMono', 'Courier New', 'monospace'],
       },
 
       borderRadius: {
         // Vuexy uses 6px as default $border-radius
-        DEFAULT: '6px',
-        sm:    '6px',
-        md:    '8px',
-        lg:    '12px',
-        xl:    '16px',
-        '2xl': '20px',
-        '3xl': '24px',
+        DEFAULT: '10px',
+        sm:    '10px',
+        md:    '12px',
+        lg:    '16px',
+        xl:    '20px',
+        '2xl': '26px',
+        '3xl': '32px',
       },
     },
   },

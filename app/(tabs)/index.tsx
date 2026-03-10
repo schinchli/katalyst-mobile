@@ -24,78 +24,55 @@ const CARD_SHADOW = {
 };
 
 // ─── Stat card definition ─────────────────────────────────────────────────────
-type StatColorType = 'primary' | 'success' | 'warning' | 'error';
-
 interface StatDef {
   icon: string;
-  colorType: StatColorType;
   label: string;
   getValue: (p: ReturnType<typeof useProgressStore.getState>['progress']) => string;
 }
 
 const STAT_DEFS: StatDef[] = [
-  { icon: 'zap',          colorType: 'primary', label: 'Day Streak', getValue: (p) => String(p.currentStreak) },
-  { icon: 'check-circle', colorType: 'success', label: 'Completed',  getValue: (p) => String(p.completedQuizzes) },
-  { icon: 'trending-up',  colorType: 'warning', label: 'Avg Score',  getValue: (p) => `${p.averageScore}%` },
-  { icon: 'award',        colorType: 'error',   label: 'Badges',     getValue: (p) => String(p.badges?.length ?? 0) },
+  { icon: 'zap',          label: 'Day Streak', getValue: (p) => String(p.currentStreak) },
+  { icon: 'check-circle', label: 'Completed',  getValue: (p) => String(p.completedQuizzes) },
+  { icon: 'trending-up',  label: 'Avg Score',  getValue: (p) => `${p.averageScore}%` },
+  { icon: 'award',        label: 'Badges',     getValue: (p) => String(p.badges?.length ?? 0) },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function GreetingHeader({ userName, coins, level }: { userName: string; coins: number; level: number }) {
+function GreetingHeader({ userName, coins, level, badges }: { userName: string; coins: number; level: number; badges: number }) {
   const colors = useThemeColors();
-
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   return (
-    <View style={[styles.headerCard, { backgroundColor: colors.surface }, CARD_SHADOW]}>
-      {/* Purple accent strip at top */}
+    <View style={[styles.headerCard, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }, CARD_SHADOW]}>
       <View style={[styles.headerAccentStrip, { backgroundColor: colors.primary }]} />
-
       <View style={styles.headerInner}>
-        <View style={styles.headerTextBlock}>
-          <Text style={[styles.greetingSubtext, { color: colors.textSecondary }]}>
-            {greeting()},
-          </Text>
-          <Text style={[styles.greetingName, { color: colors.text }]}>
-            {userName}
-          </Text>
-          <Text style={[styles.greetingDate, { color: colors.textSecondary }]}>
-            {today}
-          </Text>
-        </View>
-
-        <View style={styles.headerRight}>
-          {/* Coin balance */}
-          <View style={[styles.coinPill, { backgroundColor: colors.warning + '18' }]}>
-            <Feather name="zap" size={13} color={colors.warning} />
-            <Text style={[styles.coinPillText, { color: colors.warning }]}>{coins.toLocaleString()}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.greetingSubtext, { color: colors.textSecondary }]}>{greeting},</Text>
+          <Text style={[styles.greetingName, { color: colors.text }]} numberOfLines={1}>{userName}</Text>
+          <View style={styles.headerPillsRow}>
+            <View style={[styles.hPill, { backgroundColor: colors.warning + '18' }]}>
+              <Feather name="zap" size={11} color={colors.warning} />
+              <Text style={[styles.hPillText, { color: colors.warning }]}>{coins.toLocaleString()}</Text>
+            </View>
+            <View style={[styles.hPill, { backgroundColor: colors.primaryLight }]}>
+              <Feather name="shield" size={11} color={colors.primary} />
+              <Text style={[styles.hPillText, { color: colors.primary }]}>Lv.{level}</Text>
+            </View>
+            <View style={[styles.hPill, { backgroundColor: colors.success + '18' }]}>
+              <Feather name="award" size={11} color={colors.success} />
+              <Text style={[styles.hPillText, { color: colors.success }]}>{badges} badges</Text>
+            </View>
           </View>
-          {/* Level badge */}
-          <View style={[styles.levelPill, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[styles.levelPillText, { color: colors.primary }]}>Lv.{level}</Text>
-          </View>
-          {/* CTA button */}
-          <Pressable
-            onPress={() => router.push('/(tabs)/quizzes')}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.ctaButton, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-          >
-            <Feather name="play" size={15} color="#FFFFFF" />
-            <Text style={styles.ctaButtonText}>Start</Text>
-          </Pressable>
         </View>
+        <Pressable
+          onPress={() => router.push('/(tabs)/quizzes')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.ctaButton, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
+        >
+          <Feather name="play" size={15} color="#FFFFFF" />
+          <Text style={styles.ctaButtonText}>Start</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -111,19 +88,17 @@ function StatCard({
   flex?: boolean;
 }) {
   const colors = useThemeColors();
-  const iconColor = colors[def.colorType];
-  const iconBg    = iconColor + '18';
   return (
     <View
       style={[
         styles.statCard,
-        { backgroundColor: colors.surface },
+        { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
         CARD_SHADOW,
         flex && { flex: 1 },
       ]}
     >
-      <View style={[styles.statIconContainer, { backgroundColor: iconBg }]}>
-        <Feather name={def.icon as any} size={20} color={iconColor} />
+      <View style={[styles.statIconContainer, { backgroundColor: colors.primaryLight }]}>
+        <Feather name={def.icon as any} size={16} color={colors.primary} />
       </View>
       <Text style={[styles.statValue, { color: colors.text }]}>
         {def.getValue(progress)}
@@ -178,6 +153,7 @@ function SectionHeader({
   const colors = useThemeColors();
   return (
     <View style={styles.sectionHeader}>
+      <View style={[styles.sectionAccentBar, { backgroundColor: colors.primary }]} />
       <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
       {onViewAll && (
         <Pressable onPress={onViewAll} hitSlop={8} accessibilityRole="button">
@@ -191,9 +167,9 @@ function SectionHeader({
 function QuickActionsRow() {
   const colors = useThemeColors();
   const ACTIONS = [
-    { icon: 'award',    label: 'Leaderboard', color: colors.warning, bg: colors.warning + '18', route: '/leaderboard' as const },
-    { icon: 'zap',      label: 'Challenge',   color: colors.primary, bg: colors.primaryLight,   route: '/challenge' as const },
-    { icon: 'calendar', label: 'Contests',    color: colors.error,   bg: colors.error + '18',   route: '/contest' as const },
+    { icon: 'award',    label: 'Leaderboard', color: colors.warning, route: '/leaderboard' as const },
+    { icon: 'zap',      label: 'Challenge',   color: colors.primary, route: '/challenge' as const },
+    { icon: 'calendar', label: 'Contests',    color: colors.error,   route: '/contest' as const },
   ];
   return (
     <View style={styles.quickRow}>
@@ -202,10 +178,15 @@ function QuickActionsRow() {
           key={a.label}
           onPress={() => router.push(a.route as any)}
           accessibilityRole="button"
-          style={({ pressed }) => [styles.quickBtn, { backgroundColor: a.bg, opacity: pressed ? 0.88 : 1 }]}
+          style={({ pressed }) => [
+            styles.quickBtn,
+            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.88 : 1 },
+          ]}
         >
-          <Feather name={a.icon as any} size={22} color={a.color} />
-          <Text style={[styles.quickBtnLabel, { color: a.color }]}>{a.label}</Text>
+          <View style={[styles.quickIconWrap, { backgroundColor: a.color + '18' }]}>
+            <Feather name={a.icon as any} size={20} color={a.color} />
+          </View>
+          <Text style={[styles.quickBtnLabel, { color: colors.text }]}>{a.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -259,7 +240,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} />
+          <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} badges={progress.badges?.length ?? 0} />
 
           {/* Stats row — 4 equal columns on desktop */}
           <View style={styles.statsRowDesktop}>
@@ -309,10 +290,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} />
-
-        {/* Live contest banner */}
-        <LiveContestBanner />
+        <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} badges={progress.badges?.length ?? 0} />
 
         {/* Quick actions */}
         <View style={styles.sectionGap}>
@@ -396,14 +374,15 @@ const styles = StyleSheet.create({
     height: 4,
   },
   headerInner: {
-    padding: 20,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
   },
-  headerTextBlock: {
+  headerLeft: {
     flex: 1,
+    gap: 2,
   },
   greetingSubtext: {
     fontFamily: F.regular,
@@ -416,35 +395,26 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     marginTop: 1,
   },
-  greetingDate: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    marginTop: 3,
-    lineHeight: 18,
-  },
 
-  // ── Header right cluster ────────────────────────────────────────────────────
-  headerRight: {
+  // ── Header pills row ────────────────────────────────────────────────────────
+  headerPillsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 6,
-    flexShrink: 0,
+    marginTop: 8,
   },
-  coinPill: {
+  hPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 16,
-  },
-  coinPillText: { fontFamily: F.bold, fontSize: 12 },
-  levelPill: {
     paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 16,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  levelPillText: { fontFamily: F.bold, fontSize: 12 },
+  hPillText: {
+    fontFamily: F.semiBold,
+    fontSize: 11,
+  },
 
   // ── CTA button ─────────────────────────────────────────────────────────────
   ctaButton: {
@@ -503,9 +473,22 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
+    gap: 8,
+    paddingVertical: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#4B465C',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  quickIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   quickBtnLabel: { fontFamily: F.semiBold, fontSize: 12 },
 
@@ -521,26 +504,26 @@ const styles = StyleSheet.create({
   },
   statCard: {
     borderRadius: 10,
-    padding: 16,
+    padding: 12,
   },
   statIconContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   statValue: {
     fontFamily: F.bold,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 20,
+    lineHeight: 26,
   },
   statLabel: {
     fontFamily: F.medium,
-    fontSize: 12,
-    marginTop: 2,
-    lineHeight: 16,
+    fontSize: 11,
+    marginTop: 1,
+    lineHeight: 15,
   },
 
   // ── Recent results strip ───────────────────────────────────────────────────
@@ -578,8 +561,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 12,
+  },
+  sectionAccentBar: {
+    width: 3,
+    height: 18,
+    borderRadius: 2,
   },
   sectionTitle: {
     fontFamily: F.bold,

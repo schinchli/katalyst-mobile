@@ -4,8 +4,11 @@ export interface User {
   name: string;
   avatar?: string;
   subscription: 'free' | 'premium';
+  unlockedCourses?: string[];
   createdAt: string;
 }
+
+export type CertLevel = 'foundational' | 'associate' | 'professional' | 'specialty';
 
 export interface Quiz {
   id: string;
@@ -16,7 +19,10 @@ export interface Quiz {
   questionCount: number;
   duration: number; // minutes
   isPremium: boolean;
+  price?: number;   // INR one-time unlock price
   icon: string;
+  certLevel?: CertLevel;
+  examCode?: string;
 }
 
 export interface Question {
@@ -67,6 +73,7 @@ export interface LeaderboardEntry {
   avatarInitial: string;
   score: number;       // total score points
   coins: number;
+  xp?: number;
   streak: number;
   quizzesCompleted: number;
   isCurrentUser?: boolean;
@@ -123,4 +130,21 @@ export type QuizCategory =
   | 'mlops'
   | 'evaluation'
   | 'cost'
-  | 'general';
+  | 'cost-optimization'
+  | 'serverless'
+  | 'general'
+  // AWS Certifications
+  | 'clf-c02'
+  | 'aif-c01'
+  | 'saa-c03'
+  | 'dva-c02'
+  | 'soa-c03'
+  | 'dea-c01'
+  | 'mla-c01'
+  | 'sap-c02'
+  | 'dop-c02'
+  | 'aip-c01'
+  | 'ans-c01'
+  | 'scs-c03'
+  | 'pas-c01'
+  | 'mls-c01';

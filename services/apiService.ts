@@ -1,16 +1,16 @@
 /**
  * API Service
  * ───────────
- * Typed client for the LMS REST API (API Gateway + Lambda + DynamoDB).
- * Automatically attaches the Cognito ID token from the current session.
+ * Typed client for the LMS REST API (Supabase Edge Functions).
+ * Automatically attaches the Supabase access token from the current session.
  *
  * All methods return null (instead of throwing) when the user is unauthenticated
- * or when the AWS backend is not yet configured — so callers can degrade gracefully.
+ * or when the backend is not yet configured — so callers can degrade gracefully.
  */
 
-import { fetchAuthSession } from 'aws-amplify/auth';
+import { supabase } from '@/config/supabase';
 import { AppConfig } from '@/config/appConfig';
-import { isAmplifyReady } from '@/config/amplify';
+import type { LeaderboardEntry } from '@/types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,6 +20,7 @@ export interface SubmitQuizPayload {
   timeTaken: number;
   score: number;
   totalQuestions: number;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
 }
 
 export interface SubmitQuizResponse {
@@ -64,18 +65,17 @@ export interface ProgressResponse {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function getIdToken(): Promise<string | null> {
-  if (!isAmplifyReady()) return null;
+async function getAccessToken(): Promise<string | null> {
   try {
-    const session = await fetchAuthSession();
-    return session.tokens?.idToken?.toString() ?? null;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
   } catch {
     return null;
   }
 }
 
 function apiUrl(path: string): string {
-  const base = AppConfig.aws.apiUrl.replace(/\/$/, '');
+  const base = AppConfig.supabase.functionsUrl.replace(/\/$/, '');
   return `${base}${path}`;
 }
 
@@ -83,14 +83,14 @@ async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T | null> {
-  const token = await getIdToken();
+  const token = await getAccessToken();
   if (!token) return null;
 
   const res = await fetch(apiUrl(path), {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      Authorization:  token,
+      Authorization:  `Bearer ${token}`,
       ...options.headers,
     },
   });
@@ -106,33 +106,24 @@ async function apiFetch<T>(
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-/** POST /quiz/submit — returns null if not authenticated or API unavailable */
+/** POST /quiz-submit — returns null if not authenticated or API unavailable */
 export async function submitQuiz(
   payload: SubmitQuizPayload,
 ): Promise<SubmitQuizResponse | null> {
-  return apiFetch<SubmitQuizResponse>('/quiz/submit', {
+  return apiFetch<SubmitQuizResponse>('/quiz-submit', {
     method: 'POST',
     body:   JSON.stringify(payload),
   });
 }
 
-/** GET /progress — returns null if not authenticated or API unavailable */
+/** GET /progress-fetch — returns null if not authenticated or API unavailable */
 export async function fetchProgress(): Promise<ProgressResponse | null> {
-  return apiFetch<ProgressResponse>('/progress');
+  return apiFetch<ProgressResponse>('/progress-fetch');
 }
 
 // ── Leaderboard ───────────────────────────────────────────────────────────────
 
-export interface LeaderboardEntry {
-  rank: number;
-  userId: string;
-  name: string;
-  avatarInitial: string;
-  score: number;
-  coins: number;
-  xp: number;
-  isCurrentUser?: boolean;
-}
+export type { LeaderboardEntry };
 
 export interface LeaderboardResponse {
   period: 'daily' | 'monthly' | 'alltime';
@@ -140,9 +131,9 @@ export interface LeaderboardResponse {
   userRank: number | null;
 }
 
-/** GET /leaderboard?period=... — returns null if not authenticated or API unavailable */
+/** GET /leaderboard-fetch — returns null if not authenticated or API unavailable */
 export async function fetchLeaderboard(
-  period: 'daily' | 'monthly' | 'alltime' = 'alltime',
+  _period: 'daily' | 'monthly' | 'alltime' = 'alltime',
 ): Promise<LeaderboardResponse | null> {
-  return apiFetch<LeaderboardResponse>(`/leaderboard?period=${period}`);
+  return apiFetch<LeaderboardResponse>('/leaderboard-fetch');
 }

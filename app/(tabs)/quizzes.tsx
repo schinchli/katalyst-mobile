@@ -10,35 +10,24 @@ import type { QuizCategory, Quiz } from '@/types';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
 
-// ─── Difficulty ──────────────────────────────────────────────────────────────
-const DIFF_COLOR: Record<string, string> = {
-  beginner:     '#28C76F',
-  intermediate: '#FF9F43',
-  advanced:     '#EA5455',
-};
-const DIFF_STAR: Record<string, number> = { beginner: 1, intermediate: 2, advanced: 3 };
 
-// ─── Category filters ─────────────────────────────────────────────────────────
-const categories: { key: QuizCategory | 'all'; label: string }[] = [
-  { key: 'all',           label: 'All' },
-  { key: 'bedrock',       label: 'Bedrock' },
-  { key: 'rag',           label: 'RAG' },
-  { key: 'agents',        label: 'Agents' },
-  { key: 'guardrails',    label: 'Guardrails' },
-  { key: 'prompt-eng',    label: 'Prompting' },
-  { key: 'routing',       label: 'Routing' },
-  { key: 'security',      label: 'Security' },
-  { key: 'monitoring',    label: 'Monitoring' },
-  { key: 'orchestration', label: 'Orchestration' },
-  { key: 'evaluation',    label: 'Evaluation' },
-  { key: 'mlops',         label: 'MLOps' },
+// ─── Difficulty filters ───────────────────────────────────────────────────────
+const difficulties: { key: 'all' | 'beginner' | 'intermediate' | 'advanced'; label: string }[] = [
+  { key: 'all',          label: 'All Levels' },
+  { key: 'beginner',     label: 'Beginner' },
+  { key: 'intermediate', label: 'Intermediate' },
+  { key: 'advanced',     label: 'Advanced' },
 ];
 
-// ─── Course Card (Vuexy "Top Course" style) ───────────────────────────────────
+// ─── Domain filters ───────────────────────────────────────────────────────────
+const categories: { key: QuizCategory | 'all'; label: string }[] = [
+  { key: 'all',     label: 'All Domains' },
+  { key: 'clf-c02', label: 'CLF-C02' },
+];
+
+// ─── Course Card ──────────────────────────────────────────────────────────────
 function CourseCard({ quiz, onPress, completedIds }: { quiz: Quiz; onPress: () => void; completedIds: Set<string> }) {
   const colors    = useThemeColors();
-  const accent    = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
-  const stars     = DIFF_STAR[quiz.difficulty] ?? 1;
   const completed = completedIds.has(quiz.id);
 
   return (
@@ -48,71 +37,39 @@ function CourseCard({ quiz, onPress, completedIds }: { quiz: Quiz; onPress: () =
       accessibilityLabel={`Start ${quiz.title} quiz`}
       style={({ pressed }) => [
         s.courseCard,
-        { backgroundColor: colors.surface },
+        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
         pressed && s.cardPressed,
       ]}
     >
-      {/* Coloured header banner */}
-      <View style={[s.cardBanner, { backgroundColor: accent + '18' }]}>
-        {/* Premium badge */}
+      {/* Header banner — neutral primary tint */}
+      <View style={[s.cardBanner, { backgroundColor: colors.primaryLight }]}>
         {quiz.isPremium && (
           <View style={[s.proBadge, { backgroundColor: colors.aws }]}>
             <Text style={s.proBadgeText}>PRO</Text>
           </View>
         )}
-        {/* Completed badge */}
         {completed && (
           <View style={[s.completedBadge, { backgroundColor: colors.success + '22', borderColor: colors.success + '55' }]}>
             <Feather name="check-circle" size={11} color={colors.success} />
             <Text style={[s.completedBadgeText, { color: colors.success }]}>Done</Text>
           </View>
         )}
-        {/* Icon */}
-        <View style={[s.cardIconCircle, { backgroundColor: accent + '28' }]}>
-          <Feather name={quiz.icon as any} size={30} color={accent} />
+        <View style={[s.cardIconCircle, { backgroundColor: colors.primary + '28' }]}>
+          <Feather name={quiz.icon as any} size={28} color={colors.primary} />
         </View>
       </View>
 
       {/* Body */}
       <View style={s.cardBody}>
-        {/* Category chip */}
-        <View style={[s.catChip, { backgroundColor: accent + '14' }]}>
-          <Text style={[s.catChipText, { color: accent }]}>
-            {quiz.category.charAt(0).toUpperCase() + quiz.category.slice(1).replace('-', ' ')}
-          </Text>
+        {/* Top content group */}
+        <View style={s.cardTop}>
+          <Text style={[s.cardTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
+          <Text style={[s.cardDesc, { color: colors.textSecondary }]} numberOfLines={3}>{quiz.description}</Text>
         </View>
 
-        {/* Title */}
-        <Text style={[s.cardTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
-
-        {/* Description */}
-        <Text style={[s.cardDesc, { color: colors.textSecondary }]} numberOfLines={2}>{quiz.description}</Text>
-
-        {/* Difficulty stars */}
-        <View style={s.starsRow}>
-          {[1, 2, 3].map((n) => (
-            <Feather key={n} name="star" size={12} color={n <= stars ? accent : colors.surfaceBorder} />
-          ))}
-          <Text style={[s.diffLabel, { color: accent }]}>
-            {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
-          </Text>
-        </View>
-
-        {/* Divider */}
-        <View style={[s.divider, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* Footer */}
-        <View style={s.cardFooter}>
-          <View style={s.footerMeta}>
-            <Feather name="help-circle" size={12} color={colors.textSecondary} />
-            <Text style={[s.footerMetaText, { color: colors.textSecondary }]}>{quiz.questionCount}q</Text>
-            <Feather name="clock" size={12} color={colors.textSecondary} style={{ marginLeft: 6 }} />
-            <Text style={[s.footerMetaText, { color: colors.textSecondary }]}>{quiz.duration}m</Text>
-          </View>
-          <View style={[s.startChip, { backgroundColor: colors.primary }]}>
-            <Text style={s.startChipText}>Start</Text>
-            <Feather name="arrow-right" size={11} color="#fff" />
-          </View>
+        {/* Start button — pinned to bottom */}
+        <View style={[s.startBtn, { backgroundColor: colors.primary }]}>
+          <Text style={s.startBtnText}>Start →</Text>
         </View>
       </View>
     </Pressable>
@@ -124,14 +81,16 @@ export default function QuizzesScreen() {
   const colors = useThemeColors();
   const { isDesktop, contentContainerWeb } = useWebLayout();
   const [selectedCategory, setSelectedCategory] = useState<QuizCategory | 'all'>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
   const results = useProgressStore((s) => s.progress.recentResults);
 
   const completedIds = new Set(results.map((r) => r.quizId));
 
-  const filtered =
-    selectedCategory === 'all'
-      ? quizzes
-      : quizzes.filter((q) => q.category === selectedCategory);
+  const filtered = quizzes.filter((q) => {
+    const catMatch  = selectedCategory === 'all' || q.category === selectedCategory;
+    const diffMatch = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
+    return catMatch && diffMatch;
+  });
 
   const totalCategories = new Set(quizzes.map((q) => q.category)).size;
 
@@ -142,24 +101,42 @@ export default function QuizzesScreen() {
       <View style={[s.header, contentContainerWeb]}>
         <View>
           <Text style={[s.screenTitle, { color: colors.text }]}>All Courses</Text>
-          <Text style={[s.screenSubtitle, { color: colors.textSecondary }]}>
-            AWS GenAI Professional Prep
-          </Text>
         </View>
         <View style={[s.headerStatsRow]}>
-          <View style={[s.headerStat, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[s.headerStatVal, { color: colors.primaryText }]}>{quizzes.length}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.primaryText }]}>Quizzes</Text>
+          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
+            <Text style={[s.headerStatVal, { color: colors.primary }]}>{quizzes.length}</Text>
+            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Quizzes</Text>
           </View>
-          <View style={[s.headerStat, { backgroundColor: colors.success + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.success }]}>{totalCategories}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.success }]}>Topics</Text>
+          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
+            <Text style={[s.headerStatVal, { color: colors.primary }]}>{totalCategories}</Text>
+            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Topics</Text>
           </View>
-          <View style={[s.headerStat, { backgroundColor: colors.warning + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.warning }]}>{completedIds.size}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.warning }]}>Done</Text>
+          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
+            <Text style={[s.headerStatVal, { color: colors.primary }]}>{completedIds.size}</Text>
+            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Done</Text>
           </View>
         </View>
+      </View>
+
+      {/* ── Difficulty filter pills ── */}
+      <View style={s.diffRow}>
+        {difficulties.map((d) => {
+          const active = selectedDifficulty === d.key;
+          return (
+            <Pressable
+              key={d.key}
+              onPress={() => setSelectedDifficulty(d.key)}
+              style={[
+                s.diffPill,
+                active
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              ]}
+            >
+              <Text style={[s.diffPillText, { color: active ? '#fff' : colors.text }]}>{d.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {/* ── Category filter pills ── */}
@@ -184,7 +161,7 @@ export default function QuizzesScreen() {
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
             >
-              <Text style={[s.pillText, { color: active ? '#FFFFFF' : colors.textSecondary }]}>
+              <Text style={[s.pillText, { color: active ? '#FFFFFF' : colors.text }]}>
                 {cat.label}
               </Text>
             </Pressable>
@@ -242,8 +219,7 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  screenTitle:    { fontFamily: F.bold,    fontSize: 22, lineHeight: 28 },
-  screenSubtitle: { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
+  screenTitle: { fontFamily: F.bold, fontSize: 22, lineHeight: 28 },
   headerStatsRow: { flexDirection: 'row', gap: 6 },
   headerStat: {
     alignItems: 'center',
@@ -254,6 +230,11 @@ const s = StyleSheet.create({
   },
   headerStatVal:   { fontFamily: F.bold,    fontSize: 16, lineHeight: 20 },
   headerStatLabel: { fontFamily: F.regular, fontSize: 10, marginTop: 1 },
+
+  // ── Difficulty row ──
+  diffRow:     { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 8 },
+  diffPill:    { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  diffPillText:{ fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Pills ──
   pillScroll: { flexGrow: 0 },
@@ -273,32 +254,33 @@ const s = StyleSheet.create({
   grid: { paddingHorizontal: 16, paddingBottom: 40 },
   gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridRowDesktop: { gap: 16 },
-  gridCell: { width: '47.5%' },
+  gridCell: { width: '47.5%', alignSelf: 'stretch' },
   gridCellDesktop: { width: '30%' },
 
   // ── Course card ──
   courseCard: {
-    borderRadius: 16,
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
     overflow: 'hidden',
     shadowColor: '#4B465C',
     shadowOpacity: 0.10,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-    marginBottom: 0,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   cardPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
 
   cardBanner: {
-    height: 100,
+    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   cardIconCircle: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -325,14 +307,14 @@ const s = StyleSheet.create({
   },
   completedBadgeText: { fontFamily: F.semiBold, fontSize: 10 },
 
-  cardBody: { padding: 12 },
+  cardBody: { padding: 12, flex: 1, justifyContent: 'space-between' },
+  cardTop:  { gap: 6 },
 
   catChip: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    marginBottom: 6,
   },
   catChipText: { fontFamily: F.semiBold, fontSize: 10 },
 
@@ -340,32 +322,22 @@ const s = StyleSheet.create({
     fontFamily: F.bold,
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 5,
   },
+
   cardDesc: {
     fontFamily: F.regular,
-    fontSize: 11,
-    lineHeight: 16,
-    marginBottom: 8,
+    fontSize: 12,
+    lineHeight: 18,
   },
 
-  starsRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 10 },
-  diffLabel: { fontFamily: F.semiBold, fontSize: 10, marginLeft: 4 },
-
-  divider: { height: 1, marginBottom: 10 },
-
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  footerMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  footerMetaText: { fontFamily: F.regular, fontSize: 11 },
-  startChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  startBtn: {
+    height: 36,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
   },
-  startChipText: { fontFamily: F.semiBold, fontSize: 11, color: '#fff' },
+  startBtnText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
 
   // ── Empty state ──
   emptyState:    { alignItems: 'center', paddingTop: 64, paddingBottom: 32 },

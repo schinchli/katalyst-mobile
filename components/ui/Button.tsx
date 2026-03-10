@@ -1,4 +1,5 @@
 import { Pressable, Text, ActivityIndicator, StyleSheet, type ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 
@@ -31,7 +32,6 @@ export function Button({
       case 'secondary': return { backgroundColor: colors.primaryLight };
       case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primaryText };
       default:          return {
-        backgroundColor: colors.primary,
         shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.4, shadowRadius: 6, elevation: 4,
       };
@@ -53,12 +53,16 @@ export function Button({
         style,
       ]}
     >
-      {loading && (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primaryText} size="small" />
-      )}
-      <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]}>
-        {title}
-      </Text>
+      {variant === 'primary' ? (
+        <LinearGradient
+          colors={[colors.gradientFrom, colors.gradientTo]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFillObject, { borderRadius: 10 }]}
+        />
+      ) : null}
+      {loading && <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primaryText} size="small" />}
+      <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]}>{title}</Text>
     </Pressable>
   );
 }

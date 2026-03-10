@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -17,6 +17,7 @@ import { useQuizStore } from '@/stores/quizStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { useAuthStore } from '@/stores/authStore';
+import { openCheckout, openCourseUnlock } from '@/services/razorpayService';
 import { quizzes, quizQuestions } from '@/data/quizzes';
 import { CHALLENGE_SCORES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
@@ -57,7 +58,15 @@ export default function QuizScreen() {
   const [skipsLeft, setSkipsLeft]           = useState(3);
 
   const quiz      = quizzes.find((q) => q.id === id);
-  const questions = quizQuestions[id ?? ''] ?? [];
+  const rawQuestions = quizQuestions[id ?? ''] ?? [];
+
+  // Shuffle options once per quiz load so the correct answer isn't always "B."
+  // correctOptionId is preserved (it's the option's id, not its position).
+  const questions = useMemo(
+    () => rawQuestions.map((q) => ({ ...q, options: [...q.options].sort(() => Math.random() - 0.5) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [id],  // re-shuffle only when the quiz changes
+  );
 
   const {
     currentQuestionIndex, selectedAnswers,
@@ -71,7 +80,9 @@ export default function QuizScreen() {
   const { showAd }     = useInterstitialAd();
   const toggleBookmark = useBookmarkStore((s) => s.toggle);
   const isBookmarked   = useBookmarkStore((s) => s.isBookmarked);
-  const user           = useAuthStore((s) => s.user);
+  const user              = useAuthStore((s) => s.user);
+  const upgradeToPremium  = useAuthStore((s) => s.upgradeToPremium);
+  const unlockCourse      = useAuthStore((s) => s.unlockCourse);
 
   const currentQuestion    = questions[currentQuestionIndex];
   const answeredCount      = Object.keys(selectedAnswers).length;
@@ -198,7 +209,7 @@ export default function QuizScreen() {
   };
 
   // ── Timer color ────────────────────────────────────────────────────────────
-  const timerColor    = timeLeft <= 10 ? colors.error : timeLeft <= 20 ? colors.warning : colors.success;
+  const timerColor    = timeLeft <= 10 ? colors.error : colors.primary;
   const timerProgress = timeLeft / QUESTION_TIME;
 
   // ── Not found ─────────────────────────────────────────────────────────────
@@ -214,16 +225,48 @@ export default function QuizScreen() {
 
   // ── INTRO ─────────────────────────────────────────────────────────────────
   if (phase === 'intro') {
-    const diffColor = { beginner: colors.success, intermediate: colors.warning, advanced: colors.error }[quiz.difficulty] ?? colors.primary;
-    const isPremiumLocked = quiz.isPremium && user?.subscription !== 'premium';
+    const canAccess = user?.subscription === 'premium' || (user?.unlockedCourses ?? []).includes(quiz.id);
+    const isPremiumLocked = quiz.isPremium && !canAccess;
 
     return (
       <SafeAreaView style={[s.flex, { backgroundColor: colors.background }]}>
         {/* Premium gate modal */}
         <PremiumGateModal
           visible={showPremiumGate}
-          quizTitle={quiz.title}
+          quiz={quiz}
           onClose={() => setShowPremiumGate(false)}
+          onUpgrade={async (type: 'subscription' | 'course') => {
+            const startQuiz = () => {
+              setShowPremiumGate(false);
+              reset();
+              setShowFeedback(false);
+              setRunningScore(0);
+              setFiftyFiftyUsed(false);
+              setHiddenOptions([]);
+              setSkipsLeft(3);
+              resetTimer();
+              startedAt.current = Date.now();
+              setPhase('quiz');
+            };
+
+            if (type === 'course') {
+              const result = await openCourseUnlock(quiz.id, quiz.price ?? 149);
+              if (result.success) {
+                await unlockCourse(quiz.id);
+                startQuiz();
+              } else {
+                Alert.alert('Payment Failed', result.error ?? 'Please try again.', [{ text: 'OK' }]);
+              }
+            } else {
+              const result = await openCheckout('annual');
+              if (result.success) {
+                await upgradeToPremium();
+                startQuiz();
+              } else {
+                Alert.alert('Payment Failed', result.error ?? 'Please try again.', [{ text: 'OK' }]);
+              }
+            }
+          }}
         />
 
         {/* Back header */}
@@ -236,15 +279,15 @@ export default function QuizScreen() {
 
           {/* ── Course header card ── */}
           <View style={[s.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[s.courseStrip, { backgroundColor: diffColor }]} />
+            <View style={[s.courseStrip, { backgroundColor: colors.primary }]} />
             <View style={s.courseCardBody}>
-              <View style={[s.courseIconWrap, { backgroundColor: diffColor + '18' }]}>
-                <Feather name={quiz.icon as any} size={34} color={diffColor} />
+              <View style={[s.courseIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Feather name={quiz.icon as any} size={34} color={colors.primary} />
               </View>
               <View style={s.courseTextBlock}>
-                <View style={[s.diffChip, { backgroundColor: diffColor + '18' }]}>
-                  <View style={[s.diffChipDot, { backgroundColor: diffColor }]} />
-                  <Text style={[s.diffChipText, { color: diffColor }]}>
+                <View style={[s.diffChip, { backgroundColor: colors.primaryLight }]}>
+                  <View style={[s.diffChipDot, { backgroundColor: colors.primary }]} />
+                  <Text style={[s.diffChipText, { color: colors.primary }]}>
                     {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
                   </Text>
                 </View>
@@ -297,47 +340,48 @@ export default function QuizScreen() {
             </Text>
           </View>
 
-          {/* ── Start button ── */}
-          {isPremiumLocked ? (
-            <Pressable
-              onPress={() => setShowPremiumGate(true)}
-              style={({ pressed }) => [s.startBtn, { backgroundColor: colors.warning, opacity: pressed ? 0.88 : 1 }]}
-            >
-              <Feather name="lock" size={20} color="#fff" />
-              <Text style={s.startBtnText}>Unlock with Pro</Text>
-            </Pressable>
-          ) : (
+          {/* ── Action buttons row ── */}
+          <View style={s.actionRow}>
+            {isPremiumLocked ? (
+              <Pressable
+                onPress={() => setShowPremiumGate(true)}
+                style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.warning, opacity: pressed ? 0.88 : 1 }]}
+              >
+                <Feather name="lock" size={18} color="#fff" />
+                <Text style={s.actionBtnText}>Unlock — ₹{quiz.price ?? 149}</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  reset();
+                  setShowFeedback(false);
+                  setRunningScore(0);
+                  setFiftyFiftyUsed(false);
+                  setHiddenOptions([]);
+                  setSkipsLeft(3);
+                  resetTimer();
+                  startedAt.current = Date.now();
+                  setPhase('quiz');
+                }}
+                style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
+              >
+                <Feather name="play-circle" size={18} color="#fff" />
+                <Text style={s.actionBtnText}>Start Practice</Text>
+              </Pressable>
+            )}
+
             <Pressable
               onPress={() => {
-                reset();
-                setShowFeedback(false);
-                setRunningScore(0);
-                setFiftyFiftyUsed(false);
-                setHiddenOptions([]);
-                setSkipsLeft(3);
-                resetTimer();
-                startedAt.current = Date.now();
-                setPhase('quiz');
+                setFlashIndex(0);
+                setFlashFlipped(false);
+                setPhase('flashcard');
               }}
-              style={({ pressed }) => [s.startBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
+              style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
             >
-              <Feather name="play-circle" size={20} color="#fff" />
-              <Text style={s.startBtnText}>Start Practice</Text>
+              <Feather name="layers" size={18} color="#fff" />
+              <Text style={s.actionBtnText}>Study with Flashcards</Text>
             </Pressable>
-          )}
-
-          {/* ── Flashcard button ── */}
-          <Pressable
-            onPress={() => {
-              setFlashIndex(0);
-              setFlashFlipped(false);
-              setPhase('flashcard');
-            }}
-            style={({ pressed }) => [s.flashcardBtn, { borderColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-          >
-            <Feather name="layers" size={18} color={colors.primary} />
-            <Text style={[s.flashcardBtnText, { color: colors.primary }]}>Study with Flashcards</Text>
-          </Pressable>
+          </View>
 
         </ScrollView>
       </SafeAreaView>
@@ -613,8 +657,8 @@ export default function QuizScreen() {
           </Pressable>
 
           <View style={s.runningScore}>
-            <Feather name="check-circle" size={13} color={colors.success} />
-            <Text style={[s.runningScoreText, { color: colors.success }]}>{runningScore}</Text>
+            <Feather name="check-circle" size={13} color={colors.primary} />
+            <Text style={[s.runningScoreText, { color: colors.primary }]}>{runningScore}</Text>
           </View>
         </View>
       )}
@@ -635,19 +679,44 @@ export default function QuizScreen() {
 
       {/* Bottom nav */}
       <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
-        {currentQuestionIndex > 0 && (
-          <Button title="Previous" variant="outline" onPress={handlePrevious} style={{ flex: 1 }} />
+        {/* Left — Previous */}
+        {currentQuestionIndex > 0 ? (
+          <Pressable
+            onPress={handlePrevious}
+            style={({ pressed }) => [s.navBtn, s.navBtnOutline, { borderColor: colors.surfaceBorder, backgroundColor: pressed ? colors.primaryLight : colors.surface }]}
+          >
+            <Text style={[s.navBtnText, { color: colors.text }]}>{'<< '}Previous</Text>
+          </Pressable>
+        ) : (
+          <View style={s.navBtnPlaceholder} />
         )}
+
+        {/* Right — Next / Prompt */}
         {isReview ? (
-          isLastQuestion
-            ? <Button title="Done" onPress={exitAndReset} style={{ flex: 1 }} />
-            : <Button title="Next" onPress={() => { setShowFeedback(true); nextQuestion(); }} style={{ flex: 1 }} />
+          isLastQuestion ? (
+            <Pressable
+              onPress={exitAndReset}
+              style={({ pressed }) => [s.navBtn, { backgroundColor: pressed ? colors.primary + 'CC' : colors.primary }]}
+            >
+              <Text style={[s.navBtnText, { color: '#fff' }]}>Done{' >>'}</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => { setShowFeedback(true); nextQuestion(); }}
+              style={({ pressed }) => [s.navBtn, { backgroundColor: pressed ? colors.primary + 'CC' : colors.primary }]}
+            >
+              <Text style={[s.navBtnText, { color: '#fff' }]}>Next{' >>'}</Text>
+            </Pressable>
+          )
         ) : showFeedback && hasAnsweredCurrent ? (
-          <Button
-            title={isLastQuestion ? 'See Results' : 'Next Question'}
+          <Pressable
             onPress={handleNext}
-            style={{ flex: 1 }}
-          />
+            style={({ pressed }) => [s.navBtn, { backgroundColor: pressed ? colors.primary + 'CC' : colors.primary }]}
+          >
+            <Text style={[s.navBtnText, { color: '#fff' }]}>
+              {isLastQuestion ? 'See Results >>' : 'Next >>'}
+            </Text>
+          </Pressable>
         ) : (
           <View style={s.promptWrap}>
             <Text style={[s.promptText, { color: colors.textSecondary }]}>Select an answer above</Text>
@@ -786,21 +855,17 @@ const s = StyleSheet.create({
   },
   practiceText: { fontFamily: F.semiBold, fontSize: 13, flexShrink: 1 },
 
-  // Start button (Vuexy primary button style)
-  startBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 10, height: 52, borderRadius: 10,
-    shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 8, elevation: 4,
+  // Action buttons row (Start Practice + Study with Flashcards side by side)
+  actionRow: {
+    flexDirection: 'row', gap: 10,
   },
-  startBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 16 },
-
-  // Flashcard button (outline secondary)
-  flashcardBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, height: 48, borderRadius: 10, borderWidth: 1.5, marginTop: 10,
+  actionBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 7, height: 48, borderRadius: 10,
+    shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
   },
-  flashcardBtnText: { fontFamily: F.semiBold, fontSize: 15 },
+  actionBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 13 },
 
   // Flashcard mode header badge
   flashModeBadge: {
@@ -958,9 +1023,16 @@ const s = StyleSheet.create({
 
   // ── Bottom nav ──
   bottomNav: {
-    flexDirection: 'row', padding: 16, gap: 12,
-    borderTopWidth: 1, paddingBottom: 32,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: 16, gap: 12, borderTopWidth: 1, paddingBottom: 32,
   },
+  navBtn: {
+    height: 46, paddingHorizontal: 20, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center', minWidth: 140,
+  },
+  navBtnOutline: { borderWidth: 1 },
+  navBtnPlaceholder: { minWidth: 140 },
+  navBtnText: { fontFamily: F.semiBold, fontSize: 14 },
   promptWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
   promptText: { fontFamily: F.medium, fontSize: 14 },
 });

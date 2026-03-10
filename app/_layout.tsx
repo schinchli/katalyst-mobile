@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { DefaultTheme, DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, router, useSegments } from 'expo-router';
@@ -7,12 +7,9 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useThemeStore } from '@/stores/themeStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useProgressStore } from '@/stores/progressStore';
 import { Colors } from '@/constants/Colors';
-import { configureAmplify } from '@/config/amplify';
 import 'react-native-reanimated';
-
-// Configure Amplify as early as possible (before any auth call)
-configureAmplify();
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -28,9 +25,13 @@ SplashScreen.preventAutoHideAsync();
 // Redirects unauthenticated users to (auth) and authenticated users away from it.
 
 function AuthGuard() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isLoading       = useAuthStore((s) => s.isLoading);
-  const segments        = useSegments();
+  const isAuthenticated  = useAuthStore((s) => s.isAuthenticated);
+  const isLoading        = useAuthStore((s) => s.isLoading);
+  const step             = useAuthStore((s) => s.step);
+  const userId           = useAuthStore((s) => s.user?.id);
+  const segments         = useSegments();
+  const initFromSupabase = useProgressStore((s) => s.initFromSupabase);
+  const hydratedRef      = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -43,6 +44,14 @@ function AuthGuard() {
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments]);
+
+  // Hydrate progress store from Supabase once after a real (non-guest) login
+  useEffect(() => {
+    if (!isLoading && step === 'authenticated' && userId && !hydratedRef.current) {
+      hydratedRef.current = true;
+      initFromSupabase(userId).catch(() => {});
+    }
+  }, [isLoading, step, userId, initFromSupabase]);
 
   return null;
 }

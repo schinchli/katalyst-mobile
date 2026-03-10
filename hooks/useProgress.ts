@@ -14,8 +14,9 @@ export const PROGRESS_QUERY_KEY = ['progress'] as const;
 
 /** Fetch remote progress and sync into local Zustand store */
 export function useProgress() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const syncProgress    = useProgressStore((s) => s.syncProgress);
+  // Only fetch for real Cognito users — guests use local Zustand state only
+  const isRealUser   = useAuthStore((s) => s.step === 'authenticated');
+  const syncProgress = useProgressStore((s) => s.syncProgress);
 
   return useQuery({
     queryKey: PROGRESS_QUERY_KEY,
@@ -24,11 +25,12 @@ export function useProgress() {
       if (data) syncProgress(data);
       return data;
     },
-    enabled:        isAuthenticated,
-    staleTime:      2 * 60 * 1000,   // 2 min
-    gcTime:         10 * 60 * 1000,  // 10 min
-    retry:          1,
+    enabled:              isRealUser,
+    staleTime:            5 * 60 * 1000,   // 5 min — stats only change after quiz submit
+    gcTime:               30 * 60 * 1000,  // 30 min cache
+    retry:                1,
     refetchOnWindowFocus: false,
+    refetchOnMount:       false,           // don't re-fetch on every screen mount
   });
 }
 

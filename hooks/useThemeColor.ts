@@ -11,6 +11,9 @@ export function useThemeColor(colorName: keyof ThemeColors): string {
     primary:         preset.primary,
     primaryLight:    preset.primaryLight,
     primaryText:     darkMode ? preset.primaryTextDark : preset.primaryText,
+    gradientFrom:    preset.gradientFrom,
+    gradientTo:      preset.gradientTo,
+    gradientAccent:  preset.gradientAccent,
     tint:            preset.primary,
     tabIconSelected: preset.primary,
   };
@@ -27,6 +30,9 @@ export function useThemeColors(): ThemeColors {
     primary:         preset.primary,
     primaryLight:    preset.primaryLight,
     primaryText:     darkMode ? preset.primaryTextDark : preset.primaryText,
+    gradientFrom:    preset.gradientFrom,
+    gradientTo:      preset.gradientTo,
+    gradientAccent:  preset.gradientAccent,
     tint:            preset.primary,
     tabIconSelected: preset.primary,
   };
