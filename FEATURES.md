@@ -96,7 +96,7 @@
 | AdBanner component (stub) | ✅ | Real AdMob needs EAS Dev Client |
 | Interstitial ad hook (stub) | ✅ | Fires every 5 questions |
 | Premium gate modal | ✅ | Locks isPremium quizzes |
-| PRO badge on quiz cards | ✅ | |
+| Premium access indicator on quiz cards | ✅ | Lock/label only shown when a quiz is gated |
 | RevenueCat integration | 📋 | Needs bundle ID + Apple/Google setup |
 
 ## Infrastructure
@@ -124,7 +124,7 @@
 |---------|--------|-------|
 | Next.js 16.1.6 (Turbopack) | ✅ | Running at http://localhost:3000 |
 | Dashboard with stats cards | ✅ | Completion %, avg score, best score, quizzes taken |
-| Quizzes grid (Vuexy Top Courses style) | ✅ | Category filter, difficulty stars, PRO/Done badges |
+| Quizzes grid (Vuexy Top Courses style) | ✅ | Category filter, progress states, premium lock indicator where applicable |
 | Full quiz player | ✅ | Intro → Quiz → Results phases, 30s timer, instant feedback |
 | Progress history table | ✅ | Pass/fail status, per-quiz scores, dates |
 | Editable profile | ✅ | Display name, email, level, danger zone reset |

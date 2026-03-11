@@ -27,22 +27,14 @@ export const useQuizStore = create<QuizState>((set) => ({
     })),
 
   nextQuestion: () =>
-    setTimeout(
-      () => set((state) => ({ currentQuestionIndex: state.currentQuestionIndex + 1 })),
-      0,
-    ),
+    set((state) => ({ currentQuestionIndex: state.currentQuestionIndex + 1 })),
 
   previousQuestion: () =>
-    setTimeout(
-      () =>
-        set((state) => ({
-          currentQuestionIndex: Math.max(0, state.currentQuestionIndex - 1),
-        })),
-      0,
-    ),
+    set((state) => ({
+      currentQuestionIndex: Math.max(0, state.currentQuestionIndex - 1),
+    })),
 
-  goToQuestion: (index) =>
-    setTimeout(() => set({ currentQuestionIndex: index }), 0),
+  goToQuestion: (index) => set({ currentQuestionIndex: index }),
 
   setTimeRemaining: (timeRemaining) => set({ timeRemaining }),
 

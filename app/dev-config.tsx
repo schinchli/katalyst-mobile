@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, Platform, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -107,11 +108,13 @@ function Divider() {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function DevConfigScreen() {
-  if (!__DEV__) {
-    // Redirect after mount to avoid module-scope navigation
-    setTimeout(() => router.replace('/(tabs)'), 0);
-    return null;
-  }
+  useEffect(() => {
+    if (!__DEV__) {
+      router.replace('/(tabs)');
+    }
+  }, []);
+
+  if (!__DEV__) return null;
 
   const missing = getMissingCount();
 

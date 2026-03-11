@@ -2,6 +2,24 @@
 
 ## [Unreleased] — Active Development
 
+### 2026-03-11 — Mobile Folder Cleanup + Quiz UI Normalization
+
+**Build and repo hygiene:**
+- Added `scripts/clean.js` plus `npm run clean` and `npm run clean:cache` in `package.json`
+- Expanded `.gitignore` to exclude generated cache/build output including `.turbo`, `coverage`, and `ios/DerivedData`
+- Removed generated mobile output directories during cleanup so the repo no longer carries stale `dist` and iOS build artifacts
+- `metro.config.js` now disables hierarchical lookup and keeps `watchFolders` empty to reduce monorepo resolver overhead
+
+**Quiz UI cleanup:**
+- Removed old `PRO` badge styling from the live quiz listing surfaces and replaced it with a simpler premium lock/access indicator
+- Updated `components/quiz/QuizCard.tsx` and `app/(tabs)/quizzes.tsx` so premium state no longer looks like leftover legacy styling
+- Updated `__tests__/QuizCard.test.tsx` and current feature docs to match the new premium indicator behavior
+
+**Code quality:**
+- `app/dev-config.tsx` now redirects via `useEffect` instead of render-time `setTimeout`
+- `components/ExternalLink.tsx` no longer relies on a stale unused `@ts-expect-error`
+- `stores/quizStore.ts` keeps question navigation synchronous instead of deferring through zero-delay timers
+
 ### 2026-03-11 — Admin-Managed Quiz Gating + Practice Flow Fixes
 
 **Premium/free gating source of truth:**

@@ -1,8 +1,11 @@
 # Expo
 .expo/
+.turbo/
 dist/
 web-build/
 expo-env.d.ts
+coverage/
+*.tsbuildinfo
 
 # Node
 node_modules/
@@ -24,6 +27,7 @@ yarn-error.*
 # iOS
 ios/Pods/
 ios/build/
+ios/DerivedData/
 ios/.xcode.env.local
 
 # Android

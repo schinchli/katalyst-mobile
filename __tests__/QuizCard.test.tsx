@@ -1,6 +1,6 @@
 /**
  * QuizCard component — unit tests
- * Covers: rendering, press handler, difficulty badge, premium badge, metadata display.
+ * Covers: rendering, press handler, difficulty badge, premium indicator, metadata display.
  */
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
@@ -69,14 +69,14 @@ describe('QuizCard', () => {
     expect(getByText('Advanced')).toBeTruthy();
   });
 
-  it('shows PRO badge when quiz is premium', () => {
+  it('shows premium indicator when quiz is premium', () => {
     const { getByText } = render(<QuizCard quiz={makeQuiz({ isPremium: true })} onPress={jest.fn()} />);
-    expect(getByText('PRO')).toBeTruthy();
+    expect(getByText('Premium')).toBeTruthy();
   });
 
-  it('does NOT show PRO badge when quiz is free', () => {
+  it('does NOT show premium indicator when quiz is free', () => {
     const { queryByText } = render(<QuizCard quiz={makeQuiz({ isPremium: false })} onPress={jest.fn()} />);
-    expect(queryByText('PRO')).toBeNull();
+    expect(queryByText('Premium')).toBeNull();
   });
 
   it('has accessible role "button"', () => {

@@ -1,6 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Badge } from '@/components/ui/Badge';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import type { Quiz } from '@/types';
@@ -47,7 +46,6 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
           <Text style={[s.title, { color: colors.text }]} numberOfLines={1}>
             {quiz.title}
           </Text>
-          {quiz.isPremium && <Badge label="PRO" color={colors.aws} size="sm" />}
         </View>
 
         <Text style={[s.desc, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -73,6 +71,12 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
               {quiz.duration}m
             </Text>
           </View>
+          {quiz.isPremium ? (
+            <View style={s.meta}>
+              <Feather name="lock" size={12} color={colors.textSecondary} />
+              <Text style={[s.metaText, { color: colors.textSecondary }]}>Premium</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 

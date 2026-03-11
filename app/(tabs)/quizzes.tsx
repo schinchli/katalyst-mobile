@@ -103,11 +103,7 @@ export default function QuizzesScreen() {
               <View style={styles.courseBody}>
                 <View style={styles.metaRow}>
                   <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{quiz.category.toUpperCase()}</Text>
-                  {quiz.isPremium && (
-                    <View style={[styles.proPill, { backgroundColor: colors.primaryLight }]}>
-                      <Text style={[styles.proPillText, { color: colors.primary }]}>PRO</Text>
-                    </View>
-                  )}
+                  {quiz.isPremium ? <Feather name="lock" size={14} color={colors.textSecondary} /> : null}
                 </View>
                 <Text style={[styles.courseTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
                 <Text style={[styles.courseSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{quiz.description}</Text>
@@ -160,8 +156,6 @@ const styles = StyleSheet.create({
   courseBody: { padding: 14, gap: 10, minHeight: 180 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   metaLabel: { fontFamily: F.bold, fontSize: 11, letterSpacing: 0.8 },
-  proPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  proPillText: { fontFamily: F.bold, fontSize: 11 },
   courseTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24 },
   courseSubtitle: { fontFamily: F.regular, fontSize: 13, lineHeight: 20 },
   cardFooter: { marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

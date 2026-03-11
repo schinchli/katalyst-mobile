@@ -3,6 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
+    "clean": "node ./scripts/clean.js",
+    "clean:cache": "node ./scripts/clean.js --cache-only",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
