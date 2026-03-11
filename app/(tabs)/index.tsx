@@ -32,7 +32,7 @@ export default function HomeScreen() {
   const firstName = user?.name?.split(' ')[0] ?? 'Learner';
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const actionCards = [
-    { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/(tabs)/quizzes' as const, tone: '#8B5CF6' },
+    { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/flashcards' as const, tone: '#8B5CF6' },
     { icon: 'activity', title: 'Practice', subtitle: 'Test yourself with an exercise', route: featuredQuiz ? (`/quiz/${featuredQuiz.id}` as const) : ('/(tabs)/quizzes' as const), tone: '#F59E0B' },
     { icon: 'globe', title: 'Resources', subtitle: 'Cheat sheets, guides, and updates', route: '/(tabs)/learn' as const, tone: '#60A5FA' },
     { icon: 'star', title: 'Premium', subtitle: 'Unlock all content and projects', route: '/(tabs)/profile' as const, tone: colors.primary },
@@ -59,7 +59,7 @@ export default function HomeScreen() {
                 <Text style={[styles.heroCourseTitle, { color: colors.text }]}>{featuredQuiz?.title ?? 'Featured course'}</Text>
                 <View style={[styles.desktopOnlyChip, { backgroundColor: colors.primaryLight }]}>
                   <Text style={[styles.desktopOnlyText, { color: colors.primary }]}>
-                    {featuredQuiz?.isPremium ? 'Premium track' : 'Desktop only'}
+                    {featuredQuiz?.isPremium ? 'Premium track' : 'Available everywhere'}
                   </Text>
                 </View>
               </View>
@@ -128,7 +128,11 @@ export default function HomeScreen() {
 
             <View style={styles.flashcardList}>
               {flashcardItems.map((item, index) => (
-                <Pressable key={item.id} onPress={() => router.push('/(tabs)/quizzes')} style={[styles.flashcardRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Pressable
+                  key={item.id}
+                  onPress={() => router.push({ pathname: '/flashcards', params: { category: item.category } })}
+                  style={[styles.flashcardRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+                >
                   <View style={[styles.flashcardBadge, { backgroundColor: index % 2 === 0 ? colors.primaryLight : colors.error + '20' }]}>
                     <Text style={[styles.flashcardBadgeText, { color: index % 2 === 0 ? colors.primary : colors.error }]}>
                       {item.category === 'aws-practitioner' ? 'AWS' : 'AI'}

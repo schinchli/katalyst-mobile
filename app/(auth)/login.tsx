@@ -56,7 +56,6 @@ export default function LoginScreen() {
               <Text style={[styles.languageText, { color: colors.text }]}>EN</Text>
             </View>
             <View style={styles.heroBrand}>
-              <Text style={[styles.heroEyebrow, { color: colors.primary }]}>{EXPERIENCE_COPY.auth.eyebrow}</Text>
               <Text style={[styles.heroTitle, { color: colors.text }]}>{platformConfig.copy.authHeadline}</Text>
               <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>{platformConfig.copy.authSubheadline}</Text>
             </View>
@@ -126,7 +125,6 @@ const styles = StyleSheet.create({
   languageChip: { alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8 },
   languageText: { fontFamily: F.bold, fontSize: 14 },
   heroBrand: { gap: 10 },
-  heroEyebrow: { fontFamily: F.bold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.8 },
   heroTitle: { fontFamily: F.bold, fontSize: 38, lineHeight: 46, letterSpacing: -1.4 },
   heroSubtitle: { fontFamily: F.regular, fontSize: 15, lineHeight: 24 },
   heroHighlights: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

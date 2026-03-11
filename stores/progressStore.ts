@@ -51,6 +51,76 @@ export function xpToNextLevel(xp: number, level: number): { current: number; nee
   return { current: xp - currentThreshold, needed: nextThreshold - currentThreshold };
 }
 
+function pctForResult(result: QuizResult): number {
+  return Math.round((result.score / result.totalQuestions) * 100);
+}
+
+function dayKey(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+function previousDay(dateStr: string): string {
+  const date = new Date(`${dateStr}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function summarizeResults(results: QuizResult[]) {
+  const sorted = [...results].sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+  const uniqueDays = Array.from(new Set(sorted.map((result) => dayKey(result.completedAt))));
+  const latestDay = uniqueDays[0] ?? null;
+  const todayStr = today();
+  const yesterdayStr = yesterday();
+
+  let currentStreak = 0;
+  if (latestDay === todayStr || latestDay === yesterdayStr) {
+    let expectedDay = latestDay;
+    for (const entry of uniqueDays) {
+      if (entry !== expectedDay) break;
+      currentStreak += 1;
+      expectedDay = previousDay(expectedDay);
+    }
+  }
+
+  let longestStreak = 0;
+  let activeRun = 0;
+  let previous: string | null = null;
+  for (const entry of uniqueDays) {
+    if (!previous) {
+      activeRun = 1;
+    } else if (previousDay(previous) === entry) {
+      activeRun += 1;
+    } else {
+      activeRun = 1;
+    }
+    longestStreak = Math.max(longestStreak, activeRun);
+    previous = entry;
+  }
+
+  const completedQuizzes = sorted.length;
+  const averageScore = completedQuizzes
+    ? Math.round(sorted.reduce((sum, result) => sum + pctForResult(result), 0) / completedQuizzes)
+    : 0;
+  const computedXP = sorted.reduce((sum, result) => {
+    const quizMeta = quizzes.find((quiz) => quiz.id === result.quizId);
+    const passed = pctForResult(result) >= 70;
+    if (!passed) return sum;
+    const diffMult = quizMeta?.difficulty === 'advanced' ? 2 : quizMeta?.difficulty === 'intermediate' ? 1.5 : 1;
+    return sum + Math.round(pctForResult(result) * diffMult);
+  }, 0);
+
+  return {
+    completedQuizzes,
+    averageScore,
+    currentStreak,
+    longestStreak,
+    lastPlayedDate: latestDay,
+    recentResults: sorted.slice(0, 20),
+    xp: computedXP,
+    level: calculateLevel(computedXP),
+  };
+}
+
 // ─── State ────────────────────────────────────────────────────────────────────
 interface ProgressState {
   progress: Progress;
@@ -68,7 +138,7 @@ interface ProgressState {
 }
 
 const initialProgress: Progress = {
-  totalQuizzes: 0,
+  totalQuizzes: quizzes.length,
   completedQuizzes: 0,
   averageScore: 0,
   currentStreak: 0,
@@ -218,16 +288,27 @@ export const useProgressStore = create<ProgressState>()(
         set((state) => {
           const remote = data.statistics;
           const prev   = state.progress;
+          const recentResults = data.recentAttempts.map((attempt) => ({
+            quizId: attempt.quizId,
+            score: attempt.score,
+            totalQuestions: attempt.totalQuestions,
+            timeTaken: attempt.timeTaken,
+            answers: attempt.answers,
+            completedAt: attempt.completedAt,
+          }));
+          const summary = summarizeResults(recentResults);
+          const mergedXP = Math.max(prev.xp ?? 0, summary.xp, remote.totalXP ?? 0);
           // Merge: take the higher value for numeric fields to avoid regressing
           return {
             progress: {
               ...prev,
-              totalQuizzes:     Math.max(prev.completedQuizzes, remote.totalQuizzes),
-              completedQuizzes: Math.max(prev.completedQuizzes, remote.totalQuizzes),
+              ...summary,
+              totalQuizzes:     quizzes.length,
+              completedQuizzes: Math.max(prev.completedQuizzes, summary.completedQuizzes, remote.totalQuizzes),
               coins:            Math.max(prev.coins ?? 0, remote.totalCoins ?? 0),
               totalCoinsEarned: Math.max(prev.totalCoinsEarned ?? 0, remote.totalCoins ?? 0),
-              xp:               Math.max(prev.xp ?? 0, remote.totalXP ?? 0),
-              level:            calculateLevel(Math.max(prev.xp ?? 0, remote.totalXP ?? 0)),
+              xp:               mergedXP,
+              level:            calculateLevel(mergedXP),
             },
           };
         }),
@@ -238,11 +319,14 @@ export const useProgressStore = create<ProgressState>()(
       initFromSupabase: async (userId: string) => {
         const results = await getQuizResults(userId).catch(() => [] as QuizResult[]);
         if (results.length === 0) return;
+        const summary = summarizeResults(results);
         set((state) => ({
           progress: {
             ...state.progress,
-            recentResults:    results.slice(0, 20),
-            completedQuizzes: Math.max(state.progress.completedQuizzes, results.length),
+            ...summary,
+            totalQuizzes: quizzes.length,
+            xp: Math.max(state.progress.xp ?? 0, summary.xp),
+            level: calculateLevel(Math.max(state.progress.xp ?? 0, summary.xp)),
           },
         }));
       },

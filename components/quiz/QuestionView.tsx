@@ -4,13 +4,12 @@ import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import type { Question } from '@/types';
 
-const LETTERS = ['A', 'B', 'C', 'D', 'E'];
-
 interface QuestionViewProps {
   question: Question;
   selectedOptionId: string | undefined;
   onSelectOption: (optionId: string) => void;
   showResult?: boolean;
+  resultTone?: 'correct' | 'incorrect';
   hiddenOptionIds?: string[];
   onReport?: () => void;
 }
@@ -20,14 +19,17 @@ export function QuestionView({
   selectedOptionId,
   onSelectOption,
   showResult = false,
+  resultTone = 'correct',
   hiddenOptionIds = [],
   onReport,
 }: QuestionViewProps) {
   const colors = useThemeColors();
+  const explanationAccent = resultTone === 'correct' ? colors.primary : colors.error;
+  const explanationTitle = resultTone === 'correct' ? 'Why this answer is right' : 'Why this answer was not right';
 
   return (
     <View style={styles.container}>
-      <View style={[styles.questionCard, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
+      <View style={styles.questionBlock}>
         <Text style={[styles.questionText, { color: colors.text }]}>{question.text}</Text>
         {onReport ? (
           <Pressable onPress={onReport} style={styles.reportRow}>
@@ -82,7 +84,6 @@ export function QuestionView({
               </View>
 
               <View style={styles.optionContent}>
-                <Text style={[styles.optionLabel, { color: colors.textMuted }]}>{LETTERS[index] ?? option.id}</Text>
                 <Text style={[styles.optionText, { color: colors.text }]}>{option.text}</Text>
               </View>
 
@@ -93,17 +94,17 @@ export function QuestionView({
       </View>
 
       {showResult && question.explanation ? (
-        <View style={[styles.explanationCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.surfaceBorder }]}>
+        <View style={[styles.explanationCard, { backgroundColor: colors.backgroundAlt, borderColor: explanationAccent + '55' }]}>
           <View style={styles.explanationHeader}>
-            <View style={[styles.explanationBadge, { backgroundColor: colors.primaryLight }]}>
-              <Feather name="zap" size={12} color={colors.primary} />
+            <View style={[styles.explanationBadge, { backgroundColor: explanationAccent + '22' }]}>
+              <Feather name={resultTone === 'correct' ? 'check' : 'x'} size={12} color={explanationAccent} />
             </View>
-            <Text style={[styles.explanationTitle, { color: colors.primary }]}>Why this answer is right</Text>
+            <Text style={[styles.explanationTitle, { color: explanationAccent }]}>{explanationTitle}</Text>
           </View>
-          <Text style={[styles.explanationText, { color: colors.textSecondary }]}>{question.explanation}</Text>
+          <Text style={[styles.explanationText, { color: colors.text }]}>{question.explanation}</Text>
         </View>
       ) : showResult ? (
-        <View style={[styles.explanationCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.surfaceBorder }]}>
+        <View style={[styles.explanationCard, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.explanationText, { color: colors.textSecondary }]}>No explanation available.</Text>
         </View>
       ) : null}
@@ -113,20 +114,19 @@ export function QuestionView({
 
 const styles = StyleSheet.create({
   container: { gap: 14 },
-  questionCard: { borderWidth: 1, borderRadius: 24, padding: 18, gap: 12 },
-  questionText: { fontFamily: F.bold, fontSize: 22, lineHeight: 34 },
+  questionBlock: { paddingTop: 8, gap: 14 },
+  questionText: { fontFamily: F.bold, fontSize: 24, lineHeight: 42 },
   reportRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   reportText: { fontFamily: F.medium, fontSize: 12 },
   optionsList: { gap: 12 },
-  optionCard: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 18, flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
+  optionCard: { width: '100%', borderWidth: 1, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 22, flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
   radioOuter: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginTop: 3 },
   radioInner: { width: 12, height: 12, borderRadius: 6 },
-  optionContent: { flex: 1, gap: 8 },
-  optionLabel: { fontFamily: F.bold, fontSize: 12, letterSpacing: 0.8 },
-  optionText: { fontFamily: F.semiBold, fontSize: 18, lineHeight: 30 },
+  optionContent: { flex: 1 },
+  optionText: { fontFamily: F.semiBold, fontSize: 20, lineHeight: 38 },
   explanationCard: { borderWidth: 1, borderRadius: 18, padding: 16, gap: 10 },
   explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   explanationBadge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   explanationTitle: { fontFamily: F.bold, fontSize: 13 },
-  explanationText: { fontFamily: F.regular, fontSize: 14, lineHeight: 22 },
+  explanationText: { fontFamily: F.medium, fontSize: 15, lineHeight: 25 },
 });

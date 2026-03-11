@@ -2,6 +2,27 @@
 
 ## [Unreleased] — Active Development
 
+### 2026-03-11 — Admin-Managed Quiz Gating + Practice Flow Fixes
+
+**Premium/free gating source of truth:**
+- Added `config/quizCatalog.ts` with `QUIZ_CATALOG_OVERRIDES_KEY = 'quiz_catalog_overrides'`
+- Added `services/quizCatalogService.ts` to sync quiz premium/free overrides from `app_settings`
+- `app/_layout.tsx` now syncs quiz catalog overrides during app boot before splash is hidden
+- Only `clf-c02-full-exam` is premium by default; the CLF-C02 domain quizzes are free unless admin overrides change them
+
+**Quiz + flashcard fixes:**
+- `app/quiz/[id].tsx`: running score is now derived from committed answers instead of drifting local state
+- `app/quiz/[id].tsx`: previous-question navigation now restores the correct feedback state when revisiting answered questions
+- `app/quiz/[id].tsx`: skip clears pending answer state cleanly
+- `app/(tabs)/index.tsx`: removed the `Desktop only` copy and changed flashcard entries to open the targeted flashcard route with category context
+- `app/flashcards.tsx`: accepts a `category` route param so the tapped home widget opens the right flashcard pack
+- `app/_layout.tsx`: explicitly registers `flashcards` and `leaderboard` stack routes
+
+**Progress logic:**
+- `stores/progressStore.ts`: added result summarization helpers so streak, average score, recent results, and XP can be rebuilt from persisted attempts
+- `stores/progressStore.ts`: `syncProgress()` now merges remote attempts into local growth data instead of only copying coarse totals
+- `stores/progressStore.ts`: `initFromSupabase()` now rebuilds progress from saved results instead of only restoring a count
+
 ### Audit Results (2026-02-25)
 - 12 quizzes in data/quizzes.ts; 6 have ZERO questions (guardrails-safety, multi-llm-routing, orchestration-step-functions, evaluation-testing, genai-mega-quiz, multi-llm-routing)
 - Only 70/130 questions implemented (54%)

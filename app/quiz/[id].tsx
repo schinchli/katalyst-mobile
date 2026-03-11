@@ -36,7 +36,8 @@ export default function QuizScreen() {
   const colors   = useThemeColors();
   const [phase, setPhase]               = useState<Phase>('intro');
   const [showFeedback, setShowFeedback] = useState(false);
-  const [runningScore, setRunningScore] = useState(0);
+  const [feedbackDismissed, setFeedbackDismissed] = useState(false);
+  const [pendingAnswerId, setPendingAnswerId] = useState<string | undefined>(undefined);
   const [showPremiumGate, setShowPremiumGate] = useState(false);
   const [badgeReady, setBadgeReady]           = useState(false);
 
@@ -90,8 +91,15 @@ export default function QuizScreen() {
   const answeredCount      = Object.keys(selectedAnswers).length;
   const isLastQuestion     = currentQuestionIndex === questions.length - 1;
   const hasAnsweredCurrent = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
-  const selectedCurrentAnswer = currentQuestion ? selectedAnswers[currentQuestion.id] : undefined;
+  const committedCurrentAnswer = currentQuestion ? selectedAnswers[currentQuestion.id] : undefined;
+  const selectedCurrentAnswer = showFeedback
+    ? committedCurrentAnswer
+    : (pendingAnswerId ?? committedCurrentAnswer);
   const isCurrentCorrect = currentQuestion ? selectedCurrentAnswer === currentQuestion.correctOptionId : false;
+  const runningScore = useMemo(
+    () => questions.reduce((score, question) => (selectedAnswers[question.id] === question.correctOptionId ? score + 1 : score), 0),
+    [questions, selectedAnswers],
+  );
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const stopTimer = useCallback(() => {
@@ -123,6 +131,7 @@ export default function QuizScreen() {
   useEffect(() => {
     resetTimer();
     setHiddenOptions([]);
+    setPendingAnswerId(undefined);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestionIndex]);
 
@@ -140,14 +149,21 @@ export default function QuizScreen() {
 
   const handleSelectAnswer = (optionId: string) => {
     if (showFeedback) return;
+    setPendingAnswerId(optionId);
+  };
+
+  const handleCheckAnswer = () => {
+    if (!currentQuestion || !pendingAnswerId || showFeedback) return;
     stopTimer();
-    selectAnswer(currentQuestion.id, optionId);
+    selectAnswer(currentQuestion.id, pendingAnswerId);
+    setFeedbackDismissed(false);
     setShowFeedback(true);
-    if (optionId === currentQuestion.correctOptionId) setRunningScore((s) => s + 1);
   };
 
   const handleNext = () => {
+    setFeedbackDismissed(false);
     setShowFeedback(false);
+    setPendingAnswerId(undefined);
     if (isLastQuestion) {
       finishQuiz();
     } else {
@@ -156,7 +172,16 @@ export default function QuizScreen() {
     }
   };
 
-  const handlePrevious = () => { setShowFeedback(true); previousQuestion(); };
+  const handlePrevious = () => {
+    const previousIndex = Math.max(0, currentQuestionIndex - 1);
+    const previous = questions[previousIndex];
+    const previousAnswer = previous ? selectedAnswers[previous.id] : undefined;
+
+    setFeedbackDismissed(false);
+    setPendingAnswerId(undefined);
+    setShowFeedback(Boolean(previousAnswer));
+    previousQuestion();
+  };
 
   const finishQuiz = () => {
     stopTimer();
@@ -178,7 +203,8 @@ export default function QuizScreen() {
     clearPendingCoins();
     clearPendingBadges();
     setShowFeedback(false);
-    setRunningScore(0);
+    setFeedbackDismissed(false);
+    setPendingAnswerId(undefined);
     setFiftyFiftyUsed(false);
     setHiddenOptions([]);
     setSkipsLeft(3);
@@ -209,6 +235,8 @@ export default function QuizScreen() {
     if (skipsLeft <= 0 || showFeedback) return;
     setSkipsLeft((s) => s - 1);
     setShowFeedback(false);
+    setFeedbackDismissed(false);
+    setPendingAnswerId(undefined);
     if (isLastQuestion) { finishQuiz(); } else { nextQuestion(); }
   };
 
@@ -244,7 +272,6 @@ export default function QuizScreen() {
               setShowPremiumGate(false);
               reset();
               setShowFeedback(false);
-              setRunningScore(0);
               setFiftyFiftyUsed(false);
               setHiddenOptions([]);
               setSkipsLeft(3);
@@ -347,15 +374,11 @@ export default function QuizScreen() {
           {/* ── Action buttons row ── */}
           <View style={s.actionRow}>
             {isPremiumLocked ? (
-              <Pressable
-                onPress={() => setShowPremiumGate(true)}
-                style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.warning, opacity: pressed ? 0.88 : 1 }]}
-              >
-                <Feather name="lock" size={18} color="#fff" />
-                <Text style={s.actionBtnText} numberOfLines={1}>Unlock — ₹{quiz.price ?? 149}</Text>
-              </Pressable>
+              <Button title={`Unlock - Rs ${quiz.price ?? 149}`} onPress={() => setShowPremiumGate(true)} size="lg" style={{ width: '100%' }} />
             ) : (
-              <Pressable
+              <Button
+                title="Start Practice"
+                size="lg"
                 onPress={() => {
                   const ok = checkRateLimit();
                   if (!ok.ok) {
@@ -367,7 +390,8 @@ export default function QuizScreen() {
                   }
                   reset();
                   setShowFeedback(false);
-                  setRunningScore(0);
+                  setFeedbackDismissed(false);
+                  setPendingAnswerId(undefined);
                   setFiftyFiftyUsed(false);
                   setHiddenOptions([]);
                   setSkipsLeft(3);
@@ -375,24 +399,21 @@ export default function QuizScreen() {
                   startedAt.current = Date.now();
                   setPhase('quiz');
                 }}
-                style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-              >
-                <Feather name="play-circle" size={18} color="#fff" />
-                <Text style={s.actionBtnText} numberOfLines={1}>Start Practice</Text>
-              </Pressable>
+                style={{ width: '100%' }}
+              />
             )}
 
-            <Pressable
+            <Button
+              title="Study with Flashcards"
+              variant="secondary"
+              size="lg"
               onPress={() => {
                 setFlashIndex(0);
                 setFlashFlipped(false);
                 setPhase('flashcard');
               }}
-              style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-            >
-              <Feather name="layers" size={18} color="#fff" />
-              <Text style={s.actionBtnText} numberOfLines={1}>Study with Flashcards</Text>
-            </Pressable>
+              style={{ width: '100%' }}
+            />
           </View>
 
         </ScrollView>
@@ -560,7 +581,7 @@ export default function QuizScreen() {
         </View>
 
         {/* Progress */}
-        <View style={s.flashProgressRow}>
+        <View style={[s.flashProgressRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <ProgressBar progress={(flashIndex + 1) / questions.length} height={5} />
           <Text style={[s.flashProgressText, { color: colors.textSecondary }]}>
             {flashIndex + 1} / {questions.length}
@@ -583,16 +604,18 @@ export default function QuizScreen() {
             variant="outline"
             disabled={flashIndex === 0}
             onPress={() => { setFlashIndex((i) => i - 1); setFlashFlipped(false); }}
+            size="lg"
             style={{ flex: 1 }}
           />
           {flashIndex < questions.length - 1 ? (
             <Button
               title="Next"
               onPress={() => { setFlashIndex((i) => i + 1); setFlashFlipped(false); }}
+              size="lg"
               style={{ flex: 1 }}
             />
           ) : (
-            <Button title="Done" onPress={exitAndReset} style={{ flex: 1 }} />
+            <Button title="Done" onPress={exitAndReset} size="lg" style={{ flex: 1 }} />
           )}
         </View>
       </SafeAreaView>
@@ -602,11 +625,12 @@ export default function QuizScreen() {
   // ── QUIZ / REVIEW ─────────────────────────────────────────────────────────
   const isReview   = phase === 'review';
   const bookmarked = currentQuestion ? isBookmarked(currentQuestion.id) : false;
+  const showFeedbackBanner = !isReview && showFeedback && hasAnsweredCurrent && !feedbackDismissed;
 
   return (
     <SafeAreaView style={[s.flex, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={s.quizHeader}>
+      <View style={[s.quizHeader, { backgroundColor: colors.background, borderBottomColor: colors.surfaceBorder }]}>
         <Pressable
           onPress={isReview ? () => setPhase('results') : handleExit}
           hitSlop={8}
@@ -637,17 +661,19 @@ export default function QuizScreen() {
 
       {/* Timer bar */}
       {!isReview && (
-        <View style={s.timerRow}>
+        <View style={[s.timerShell, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={s.timerRow}>
           <View style={[s.timerTrack, { backgroundColor: colors.surfaceBorder }]}>
             <View style={[s.timerFill, { width: `${timerProgress * 100}%` as any, backgroundColor: timerColor }]} />
           </View>
           <Text style={[s.timerText, { color: timerColor }]}>{timeLeft}s</Text>
         </View>
+        </View>
       )}
 
       {/* Lifelines */}
       {!isReview && !showFeedback && (
-        <View style={s.lifelineRow}>
+        <View style={[s.lifelineRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Pressable
             onPress={handleFiftyFifty}
             disabled={fiftyFiftyUsed}
@@ -677,29 +703,49 @@ export default function QuizScreen() {
 
       {/* Question */}
       <ScrollView contentContainerStyle={s.questionPad} showsVerticalScrollIndicator={false}>
+        {!isReview && (
+          <Text style={[s.answerPrompt, { color: colors.textSecondary }]}>Select the correct answer</Text>
+        )}
         {currentQuestion && (
           <QuestionView
             question={currentQuestion}
             selectedOptionId={selectedCurrentAnswer}
             onSelectOption={handleSelectAnswer}
             showResult={showFeedback && hasAnsweredCurrent}
+            resultTone={isCurrentCorrect ? 'correct' : 'incorrect'}
             hiddenOptionIds={hiddenOptions}
             onReport={!isReview ? () => setShowReport(true) : undefined}
           />
         )}
       </ScrollView>
 
-      {!isReview && showFeedback && hasAnsweredCurrent ? (
-        <View style={[s.feedbackBanner, { backgroundColor: isCurrentCorrect ? colors.primary : colors.error }]}>
-          <View style={s.feedbackLeft}>
-            <View style={s.feedbackIconCircle}>
-              <Feather name={isCurrentCorrect ? 'check' : 'x'} size={30} color={isCurrentCorrect ? colors.primary : colors.error} />
+      {showFeedbackBanner ? (
+        <View style={[s.feedbackBanner, { backgroundColor: colors.surfaceElevated, borderColor: isCurrentCorrect ? colors.primary : colors.error }]}>
+          <View style={s.feedbackTopRow}>
+            <View style={s.feedbackLeft}>
+              <View style={[s.feedbackIconCircle, { backgroundColor: isCurrentCorrect ? colors.primaryLight : colors.error + '18' }]}>
+                <Feather name={isCurrentCorrect ? 'check' : 'x'} size={28} color={isCurrentCorrect ? colors.primary : colors.error} />
+              </View>
+              <View style={s.feedbackTextWrap}>
+                <Text style={[s.feedbackEyebrow, { color: isCurrentCorrect ? colors.primary : colors.error }]}>
+                  {isCurrentCorrect ? 'Correct answer' : 'Not right'}
+                </Text>
+                <Text style={[s.feedbackText, { color: colors.text }]}>
+                  {isCurrentCorrect ? 'Well done. Keep the streak going.' : "That's not right. Review the explanation and keep moving."}
+                </Text>
+              </View>
             </View>
-            <Text style={s.feedbackText}>
-              {isCurrentCorrect ? 'Well done!' : "Whoo! That's not right."}
-            </Text>
+            <Pressable onPress={() => setFeedbackDismissed(true)} hitSlop={8} style={s.feedbackCloseBtn}>
+              <Feather name="x" size={18} color={colors.textSecondary} />
+            </Pressable>
           </View>
-          <Feather name="menu" size={22} color="#04111F" />
+          <Pressable
+            onPress={handleNext}
+            style={({ pressed }) => [s.feedbackAction, { backgroundColor: isCurrentCorrect ? colors.primary : colors.error, opacity: pressed ? 0.88 : 1 }]}
+          >
+            <Text style={s.feedbackActionText}>{isLastQuestion ? 'See results' : 'Next question'}</Text>
+            <Feather name="arrow-right" size={16} color="#04111F" />
+          </Pressable>
         </View>
       ) : null}
 
@@ -735,13 +781,17 @@ export default function QuizScreen() {
             </Pressable>
           )
         ) : showFeedback && hasAnsweredCurrent ? (
+          <View style={s.promptWrap}>
+            <Text style={[s.promptText, { color: colors.textSecondary }]}>
+              {feedbackDismissed ? 'Explanation open above' : 'Use the feedback card to continue'}
+            </Text>
+          </View>
+        ) : pendingAnswerId ? (
           <Pressable
-            onPress={handleNext}
+            onPress={handleCheckAnswer}
             style={({ pressed }) => [s.navBtn, { backgroundColor: pressed ? colors.primary + 'CC' : colors.primary }]}
           >
-            <Text style={[s.navBtnText, { color: '#04111F' }]}>
-              {isLastQuestion ? 'See Results >>' : 'Next >>'}
-            </Text>
+            <Text style={[s.navBtnText, { color: '#04111F' }]}>Check</Text>
           </Pressable>
         ) : (
           <View style={s.promptWrap}>
@@ -886,19 +936,6 @@ const s = StyleSheet.create({
     flexDirection: 'column',
     gap: 12,
   },
-  actionBtn: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 54,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
-  },
-  actionBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 14, textAlign: 'center', flexShrink: 1 },
 
   // Flashcard mode header badge
   flashModeBadge: {
@@ -1027,12 +1064,13 @@ const s = StyleSheet.create({
   reportCloseBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 15 },
 
   // ── Quiz / Review header ──
-  quizHeader:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 },
+  quizHeader:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 10, borderBottomWidth: 1 },
   quizProgressWrap: { flex: 1 },
   quizCount:        { fontFamily: F.semiBold, fontSize: 13, minWidth: 36, textAlign: 'right' },
 
   // ── Timer ──
-  timerRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 6 },
+  timerShell: { marginHorizontal: 16, marginTop: 8, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderRadius: 18 },
+  timerRow:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
   timerTrack: { flex: 1, height: 5, borderRadius: 3, overflow: 'hidden' },
   timerFill:  { height: '100%', borderRadius: 3 },
   timerText:  { fontFamily: F.bold, fontSize: 13, minWidth: 30, textAlign: 'right' },
@@ -1040,7 +1078,7 @@ const s = StyleSheet.create({
   // ── Lifeline bar ──
   lifelineRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
-    gap: 9, paddingHorizontal: 16, paddingBottom: 10,
+    gap: 9, marginHorizontal: 16, marginTop: 10, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 18, borderWidth: 1,
   },
   lifelineBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -1052,25 +1090,40 @@ const s = StyleSheet.create({
   runningScoreText: { fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Question area ──
-  questionPad: { padding: 20, paddingBottom: 120 },
+  questionPad: { paddingHorizontal: 18, paddingTop: 12, paddingBottom: 144 },
+  answerPrompt: { fontFamily: F.medium, fontSize: 15, marginBottom: 16 },
   feedbackBanner: {
-    minHeight: 84,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 22,
+    borderWidth: 1.5,
     paddingHorizontal: 18,
     paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 14,
   },
+  feedbackTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
   feedbackLeft: { flexDirection: 'row', alignItems: 'center', gap: 16, flex: 1 },
   feedbackIconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#04111F',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  feedbackText: { color: '#04111F', fontFamily: F.bold, fontSize: 18, flex: 1 },
+  feedbackTextWrap: { flex: 1, gap: 4, paddingTop: 2 },
+  feedbackEyebrow: { fontFamily: F.bold, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' },
+  feedbackText: { fontFamily: F.bold, fontSize: 18, lineHeight: 25, flex: 1 },
+  feedbackCloseBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  feedbackAction: {
+    minHeight: 48,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  feedbackActionText: { color: '#04111F', fontFamily: F.bold, fontSize: 15 },
 
   // ── Bottom nav ──
   bottomNav: {

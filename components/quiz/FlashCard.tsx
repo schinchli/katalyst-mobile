@@ -1,230 +1,98 @@
-import { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  interpolate,
-  Extrapolation,
-} from 'react-native-reanimated';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import type { Question } from '@/types';
 
-// ─── Dark luxury palette (Quizlet night × MasterClass premium) ───────────────
-const D = {
-  questionBg:      '#13111F',   // deep purple-black
-  answerBg:        '#0C1820',   // deep blue-black
-  questionStrip:   '#7367F0',   // primary purple
-  answerStrip:     '#28C76F',   // success green
-  questionLabel:   '#9D94FF',   // soft purple
-  answerLabel:     '#3DD68C',   // bright green
-  questionText:    '#F0EEFF',   // warm white
-  counterText:     '#5E5A7A',   // muted purple-grey
-  answerBubbleBg:  '#0E2B1E',   // dark green tint
-  answerBubbleBorder: '#1E5C38',
-  answerBubbleText:'#3DD68C',   // vibrant green
-  explanationBg:   '#1A1630',   // slightly lighter than bg
-  explanationText: '#9994B8',   // muted lavender
-  hintText:        '#46436A',   // very muted
-  cardShadow:      '#7367F0',   // purple glow for question
-  cardShadowA:     '#28C76F',   // green glow for answer
-} as const;
-
 interface FlashCardProps {
-  question:   Question;
-  isFlipped:  boolean;
-  onFlip:     () => void;
-  cardIndex:  number;
-  total:      number;
+  question: Question;
+  isFlipped: boolean;
+  onFlip: () => void;
+  cardIndex: number;
+  total: number;
 }
 
 export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: FlashCardProps) {
-  const rotation = useSharedValue(0);
-
-  useEffect(() => {
-    rotation.value = withTiming(isFlipped ? 1 : 0, { duration: 450 });
-  }, [isFlipped]);
-
-  const correctOption = question.options.find((o) => o.id === question.correctOptionId);
-
-  // ── Web: opacity-swap (backfaceVisibility unsupported on web) ─────────────
-  if (Platform.OS === 'web') {
-    return (
-      <Pressable onPress={onFlip} style={s.container}>
-        <View style={[
-          s.card,
-          { backgroundColor: isFlipped ? D.answerBg : D.questionBg },
-          isFlipped ? s.cardGlowGreen : s.cardGlowPurple,
-        ]}>
-          <View style={[s.strip, { backgroundColor: isFlipped ? D.answerStrip : D.questionStrip }]} />
-          <View style={s.header}>
-            <View style={s.headerLeft}>
-              <View style={[s.labelDot, { backgroundColor: isFlipped ? D.answerStrip : D.questionStrip }]} />
-              <Text style={[s.sideLabel, { color: isFlipped ? D.answerLabel : D.questionLabel }]}>
-                {isFlipped ? 'ANSWER' : 'QUESTION'}
-              </Text>
-            </View>
-            <View style={s.counterPill}>
-              <Text style={s.counter}>{cardIndex + 1}</Text>
-              <Text style={s.counterSep}>/</Text>
-              <Text style={s.counter}>{total}</Text>
-            </View>
-          </View>
-
-          <View style={s.body}>
-            {isFlipped ? (
-              <>
-                <View style={s.answerBubble}>
-                  <Text style={s.answerText}>{correctOption?.text}</Text>
-                </View>
-                {question.explanation ? (
-                  <View style={s.explanationBox}>
-                    <Feather name="info" size={13} color={D.questionLabel} style={{ marginBottom: 6 }} />
-                    <Text style={s.explanationText}>{question.explanation}</Text>
-                  </View>
-                ) : null}
-              </>
-            ) : (
-              <Text style={s.questionText}>{question.text}</Text>
-            )}
-          </View>
-
-          <View style={s.footer}>
-            <Feather name="rotate-cw" size={13} color={D.hintText} />
-            <Text style={s.hintText}>Tap to flip</Text>
-          </View>
-        </View>
-      </Pressable>
-    );
-  }
-
-  // ── Native: real 3D Y-axis flip ───────────────────────────────────────────
-  const frontStyle = useAnimatedStyle(() => {
-    const rotateY = interpolate(rotation.value, [0, 1], [0, 180], Extrapolation.CLAMP);
-    return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateY}deg` }],
-      backfaceVisibility: 'hidden' as const,
-      position: 'absolute' as const,
-      width: '100%',
-      height: '100%',
-    };
-  });
-
-  const backStyle = useAnimatedStyle(() => {
-    const rotateY = interpolate(rotation.value, [0, 1], [180, 360], Extrapolation.CLAMP);
-    return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateY}deg` }],
-      backfaceVisibility: 'hidden' as const,
-      position: 'absolute' as const,
-      width: '100%',
-      height: '100%',
-    };
-  });
+  const colors = useThemeColors();
+  const correctOption = question.options.find((option) => option.id === question.correctOptionId);
 
   return (
-    <Pressable onPress={onFlip} style={s.container}>
-      <View style={s.flipContainer}>
+    <Pressable onPress={onFlip} style={styles.container}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.surface,
+            borderColor: isFlipped ? colors.primary : colors.surfaceBorder,
+            shadowColor: isFlipped ? colors.primary : '#000',
+          },
+        ]}
+      >
+        <View style={[styles.strip, { backgroundColor: isFlipped ? colors.primary : colors.gradientAccent }]} />
 
-        {/* ── Front: Question ── */}
-        <Animated.View style={frontStyle}>
-          <View style={[s.card, { backgroundColor: D.questionBg }, s.cardGlowPurple]}>
-            <View style={[s.strip, { backgroundColor: D.questionStrip }]} />
-            <View style={s.header}>
-              <View style={s.headerLeft}>
-                <View style={[s.labelDot, { backgroundColor: D.questionStrip }]} />
-                <Text style={[s.sideLabel, { color: D.questionLabel }]}>QUESTION</Text>
-              </View>
-              <View style={s.counterPill}>
-                <Text style={s.counter}>{cardIndex + 1}</Text>
-                <Text style={s.counterSep}>/</Text>
-                <Text style={s.counter}>{total}</Text>
-              </View>
-            </View>
-            <View style={s.body}>
-              <Text style={s.questionText}>{question.text}</Text>
-            </View>
-            <View style={s.footer}>
-              <Feather name="rotate-cw" size={13} color={D.hintText} />
-              <Text style={s.hintText}>Tap to reveal answer</Text>
-            </View>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={[styles.labelDot, { backgroundColor: isFlipped ? colors.primary : colors.gradientAccent }]} />
+            <Text style={[styles.sideLabel, { color: isFlipped ? colors.primary : colors.textSecondary }]}>
+              {isFlipped ? 'ANSWER' : 'QUESTION'}
+            </Text>
           </View>
-        </Animated.View>
+          <View style={[styles.counterPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.counter, { color: colors.text }]}>{cardIndex + 1}</Text>
+            <Text style={[styles.counterSep, { color: colors.textSecondary }]}>/</Text>
+            <Text style={[styles.counter, { color: colors.textSecondary }]}>{total}</Text>
+          </View>
+        </View>
 
-        {/* ── Back: Answer ── */}
-        <Animated.View style={backStyle}>
-          <View style={[s.card, { backgroundColor: D.answerBg }, s.cardGlowGreen]}>
-            <View style={[s.strip, { backgroundColor: D.answerStrip }]} />
-            <View style={s.header}>
-              <View style={s.headerLeft}>
-                <View style={[s.labelDot, { backgroundColor: D.answerStrip }]} />
-                <Text style={[s.sideLabel, { color: D.answerLabel }]}>ANSWER</Text>
+        <View style={styles.body}>
+          {isFlipped ? (
+            <>
+              <View style={[styles.answerBubble, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '55' }]}>
+                <Text style={[styles.answerText, { color: colors.text }]}>{correctOption?.text}</Text>
               </View>
-              <View style={s.counterPill}>
-                <Text style={s.counter}>{cardIndex + 1}</Text>
-                <Text style={s.counterSep}>/</Text>
-                <Text style={s.counter}>{total}</Text>
-              </View>
-            </View>
-            <View style={s.body}>
-              <View style={s.answerBubble}>
-                <Text style={s.answerText}>{correctOption?.text}</Text>
-              </View>
-              {question.explanation ? (
-                <View style={s.explanationBox}>
-                  <Feather name="info" size={13} color={D.questionLabel} style={{ marginBottom: 6 }} />
-                  <Text style={s.explanationText}>{question.explanation}</Text>
+              <View style={[styles.explanationBox, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+                <View style={styles.explanationHeader}>
+                  <Feather name="info" size={14} color={colors.primary} />
+                  <Text style={[styles.explanationTitle, { color: colors.primary }]}>Explanation</Text>
                 </View>
-              ) : null}
-            </View>
-            <View style={s.footer}>
-              <Feather name="rotate-cw" size={13} color={D.hintText} />
-              <Text style={s.hintText}>Tap to flip back</Text>
-            </View>
-          </View>
-        </Animated.View>
+                <Text style={[styles.explanationText, { color: colors.textSecondary }]}>
+                  {question.explanation || 'No explanation available.'}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <Text style={[styles.questionText, { color: colors.text }]}>{question.text}</Text>
+          )}
+        </View>
 
+        <View style={[styles.footer, { borderTopColor: colors.surfaceBorder }]}>
+          <Feather name="rotate-cw" size={13} color={colors.textSecondary} />
+          <Text style={[styles.hintText, { color: colors.textSecondary }]}>
+            {isFlipped ? 'Tap to flip back' : 'Tap to reveal answer'}
+          </Text>
+        </View>
       </View>
     </Pressable>
   );
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  flipContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-
-  // ── Card shell ──────────────────────────────────────────────────────────────
   card: {
     flex: 1,
     borderRadius: 24,
+    borderWidth: 1.2,
     overflow: 'hidden',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
-  cardGlowPurple: {
-    shadowColor: '#7367F0',
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
-  },
-  cardGlowGreen: {
-    shadowColor: '#28C76F',
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
-  },
-
-  // ── Top accent strip ────────────────────────────────────────────────────────
   strip: { height: 5 },
-
-  // ── Header row ──────────────────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -251,88 +119,79 @@ const s = StyleSheet.create({
   counterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
+    borderWidth: 1,
   },
   counter: {
     fontFamily: F.semiBold,
     fontSize: 12,
-    color: D.counterText,
   },
   counterSep: {
     fontFamily: F.regular,
     fontSize: 11,
-    color: D.counterText,
-    opacity: 0.5,
+    opacity: 0.6,
   },
-
-  // ── Body (question / answer content) ────────────────────────────────────────
   body: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 26,
-    paddingVertical: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     gap: 18,
   },
   questionText: {
     fontFamily: F.semiBold,
-    fontSize: 20,
-    lineHeight: 32,
+    fontSize: 24,
+    lineHeight: 38,
     textAlign: 'center',
-    color: D.questionText,
-    letterSpacing: 0.1,
   },
-
-  // ── Answer bubble ───────────────────────────────────────────────────────────
   answerBubble: {
-    backgroundColor: D.answerBubbleBg,
     borderWidth: 1,
-    borderColor: D.answerBubbleBorder,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    width: '100%',
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
   },
   answerText: {
     fontFamily: F.bold,
-    fontSize: 19,
-    color: D.answerBubbleText,
+    fontSize: 22,
+    lineHeight: 34,
     textAlign: 'center',
-    lineHeight: 28,
   },
-
-  // ── Explanation ─────────────────────────────────────────────────────────────
   explanationBox: {
-    backgroundColor: D.explanationBg,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderRadius: 18,
     padding: 16,
+    gap: 10,
+  },
+  explanationHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    gap: 8,
+  },
+  explanationTitle: {
+    fontFamily: F.bold,
+    fontSize: 13,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   explanationText: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: 'center',
-    color: D.explanationText,
+    fontFamily: F.medium,
+    fontSize: 15,
+    lineHeight: 24,
   },
-
-  // ── Footer hint ─────────────────────────────────────────────────────────────
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingBottom: 22,
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderTopWidth: 1,
   },
   hintText: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    color: D.hintText,
+    fontFamily: F.medium,
+    fontSize: 13,
   },
 });
