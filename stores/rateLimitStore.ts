@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type RateResult = { ok: true } | { ok: false; reason: string };
+type RateResult = { ok: true } | { ok: false; reason: 'daily_limit' };
 
 interface RateLimitState {
   dayKey: string;     // e.g., 2026-03-10
@@ -30,7 +30,7 @@ export const useRateLimitStore = create<RateLimitState>()(
       dayCount: 0,
       hourKey: hourKey(),
       hourCount: 0,
-      maxPerDay: 2,
+      maxPerDay: 5,
       maxPerHour: 10,
 
       checkAndConsume: () => {
@@ -46,11 +46,8 @@ export const useRateLimitStore = create<RateLimitState>()(
           hourCount = 0;
         }
 
-        if (dayCount >= state.maxPerDay) {
-          return { ok: false, reason: 'Daily limit reached (2 attempts). Upgrade to continue today.' };
-        }
-        if (hourCount >= state.maxPerHour) {
-          return { ok: false, reason: 'Rate limit: max 10 quizzes per hour. Please wait or upgrade.' };
+        if (dayCount >= state.maxPerDay || hourCount >= state.maxPerHour) {
+          return { ok: false, reason: 'daily_limit' };
         }
 
         set({

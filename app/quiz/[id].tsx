@@ -11,6 +11,7 @@ import { FlashCard } from '@/components/quiz/FlashCard';
 import { AdBanner } from '@/components/ads/AdBanner';
 import { BadgeCelebrationModal } from '@/components/ui/BadgeCelebrationModal';
 import { PremiumGateModal } from '@/components/ui/PremiumGateModal';
+import { DailyLimitModal } from '@/components/ui/DailyLimitModal';
 import { useInterstitialAd, INTERSTITIAL_AD_INTERVAL } from '@/hooks/useInterstitialAd';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useQuizStore } from '@/stores/quizStore';
@@ -39,6 +40,7 @@ export default function QuizScreen() {
   const [feedbackDismissed, setFeedbackDismissed] = useState(false);
   const [pendingAnswerId, setPendingAnswerId] = useState<string | undefined>(undefined);
   const [showPremiumGate, setShowPremiumGate] = useState(false);
+  const [showDailyLimit, setShowDailyLimit]   = useState(false);
   const [badgeReady, setBadgeReady]           = useState(false);
 
   // Flashcard state
@@ -278,6 +280,13 @@ export default function QuizScreen() {
 
     return (
       <SafeAreaView style={[s.flex, { backgroundColor: colors.background }]}>
+        {/* Daily limit modal */}
+        <DailyLimitModal
+          visible={showDailyLimit}
+          onClose={() => setShowDailyLimit(false)}
+          onUpgrade={() => { setShowDailyLimit(false); setShowPremiumGate(true); }}
+        />
+
         {/* Premium gate modal */}
         <PremiumGateModal
           visible={showPremiumGate}
@@ -316,11 +325,15 @@ export default function QuizScreen() {
           }}
         />
 
-        {/* Back header */}
-        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={8}>
-          <Feather name="arrow-left" size={22} color={colors.text} />
-          <Text style={[s.backLabel, { color: colors.textSecondary }]}>Back</Text>
-        </Pressable>
+        {/* Intro header bar */}
+        <View style={[s.introHeader, { borderBottomColor: colors.surfaceBorder }]}>
+          <Pressable onPress={() => router.back()} style={s.introBackBtn} hitSlop={10}>
+            <Feather name="arrow-left" size={22} color={colors.text} />
+            <Text style={[s.backLabel, { color: colors.textSecondary }]}>Back</Text>
+          </Pressable>
+          <Text style={[s.introHeaderTitle, { color: colors.text }]} numberOfLines={1}>Practice</Text>
+          <View style={{ width: 72 }} />
+        </View>
 
         <ScrollView contentContainerStyle={s.introPad} showsVerticalScrollIndicator={false}>
 
@@ -390,10 +403,7 @@ export default function QuizScreen() {
                 onPress={() => {
                   const ok = checkRateLimit();
                   if (!ok.ok) {
-                    Alert.alert('Limit reached', ok.reason, [
-                      { text: 'Upgrade', onPress: () => setShowPremiumGate(true) },
-                      { text: 'OK', style: 'cancel' },
-                    ]);
+                    setShowDailyLimit(true);
                     return;
                   }
                   reset();
@@ -823,11 +833,16 @@ const s = StyleSheet.create({
   backBtn:   { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 12 },
   backLabel: { fontFamily: F.medium, fontSize: 15 },
 
+  // Intro header bar
+  introHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, paddingHorizontal: 16, paddingVertical: 14 },
+  introBackBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  introHeaderTitle: { fontFamily: F.bold, fontSize: 17, flex: 1, textAlign: 'center' },
+
   // Not found
   notFoundText: { fontFamily: F.semiBold, fontSize: 18, marginTop: 16 },
 
   // ── Intro ──
-  introPad: { padding: 20, paddingTop: 8, paddingBottom: 40 },
+  introPad: { padding: 20, paddingTop: 14, paddingBottom: 40 },
 
   // Course header card (Vuexy card style)
   courseCard: {
