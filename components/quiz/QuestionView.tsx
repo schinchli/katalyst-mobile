@@ -42,7 +42,7 @@ export function QuestionView({
 
       {/* "Select the correct answer" label — teal, only before result */}
       {!showResult && (
-        <Text style={[styles.selectLabel, { color: colors.gradientAccent }]}>Select the correct answer</Text>
+        <Text style={[styles.selectLabel, { color: '#3DD6C0' }]}>Select the correct answer</Text>
       )}
 
       {/* Options */}
@@ -52,16 +52,18 @@ export function QuestionView({
           const isCorrect = option.id === question.correctOptionId;
           const isHidden = hiddenOptionIds.includes(option.id);
 
-          const cardBase = colors.surface; // dark #101C36 — close to DataCamp card bg
+          // Explicit high-contrast card colors — theme tokens were too close to bg
+          const CARD_BG      = '#111D35'; // clearly visible against #050B18 background
+          const CARD_BORDER  = '#1E3055'; // subtle border, always visible
           const stateColors = (() => {
             if (!showResult) {
               return isSelected
-                ? { background: cardBase, border: colors.primary, radioBg: colors.primary }
-                : { background: cardBase, border: colors.surfaceBorder, radioBg: 'transparent' };
+                ? { background: '#162648', border: colors.primary, radioBg: colors.primary }
+                : { background: CARD_BG, border: CARD_BORDER, radioBg: 'transparent' };
             }
-            if (isCorrect) return { background: colors.success + '18', border: colors.success, radioBg: colors.success };
-            if (isSelected) return { background: colors.error + '12', border: colors.error, radioBg: colors.error };
-            return { background: cardBase, border: colors.surfaceBorder, radioBg: 'transparent' };
+            if (isCorrect) return { background: '#0D2B1E', border: '#28C76F', radioBg: '#28C76F' };
+            if (isSelected) return { background: '#2A0F12', border: '#EF4444', radioBg: '#EF4444' };
+            return { background: CARD_BG, border: CARD_BORDER, radioBg: 'transparent' };
           })();
 
           const radioFilled = isSelected || (showResult && (isCorrect || isSelected));

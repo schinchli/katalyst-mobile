@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
@@ -35,6 +35,7 @@ type Phase = 'intro' | 'quiz' | 'review' | 'results' | 'flashcard';
 export default function QuizScreen() {
   const { id }   = useLocalSearchParams<{ id: string }>();
   const colors   = useThemeColors();
+  const insets   = useSafeAreaInsets();
   const [phase, setPhase]               = useState<Phase>('intro');
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackDismissed, setFeedbackDismissed] = useState(false);
@@ -629,13 +630,13 @@ export default function QuizScreen() {
           {flashIndex < questions.length - 1 ? (
             <Button
               title="Next Card"
-              variant="primary"
+              variant="outline"
               onPress={() => { setFlashIndex((i) => i + 1); setFlashFlipped(false); }}
               size="lg"
               style={{ flex: 1 }}
             />
           ) : (
-            <Button title="Done" variant="primary" onPress={exitAndReset} size="lg" style={{ flex: 1 }} />
+            <Button title="Done" variant="outline" onPress={exitAndReset} size="lg" style={{ flex: 1 }} />
           )}
         </View>
       </SafeAreaView>
@@ -646,31 +647,35 @@ export default function QuizScreen() {
   const isReview = phase === 'review';
 
   return (
-    <SafeAreaView style={[s.flex, { backgroundColor: colors.background }]}>
-      {/* Header: [⚠️ report] [progress bar] [X exit] */}
-      <View style={[s.quizTopBar, { backgroundColor: colors.background }]}>
+    <View style={[s.flex, { backgroundColor: '#050B18', paddingTop: insets.top }]}>
+      {/* ── Quiz header: [⚠️/←] [─progress─] [✕] ── */}
+      <View style={s.quizTopBar}>
         <Pressable
-          onPress={isReview ? () => setPhase('results') : (currentQuestion ? () => setShowReport(true) : undefined)}
-          hitSlop={10}
+          onPress={isReview ? () => setPhase('results') : () => currentQuestion && setShowReport(true)}
+          hitSlop={12}
           style={s.topBarSideBtn}
         >
           <Feather
             name={isReview ? 'arrow-left' : 'alert-triangle'}
-            size={isReview ? 22 : 19}
-            color={colors.textSecondary}
+            size={isReview ? 22 : 20}
+            color="rgba(255,255,255,0.55)"
           />
         </Pressable>
         <View style={s.topBarProgressWrap}>
-          <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} height={4} />
+          <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} height={5} />
         </View>
-        <Pressable onPress={isReview ? () => setPhase('results') : handleExit} hitSlop={10} style={s.topBarSideBtn}>
-          <Feather name="x" size={22} color={colors.text} />
+        <Pressable onPress={isReview ? () => setPhase('results') : handleExit} hitSlop={12} style={s.topBarSideBtn}>
+          <Feather name="x" size={22} color="rgba(255,255,255,0.85)" />
         </Pressable>
       </View>
 
-
-      {/* Question */}
-      <ScrollView contentContainerStyle={s.questionPad} showsVerticalScrollIndicator={false}>
+      {/* ── Question (scrollable) ── */}
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={s.questionPad}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {currentQuestion && (
           <QuestionView
             question={currentQuestion}
@@ -684,24 +689,24 @@ export default function QuizScreen() {
         )}
       </ScrollView>
 
-      {/* Bottom nav */}
-      <View style={[s.bottomNav, { backgroundColor: colors.background }]}>
+      {/* ── Bottom action bar ── */}
+      <View style={[s.bottomNav, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         {isReview ? (
           <View style={s.reviewButtons}>
-            {currentQuestionIndex > 0 ? (
-              <Button title="Previous" variant="outline" onPress={handlePrevious} size="lg" style={{ flex: 1 }} />
-            ) : (
-              <View style={{ flex: 1 }} />
-            )}
+            <Button
+              title="Previous"
+              variant="outline"
+              onPress={handlePrevious}
+              size="lg"
+              disabled={currentQuestionIndex === 0}
+              style={{ flex: 1 }}
+            />
             <Button
               title={isLastQuestion ? 'Done' : 'Next'}
+              variant="outline"
               onPress={() => {
-                if (isLastQuestion) {
-                  exitAndReset();
-                } else {
-                  setShowFeedback(true);
-                  nextQuestion();
-                }
+                if (isLastQuestion) { exitAndReset(); }
+                else { setShowFeedback(true); nextQuestion(); }
               }}
               size="lg"
               style={{ flex: 1 }}
@@ -782,7 +787,7 @@ export default function QuizScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -989,14 +994,14 @@ const s = StyleSheet.create({
   },
   reportCloseBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 15 },
 
-  // ── Quiz / Review header (DataCamp style) ──
-  quizTopBar:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
-  topBarSideBtn:     { width: 36, alignItems: 'center', justifyContent: 'center' },
-  topBarProgressWrap:{ flex: 1 },
-  // keep old keys as no-ops so nothing breaks:
-  quizHeader:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 10 },
-  quizProgressWrap:  { flex: 1 },
-  quizCount:         { fontFamily: F.semiBold, fontSize: 13, minWidth: 36, textAlign: 'right' },
+  // ── Quiz / Review header ──
+  quizTopBar:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, gap: 8, backgroundColor: '#050B18' },
+  topBarSideBtn:      { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  topBarProgressWrap: { flex: 1 },
+  // legacy no-ops
+  quizHeader:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 10 },
+  quizProgressWrap:   { flex: 1 },
+  quizCount:          { fontFamily: F.semiBold, fontSize: 13, minWidth: 36, textAlign: 'right' },
 
   // ── Timer ──
   timerShell: { marginHorizontal: 16, marginTop: 8, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderRadius: 18 },
@@ -1020,7 +1025,7 @@ const s = StyleSheet.create({
   runningScoreText: { fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Question area ──
-  questionPad: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 160 },
+  questionPad: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   answerPrompt: { fontFamily: F.medium, fontSize: 15, marginBottom: 16 },
   feedbackBanner: {
     marginHorizontal: 16,
@@ -1057,8 +1062,9 @@ const s = StyleSheet.create({
 
   // ── Bottom nav ──
   bottomNav: {
-    alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 14, gap: 12, paddingBottom: 28,
+    backgroundColor: '#050B18',
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   reviewButtons: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 12 },
   promptWrap: { width: '100%', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
