@@ -49,7 +49,7 @@ export default function FlashcardsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Review concepts with the same dark theme and uniform controls as the quiz flow.</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Tap a card to flip between question and answer.</Text>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
           {FILTERS.map((item) => {
@@ -77,7 +77,7 @@ export default function FlashcardsScreen() {
 
         {active ? (
           <Pressable onPress={() => setFlipped((value) => !value)} style={[styles.card, { backgroundColor: colors.surface, borderColor: flipped ? colors.primary : colors.surfaceBorder, shadowColor: flipped ? colors.primary : '#000' }]}>
-            <View style={[styles.cardStrip, { backgroundColor: flipped ? colors.primary : colors.gradientAccent }]} />
+            <View style={[styles.cardStrip, { backgroundColor: colors.primary }]} />
             <View style={styles.cardHeader}>
               <Text style={[styles.cardLabel, { color: flipped ? colors.primary : colors.textSecondary }]}>{flipped ? 'ANSWER' : 'QUESTION'}</Text>
               <View style={[styles.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
@@ -112,7 +112,7 @@ export default function FlashcardsScreen() {
           style={{ flex: 1 }}
         />
         <Button
-          title={index < items.length - 1 ? 'Next' : 'Done'}
+          title={index < items.length - 1 ? 'Next Card' : 'Done'}
           size="lg"
           onPress={() => {
             if (index < items.length - 1) {

@@ -5,7 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useAuthStore } from '@/stores/authStore';
-import { useProgressStore } from '@/stores/progressStore';
+import { useProgressStore, calculateLevel, LEVEL_NAMES } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
 import { flashcards } from '@/data/flashcards';
 import { F } from '@/constants/Typography';
@@ -31,9 +31,19 @@ export default function HomeScreen() {
   const courseCompletion = featuredQuiz ? Math.min(100, Math.max(8, Math.round((progress.completedQuizzes / quizzes.length) * 100))) : 0;
   const firstName = user?.name?.split(' ')[0] ?? 'Learner';
   const platformConfig = usePlatformConfigStore((s) => s.config);
+  const streak = progress.currentStreak;
+  const xp = progress.xp ?? 0;
+  const level = calculateLevel(xp);
+  const levelName = LEVEL_NAMES[level - 1] ?? 'Novice';
+  const streakMessage =
+    streak === 0 ? '🚀 Start your learning streak today!'
+    : streak === 1 ? '🔥 1 day streak! Come back tomorrow to keep it going!'
+    : streak >= 7 ? `⚡ ${streak} day streak! You're unstoppable!`
+    : streak >= 3 ? `🔥 ${streak} day streak! You're on fire!`
+    : `🔥 ${streak} day streak! Keep it going!`;
   const actionCards = [
     { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/flashcards' as const, tone: '#8B5CF6' },
-    { icon: 'activity', title: 'Practice', subtitle: 'Test yourself with an exercise', route: featuredQuiz ? (`/quiz/${featuredQuiz.id}` as const) : ('/(tabs)/quizzes' as const), tone: '#F59E0B' },
+    { icon: 'activity', title: 'Practice', subtitle: 'Explore every quiz and start a session', route: '/(tabs)/quizzes' as const, tone: '#F59E0B' },
     { icon: 'globe', title: 'Resources', subtitle: 'Cheat sheets, guides, and updates', route: '/(tabs)/learn' as const, tone: '#60A5FA' },
     { icon: 'star', title: 'Premium', subtitle: 'Unlock all content and projects', route: '/(tabs)/profile' as const, tone: colors.primary },
   ];
@@ -43,8 +53,8 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {platformConfig.widgets.showHomeStats ? (
           <View style={styles.topStats}>
-            <StatPill icon="award" value={`${(progress.coins ?? 0).toLocaleString()} coins`} colors={colors} />
-            <StatPill icon="zap" value={`${progress.xp ?? 0} XP`} colors={colors} />
+            <StatPill icon="zap" value={`${xp} XP · Lv.${level} ${levelName}`} colors={colors} />
+            <StatPill icon="activity" value={streak > 0 ? `🔥 ${streak} day streak` : '🚀 Start streak'} colors={colors} />
           </View>
         ) : null}
 
@@ -52,6 +62,7 @@ export default function HomeScreen() {
           <Text style={[styles.heroEyebrow, { color: colors.primary }]}>{EXPERIENCE_COPY.home.heroEyebrow}</Text>
           <Text style={[styles.heroTitle, { color: colors.text }]}>Hi {firstName}, {platformConfig.copy.homeHeroTitle}</Text>
           <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>{platformConfig.copy.homeHeroSubtitle}</Text>
+          <Text style={[styles.heroStreakMessage, { color: colors.textSecondary }]}>{streakMessage}</Text>
 
           <View style={[styles.heroCourseCard, { backgroundColor: platformConfig.colors.homeHeroCourseBg }]}>
             <View style={styles.heroCourseTop}>
@@ -188,6 +199,7 @@ const styles = StyleSheet.create({
   heroEyebrow: { fontFamily: F.bold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.8 },
   heroTitle: { fontFamily: F.bold, fontSize: 28, lineHeight: 34, letterSpacing: -0.8 },
   heroSubtitle: { fontFamily: F.regular, fontSize: 15, lineHeight: 24 },
+  heroStreakMessage: { fontFamily: F.medium, fontSize: 13, lineHeight: 20, marginTop: -4 },
   heroCourseCard: { backgroundColor: '#0E1830', borderRadius: 24, padding: 18, gap: 18 },
   heroCourseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   heroCourseTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24, maxWidth: 190 },

@@ -73,7 +73,7 @@ export const DEFAULT_MOBILE_PLATFORM_CONFIG: MobilePlatformConfig = {
     showGrowthWidget: true,
   },
   theme: {
-    platformAccent: 'datacamp',
+    platformAccent: 'indigo',
   },
 };
 

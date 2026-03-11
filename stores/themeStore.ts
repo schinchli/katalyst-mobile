@@ -7,9 +7,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type AccentPreset =
-  | 'datacamp'
-  | 'purple' // legacy
-  | 'teal'   // legacy
   | 'ocean'
   | 'aurora'
   | 'forest'
@@ -35,9 +32,6 @@ export interface AccentConfig {
 }
 
 export const ACCENT_PRESETS: Record<AccentPreset, AccentConfig> = {
-  datacamp: { primary: '#00ED64', primaryLight: 'rgba(0,237,100,0.15)', primaryText: '#007E36', primaryTextDark: '#6CFFAA', gradientFrom: '#00ED64', gradientTo: '#6F5DFF', gradientAccent: '#2E9BFF', label: 'DataCamp', emoji: '◆' },
-  purple:   { primary: '#6C5BFF', primaryLight: '#F0EDFF', primaryText: '#4C3BE4', primaryTextDark: '#BAAEFF', gradientFrom: '#6C5BFF', gradientTo: '#36E5F0', gradientAccent: '#A855F7', label: 'Neon Aurora',    emoji: '🌈' },
-  teal:     { primary: '#0EA5E9', primaryLight: '#E0F7FF', primaryText: '#026AA2', primaryTextDark: '#38BDF8', gradientFrom: '#0EA5E9', gradientTo: '#2DD4BF', gradientAccent: '#60A5FA', label: 'Ocean Glass',    emoji: '🌊' },
   aurora:   { primary: '#0EA5E9', primaryLight: '#E6F4FF', primaryText: '#0369A1', primaryTextDark: '#7DD3FC', gradientFrom: '#C084FC', gradientTo: '#0EA5E9', gradientAccent: '#22D3EE', label: 'Neon Aurora',    emoji: '🌈' },
   ocean:    { primary: '#0EA5E9', primaryLight: '#E0F7FF', primaryText: '#026AA2', primaryTextDark: '#38BDF8', gradientFrom: '#0EA5E9', gradientTo: '#2DD4BF', gradientAccent: '#60A5FA', label: 'Ocean Glass',    emoji: '🌊' },
   forest:   { primary: '#10B981', primaryLight: '#DCFCE7', primaryText: '#047857', primaryTextDark: '#6EE7B7', gradientFrom: '#10B981', gradientTo: '#84CC16', gradientAccent: '#14B8A6', label: 'Forest Mint',    emoji: '🌿' },
@@ -64,7 +58,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      accent:      'datacamp',
+      accent:      'indigo',
       darkMode:    true,
       usePlatform: true,
       setAccent:   (accent)  => set({ accent }),
@@ -78,10 +72,10 @@ export const useThemeStore = create<ThemeState>()(
       version: 2,
       migrate: async (persisted) => {
         const state = persisted as ThemeState | undefined;
-        if (!state) return { accent: 'datacamp', darkMode: true, usePlatform: true } as ThemeState;
-        // Normalize legacy preset ids
-        const legacyMap: Record<string, AccentPreset> = { purple: 'aurora', teal: 'ocean' };
-        const nextAccent = legacyMap[state.accent as string] ?? state.accent ?? 'datacamp';
+        if (!state) return { accent: 'indigo', darkMode: true, usePlatform: true } as ThemeState;
+        // Normalize legacy preset ids (purple → aurora, teal → ocean, datacamp → indigo)
+        const legacyMap: Record<string, AccentPreset> = { purple: 'aurora', teal: 'ocean', datacamp: 'indigo' };
+        const nextAccent = legacyMap[state.accent as string] ?? state.accent ?? 'indigo';
         return { ...state, accent: nextAccent, darkMode: state.darkMode ?? true, usePlatform: state.usePlatform ?? true };
       },
     },

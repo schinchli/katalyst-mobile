@@ -6,7 +6,7 @@ import { F } from '@/constants/Typography';
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'success';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
@@ -31,6 +31,7 @@ export function Button({
     switch (variant) {
       case 'secondary': return { backgroundColor: colors.primaryLight };
       case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primaryText };
+      case 'success':   return { backgroundColor: '#28C76F', shadowColor: '#28C76F', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 4 };
       default:          return {
         shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.4, shadowRadius: 6, elevation: 4,
@@ -38,7 +39,7 @@ export function Button({
     }
   })();
 
-  const textColor = variant === 'primary' ? '#04111F' : colors.primaryText;
+  const textColor = (variant === 'primary' || variant === 'success') ? '#04111F' : colors.primaryText;
 
   return (
     <Pressable
@@ -53,7 +54,7 @@ export function Button({
         style,
       ]}
     >
-      {variant === 'primary' ? (
+      {(variant === 'primary' || variant === undefined) ? (
         <LinearGradient
           colors={[colors.gradientFrom, colors.gradientTo]}
           start={{ x: 0, y: 0 }}

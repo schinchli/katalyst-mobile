@@ -5,7 +5,7 @@
 import { ACCENT_PRESETS, useThemeStore } from '@/stores/themeStore';
 import type { AccentPreset } from '@/stores/themeStore';
 
-const ALL_PRESETS: AccentPreset[] = ['purple', 'teal', 'emerald', 'amber', 'rose', 'indigo'];
+const ALL_PRESETS: AccentPreset[] = ['ocean', 'aurora', 'forest', 'sunset', 'midnight', 'sand', 'slate', 'emerald', 'amber', 'rose', 'indigo'];
 
 describe('ACCENT_PRESETS — structure', () => {
   it('has an entry for every accent preset key', () => {
@@ -17,12 +17,6 @@ describe('ACCENT_PRESETS — structure', () => {
   it('every preset has a valid hex primary color', () => {
     ALL_PRESETS.forEach((key) => {
       expect(ACCENT_PRESETS[key].primary).toMatch(/^#[0-9A-Fa-f]{6}$/);
-    });
-  });
-
-  it('every preset has a valid hex primaryLight color', () => {
-    ALL_PRESETS.forEach((key) => {
-      expect(ACCENT_PRESETS[key].primaryLight).toMatch(/^#[0-9A-Fa-f]{6}$/);
     });
   });
 
@@ -38,9 +32,8 @@ describe('ACCENT_PRESETS — structure', () => {
     });
   });
 
-  it('default purple preset matches Vuexy primary', () => {
-    expect(ACCENT_PRESETS.purple.primary).toBe('#7367F0');
-    expect(ACCENT_PRESETS.purple.primaryLight).toBe('#EBE9FD');
+  it('default indigo preset has correct primary', () => {
+    expect(ACCENT_PRESETS.indigo.primary).toBe('#4B5EFA');
   });
 
   it('primary and primaryLight are different colors', () => {

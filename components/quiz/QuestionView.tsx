@@ -39,8 +39,12 @@ export function QuestionView({
         ) : null}
       </View>
 
+      {!showResult && (
+        <Text style={[styles.selectLabel, { color: colors.textSecondary }]}>Select the correct answer</Text>
+      )}
+
       <View style={styles.optionsList}>
-        {question.options.map((option, index) => {
+        {question.options.map((option) => {
           const isSelected = selectedOptionId === option.id;
           const isCorrect = option.id === question.correctOptionId;
           const isHidden = hiddenOptionIds.includes(option.id);
@@ -48,20 +52,22 @@ export function QuestionView({
           const stateColors = (() => {
             if (!showResult) {
               return isSelected
-                ? { background: colors.surfaceElevated, border: colors.primary, icon: colors.primary }
-                : { background: colors.surface, border: colors.surfaceBorder, icon: colors.background };
+                ? { background: colors.surfaceElevated, border: colors.primary, radioBg: colors.primary }
+                : { background: colors.surface, border: colors.surfaceBorder, radioBg: 'transparent' };
             }
 
             if (isCorrect) {
-              return { background: colors.surfaceElevated, border: colors.success, icon: colors.primary };
+              return { background: colors.surfaceElevated, border: colors.success, radioBg: colors.success };
             }
 
             if (isSelected) {
-              return { background: '#221841', border: colors.error, icon: colors.error };
+              return { background: '#221841', border: colors.error, radioBg: colors.error };
             }
 
-            return { background: colors.surface, border: colors.surfaceBorder, icon: colors.background };
+            return { background: colors.surface, border: colors.surfaceBorder, radioBg: 'transparent' };
           })();
+
+          const radioFilled = isSelected || (showResult && (isCorrect || isSelected));
 
           return (
             <Pressable
@@ -77,17 +83,12 @@ export function QuestionView({
                 },
               ]}
             >
-              <View style={[styles.radioOuter, { borderColor: showResult && isCorrect ? colors.primary : isSelected ? colors.gradientAccent : colors.surfaceBorder }]}>
-                {(isSelected || (showResult && isCorrect)) && (
-                  <View style={[styles.radioInner, { backgroundColor: showResult && isCorrect ? colors.primary : colors.gradientAccent }]} />
-                )}
-              </View>
-
               <View style={styles.optionContent}>
+                <View style={[styles.radioCircle, { borderColor: stateColors.border, backgroundColor: radioFilled ? stateColors.radioBg : 'transparent' }]}>
+                  {radioFilled && <View style={styles.radioDot} />}
+                </View>
                 <Text style={[styles.optionText, { color: colors.text }]}>{option.text}</Text>
               </View>
-
-              {showResult && isCorrect ? <Feather name="check" size={18} color={colors.primary} /> : null}
             </Pressable>
           );
         })}
@@ -118,12 +119,13 @@ const styles = StyleSheet.create({
   questionText: { fontFamily: F.bold, fontSize: 24, lineHeight: 42 },
   reportRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   reportText: { fontFamily: F.medium, fontSize: 12 },
+  selectLabel: { fontFamily: F.medium, fontSize: 13, marginBottom: 2 },
   optionsList: { gap: 12 },
-  optionCard: { width: '100%', borderWidth: 1, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 22, flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
-  radioOuter: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginTop: 3 },
-  radioInner: { width: 12, height: 12, borderRadius: 6 },
-  optionContent: { flex: 1 },
-  optionText: { fontFamily: F.semiBold, fontSize: 20, lineHeight: 38 },
+  optionCard: { width: '100%', borderWidth: 1, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 18, alignItems: 'flex-start' },
+  optionContent: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 14 },
+  radioCircle: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#04111F' },
+  optionText: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 24, flex: 1 },
   explanationCard: { borderWidth: 1, borderRadius: 18, padding: 16, gap: 10 },
   explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   explanationBadge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

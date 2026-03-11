@@ -11,7 +11,7 @@ import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 
-const PRESETS: AccentPreset[] = ['datacamp', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'indigo'];
+const PRESETS: AccentPreset[] = ['indigo', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'emerald'];
 
 export default function ProfileScreen() {
   const colors = useThemeColors();

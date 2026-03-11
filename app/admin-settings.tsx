@@ -12,7 +12,7 @@ import { savePlatformConfigAsAdmin } from '@/services/platformConfigService';
 import { ACCENT_PRESETS, type AccentPreset } from '@/stores/themeStore';
 import { F } from '@/constants/Typography';
 
-const PRESETS: AccentPreset[] = ['datacamp', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'indigo'];
+const PRESETS: AccentPreset[] = ['indigo', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'emerald'];
 
 export default function AdminSettingsScreen() {
   const colors = useThemeColors();
