@@ -52,15 +52,16 @@ export function QuestionView({
           const isCorrect = option.id === question.correctOptionId;
           const isHidden = hiddenOptionIds.includes(option.id);
 
+          const cardBase = colors.surface; // dark #101C36 — close to DataCamp card bg
           const stateColors = (() => {
             if (!showResult) {
               return isSelected
-                ? { background: colors.surfaceElevated, border: colors.primary, radioBg: colors.primary }
-                : { background: colors.surfaceElevated, border: colors.surfaceBorder, radioBg: 'transparent' };
+                ? { background: cardBase, border: colors.primary, radioBg: colors.primary }
+                : { background: cardBase, border: colors.surfaceBorder, radioBg: 'transparent' };
             }
             if (isCorrect) return { background: colors.success + '18', border: colors.success, radioBg: colors.success };
             if (isSelected) return { background: colors.error + '12', border: colors.error, radioBg: colors.error };
-            return { background: colors.surfaceElevated, border: colors.surfaceBorder, radioBg: 'transparent' };
+            return { background: cardBase, border: colors.surfaceBorder, radioBg: 'transparent' };
           })();
 
           const radioFilled = isSelected || (showResult && (isCorrect || isSelected));
@@ -121,10 +122,10 @@ const styles = StyleSheet.create({
   reportText:      { fontFamily: F.medium, fontSize: 12 },
   selectLabel:     { fontFamily: F.semiBold, fontSize: 14, marginBottom: 2 },
   optionsList:     { gap: 12 },
-  optionCard:      { width: '100%', borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 18 },
+  optionCard:      { width: '100%', borderWidth: 1, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 18 },
   optionContent:   { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 16 },
-  radioCircle:     { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  radioDot:        { width: 9, height: 9, borderRadius: 5, backgroundColor: '#04111F' },
+  radioCircle:     { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  radioDot:        { width: 8, height: 8, borderRadius: 4, backgroundColor: '#04111F' },
   optionText:      { fontFamily: F.bold, fontSize: 17, lineHeight: 26, flex: 1 },
   explanationCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
   explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },

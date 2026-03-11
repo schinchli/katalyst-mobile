@@ -643,9 +643,7 @@ export default function QuizScreen() {
   }
 
   // ── QUIZ / REVIEW ─────────────────────────────────────────────────────────
-  const isReview   = phase === 'review';
-  const bookmarked = currentQuestion ? isBookmarked(currentQuestion.id) : false;
-  const showFeedbackBanner = !isReview && showFeedback && hasAnsweredCurrent && !feedbackDismissed;
+  const isReview = phase === 'review';
 
   return (
     <SafeAreaView style={[s.flex, { backgroundColor: colors.background }]}>
@@ -687,7 +685,7 @@ export default function QuizScreen() {
       </ScrollView>
 
       {/* Bottom nav */}
-      <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+      <View style={[s.bottomNav, { backgroundColor: colors.background }]}>
         {isReview ? (
           <View style={s.reviewButtons}>
             {currentQuestionIndex > 0 ? (
@@ -1060,7 +1058,7 @@ const s = StyleSheet.create({
   // ── Bottom nav ──
   bottomNav: {
     alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 14, gap: 12, borderTopWidth: 1, paddingBottom: 28,
+    paddingHorizontal: 16, paddingTop: 14, gap: 12, paddingBottom: 28,
   },
   reviewButtons: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 12 },
   promptWrap: { width: '100%', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
