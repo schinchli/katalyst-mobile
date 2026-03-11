@@ -47,3 +47,4 @@ android/local.properties
 
 # Build outputs
 *.log
+*-qr.png

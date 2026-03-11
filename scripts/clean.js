@@ -11,6 +11,7 @@ const cacheTargets = [
   '.turbo',
   'ios/build',
   'ios/DerivedData',
+  'ios/Pods',
 ];
 
 const fullTargets = [...cacheTargets, 'web-build'];
