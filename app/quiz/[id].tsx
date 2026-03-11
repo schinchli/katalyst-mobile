@@ -360,10 +360,10 @@ export default function QuizScreen() {
           <View style={[s.featuresCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <Text style={[s.featuresHeader, { color: colors.text }]}>What's Included</Text>
             {[
-              { icon: 'percent',      color: colors.warning, text: '50/50 Lifeline — eliminate 2 wrong answers' },
-              { icon: 'skip-forward', color: colors.primary, text: '3 Question skips available' },
-              { icon: 'clock',        color: colors.info,    text: '30 seconds per question timer' },
-              { icon: 'eye',          color: colors.success, text: 'Instant feedback & explanations' },
+              { icon: 'eye',         color: colors.success, text: 'Instant feedback after every answer' },
+              { icon: 'book-open',   color: colors.primary, text: 'Full explanations for each question' },
+              { icon: 'bookmark',    color: colors.info,    text: 'Bookmark questions for later review' },
+              { icon: 'layers',      color: colors.gradientAccent, text: 'Flashcard mode to reinforce learning' },
             ].map((f) => (
               <View key={f.text} style={s.featureRow}>
                 <View style={[s.featureIconWrap, { backgroundColor: f.color + '18' }]}>
@@ -663,35 +663,6 @@ export default function QuizScreen() {
         )}
       </View>
 
-      {/* Lifelines */}
-      {!isReview && !showFeedback && (
-        <View style={[s.lifelineRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Pressable
-            onPress={handleFiftyFifty}
-            disabled={fiftyFiftyUsed}
-            style={[s.lifelineBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: fiftyFiftyUsed ? 0.35 : 1 }]}
-          >
-            <Text style={[s.lifelineSymbol, { color: fiftyFiftyUsed ? colors.textSecondary : colors.warning }]}>½</Text>
-            <Text style={[s.lifelineBtnText, { color: fiftyFiftyUsed ? colors.textSecondary : colors.text }]}>50/50</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleSkip}
-            disabled={skipsLeft <= 0}
-            style={[s.lifelineBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: skipsLeft <= 0 ? 0.35 : 1 }]}
-          >
-            <Feather name="skip-forward" size={14} color={skipsLeft > 0 ? colors.primary : colors.textSecondary} />
-            <Text style={[s.lifelineBtnText, { color: skipsLeft > 0 ? colors.text : colors.textSecondary }]}>
-              Skip ({skipsLeft})
-            </Text>
-          </Pressable>
-
-          <View style={s.runningScore}>
-            <Feather name="check-circle" size={13} color={colors.primary} />
-            <Text style={[s.runningScoreText, { color: colors.primary }]}>{runningScore}</Text>
-          </View>
-        </View>
-      )}
 
       {/* Question */}
       <ScrollView contentContainerStyle={s.questionPad} showsVerticalScrollIndicator={false}>
