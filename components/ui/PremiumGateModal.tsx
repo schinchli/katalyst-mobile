@@ -73,9 +73,11 @@ export function PremiumGateModal({ visible, quiz, onClose, onUpgrade }: PremiumG
             </Pressable>
 
             <LinearGradient colors={[colors.surfaceElevated, colors.surface]} style={[styles.planCard, { borderColor: tab === 'pro' ? colors.primary : colors.surfaceBorder }]}>
-              <View style={[styles.saveBadge, { backgroundColor: platformConfig.colors.premiumAccent }]}>
-                <Text style={styles.saveBadgeText}>Save 50%</Text>
-              </View>
+              {platformConfig.widgets.showDiscountBanner && (
+                <View style={[styles.saveBadge, { backgroundColor: platformConfig.colors.premiumAccent }]}>
+                  <Text style={styles.saveBadgeText}>Save 50%</Text>
+                </View>
+              )}
               <Text style={[styles.planName, { color: colors.text }]}>Yearly</Text>
               <Text style={[styles.strikePrice, { color: colors.textSecondary }]}>₹10,999.00</Text>
               <Text style={[styles.planPrice, { color: colors.text }]}>₹ {PLANS.annual.price}.00</Text>

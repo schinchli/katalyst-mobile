@@ -64,7 +64,7 @@ export default function FlashcardsScreen() {
                 }}
                 style={[styles.filterChip, { backgroundColor: activeFilter ? colors.primary : colors.surface, borderColor: activeFilter ? colors.primary : colors.surfaceBorder }]}
               >
-                <Text style={[styles.filterChipText, { color: activeFilter ? '#04111F' : colors.text }]}>{item.label}</Text>
+                <Text style={[styles.filterChipText, { color: activeFilter ? '#FFFFFF' : colors.text }]}>{item.label}</Text>
               </Pressable>
             );
           })}

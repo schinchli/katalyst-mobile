@@ -68,7 +68,7 @@ function RankRow({ entry, colors }: { entry: LeaderboardEntry; colors: ReturnTyp
           {entry.score.toLocaleString()}
         </Text>
         <View style={styles.coinRow}>
-          <Feather name="zap" size={11} color="#FF9F43" />
+          <Feather name="zap" size={11} color={colors.warning} />
           <Text style={[styles.rankCoins, { color: colors.textSecondary }]}>
             {entry.coins.toLocaleString()}
           </Text>
@@ -97,9 +97,9 @@ export default function LeaderboardScreen() {
           <Feather name="arrow-left" size={22} color={colors.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Leaderboard</Text>
-        <View style={[styles.liveBadge, { backgroundColor: '#EA545518' }]}>
-          <View style={styles.liveDot} />
-          <Text style={[styles.liveBadgeText, { color: '#EA5455' }]}>LIVE</Text>
+        <View style={[styles.liveBadge, { backgroundColor: colors.error + '18' }]}>
+          <View style={[styles.liveDot, { backgroundColor: colors.error }]} />
+          <Text style={[styles.liveBadgeText, { color: colors.error }]}>LIVE</Text>
         </View>
       </View>
 
@@ -171,7 +171,6 @@ const styles = StyleSheet.create<Record<string, ViewStyle & TextStyle>>({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#EA5455',
   },
   liveBadgeText: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.5 },
 

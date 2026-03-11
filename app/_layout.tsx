@@ -82,6 +82,8 @@ function ThemedApp() {
         <Stack.Screen name="quiz/[id]"  options={{ headerShown: false, presentation: 'fullScreenModal' }} />
         <Stack.Screen name="dev-config" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="admin-settings" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="challenge"      options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="contest"        options={{ headerShown: false, presentation: 'card' }} />
       </Stack>
     </ThemeProvider>
   );

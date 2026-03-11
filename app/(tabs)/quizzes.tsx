@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -10,6 +10,18 @@ import { quizzes } from '@/data/quizzes';
 import type { QuizCategory } from '@/types';
 import { F } from '@/constants/Typography';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
+
+const CATEGORY_GRADIENT: Record<string, [string, string]> = {
+  'clf-c02':  ['#FF9900', '#E8650A'],
+  bedrock:    ['#7C3AED', '#4338CA'],
+  genai:      ['#0EA5E9', '#0369A1'],
+  security:   ['#EF4444', '#B91C1C'],
+  mlops:      ['#10B981', '#047857'],
+  compute:    ['#F59E0B', '#B45309'],
+  networking: ['#3B82F6', '#1D4ED8'],
+  databases:  ['#8B5CF6', '#6D28D9'],
+};
 
 const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -61,7 +73,7 @@ export default function QuizzesScreen() {
                 onPress={() => setFilter(item.key)}
                 style={[styles.filterChip, { backgroundColor: active ? colors.primary : colors.surface, borderColor: active ? colors.primary : colors.surfaceBorder }]}
               >
-                <Text style={[styles.filterChipText, { color: active ? '#04111F' : colors.text }]}>{item.label}</Text>
+                <Text style={[styles.filterChipText, { color: active ? '#FFFFFF' : colors.text }]}>{item.label}</Text>
               </Pressable>
             );
           })}
@@ -70,12 +82,22 @@ export default function QuizzesScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trackRow}>
           {quizzes.slice(0, 4).map((quiz, index) => (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <LinearGradient colors={index % 2 === 0 ? [colors.error, colors.gradientAccent] : [colors.warning, '#F59E0B']} style={styles.trackVisual}>
-                <View style={[styles.trackBadge, { backgroundColor: '#04111F' }]}>
-                  <Text style={styles.trackBadgeText}>{quiz.isPremium ? 'Track' : 'Start'}</Text>
-                </View>
-                <Feather name={quiz.icon as any} size={54} color="#F8FAFC" />
-              </LinearGradient>
+              {(() => {
+                const grad = CATEGORY_GRADIENT[quiz.category] ?? [colors.error, colors.gradientAccent];
+                const catIcon = AWS_CATEGORY_ICONS[quiz.category];
+                return (
+                  <LinearGradient colors={grad} style={styles.trackVisual}>
+                    <View style={[styles.trackBadge, { backgroundColor: 'rgba(0,0,0,0.45)' }]}>
+                      <Text style={styles.trackBadgeText}>{quiz.isPremium ? 'Track' : 'Start'}</Text>
+                    </View>
+                    {catIcon ? (
+                      <Image source={catIcon} style={styles.trackIcon} />
+                    ) : (
+                      <Feather name={quiz.icon as any} size={54} color="#F8FAFC" />
+                    )}
+                  </LinearGradient>
+                );
+              })()}
               <View style={styles.trackBody}>
                 <View style={styles.trackProgressRow}>
                   <View style={[styles.trackProgressBar, { backgroundColor: colors.backgroundAlt }]}>
@@ -97,9 +119,19 @@ export default function QuizzesScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.courseRow}>
           {visibleCourses.map((quiz, index) => (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <LinearGradient colors={index % 3 === 0 ? [colors.gradientAccent, colors.error] : index % 3 === 1 ? [colors.warning, '#FDE047'] : [colors.primary, colors.gradientAccent]} style={styles.courseImage}>
-                <Feather name={quiz.icon as any} size={48} color="#F8FAFC" />
-              </LinearGradient>
+              {(() => {
+                const grad = CATEGORY_GRADIENT[quiz.category] ?? [colors.primary, colors.gradientAccent];
+                const catIcon = AWS_CATEGORY_ICONS[quiz.category];
+                return (
+                  <LinearGradient colors={grad} style={styles.courseImage}>
+                    {catIcon ? (
+                      <Image source={catIcon} style={styles.courseIcon} />
+                    ) : (
+                      <Feather name={quiz.icon as any} size={48} color="#F8FAFC" />
+                    )}
+                  </LinearGradient>
+                );
+              })()}
               <View style={styles.courseBody}>
                 <View style={styles.metaRow}>
                   <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{quiz.category.toUpperCase()}</Text>
@@ -138,6 +170,7 @@ const styles = StyleSheet.create({
   trackRow: { gap: 14, paddingRight: 16 },
   trackCard: { width: 224, borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
   trackVisual: { height: 168, justifyContent: 'center', alignItems: 'center' },
+  trackIcon: { width: 64, height: 64 },
   trackBadge: { position: 'absolute', left: 14, top: 14, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
   trackBadgeText: { color: '#fff', fontFamily: F.bold, fontSize: 14 },
   trackBody: { padding: 14, gap: 12 },
@@ -153,6 +186,7 @@ const styles = StyleSheet.create({
   courseCard: { width: 220, borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
   courseCardSingleWide: { width: 280 },
   courseImage: { height: 160, alignItems: 'center', justifyContent: 'center' },
+  courseIcon: { width: 56, height: 56 },
   courseBody: { padding: 14, gap: 10, minHeight: 180 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   metaLabel: { fontFamily: F.bold, fontSize: 11, letterSpacing: 0.8 },

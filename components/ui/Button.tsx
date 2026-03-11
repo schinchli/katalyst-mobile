@@ -39,7 +39,7 @@ export function Button({
     }
   })();
 
-  const textColor = (variant === 'primary' || variant === 'success') ? '#04111F' : colors.primaryText;
+  const textColor = (variant === 'primary' || variant === 'success') ? '#FFFFFF' : colors.primaryText;
 
   return (
     <Pressable
@@ -59,10 +59,10 @@ export function Button({
           colors={[colors.gradientFrom, colors.gradientTo]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFillObject, { borderRadius: 10 }]}
+          style={[StyleSheet.absoluteFillObject, { borderRadius: 12 }]}
         />
       ) : null}
-      {loading && <ActivityIndicator color={variant === 'primary' ? '#04111F' : colors.primaryText} size="small" />}
+      {loading && <ActivityIndicator color={variant === 'primary' || variant === 'success' ? '#FFFFFF' : colors.primaryText} size="small" />}
       <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]} numberOfLines={1}>{title}</Text>
     </Pressable>
   );

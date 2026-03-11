@@ -10,7 +10,12 @@ import { useThemeColors } from '@/hooks/useThemeColor';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { savePlatformConfigAsAdmin } from '@/services/platformConfigService';
 import { ACCENT_PRESETS, type AccentPreset } from '@/stores/themeStore';
+import { quizzes } from '@/data/quizzes';
+import { supabase } from '@/config/supabase';
+import { QUIZ_CATALOG_OVERRIDES_KEY } from '@/config/quizCatalog';
 import { F } from '@/constants/Typography';
+
+type QuizEntry = { isPremium: boolean; price: number; enabled: boolean };
 
 const PRESETS: AccentPreset[] = ['indigo', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'emerald'];
 
@@ -22,6 +27,39 @@ export default function AdminSettingsScreen() {
   const isAdmin = (user?.role ?? '').toLowerCase() === 'admin';
   const [draft, setDraft] = useState(storedConfig);
   const [saving, setSaving] = useState(false);
+
+  // ── Quiz catalog CRUD state ──────────────────────────────────────────────
+  const [quizCatalog, setQuizCatalog] = useState<Record<string, QuizEntry>>(() =>
+    Object.fromEntries(
+      quizzes.map((q) => [q.id, { isPremium: q.isPremium ?? false, price: q.price ?? 149, enabled: true }])
+    )
+  );
+  const [quizSaving, setQuizSaving] = useState(false);
+  const [expandedQuiz, setExpandedQuiz] = useState<string | null>(null);
+
+  const handleSaveQuizCatalog = async () => {
+    setQuizSaving(true);
+    try {
+      const overrides = Object.fromEntries(
+        Object.entries(quizCatalog).map(([id, val]) => [
+          id,
+          { isPremium: val.isPremium, enabled: val.enabled, ...(val.isPremium ? { price: val.price } : {}) },
+        ])
+      );
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: QUIZ_CATALOG_OVERRIDES_KEY, value: overrides }, { onConflict: 'key' });
+      if (error) throw error;
+      Alert.alert('Saved', 'Quiz catalog updated for all users.');
+    } catch (err) {
+      Alert.alert('Save failed', err instanceof Error ? err.message : 'Unable to save quiz catalog.');
+    } finally {
+      setQuizSaving(false);
+    }
+  };
+
+  const updateQuiz = (id: string, patch: Partial<QuizEntry>) =>
+    setQuizCatalog((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
 
   const sections = useMemo(() => [
     { label: 'Auth headline', key: 'authHeadline' as const },
@@ -125,6 +163,7 @@ export default function AdminSettingsScreen() {
             ['showPopularCourses', 'Show popular courses'],
             ['showFlashcards', 'Show flashcard packs'],
             ['showGrowthWidget', 'Show growth snapshot'],
+            ['showDiscountBanner', '🏷️ Show "Save 50%" discount badge'],
           ].map(([key, label]) => {
             const typedKey = key as keyof typeof draft.widgets;
             const enabled = draft.widgets[typedKey];
@@ -157,6 +196,105 @@ export default function AdminSettingsScreen() {
               );
             })}
           </View>
+        </View>
+
+        {/* ── Quiz Catalog CRUD ── */}
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={styles.catalogHeader}>
+            <View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Quiz Catalog</Text>
+              <Text style={[styles.catalogSubtitle, { color: colors.textSecondary }]}>
+                {quizzes.length} quizzes · tap row to edit
+              </Text>
+            </View>
+            <View style={[styles.catalogBadge, { backgroundColor: colors.primaryLight }]}>
+              <Feather name="layers" size={14} color={colors.primary} />
+              <Text style={[styles.catalogBadgeText, { color: colors.primary }]}>CRUD</Text>
+            </View>
+          </View>
+
+          {quizzes.map((quiz) => {
+            const entry = quizCatalog[quiz.id];
+            const isExpanded = expandedQuiz === quiz.id;
+            return (
+              <View key={quiz.id} style={[styles.quizRow, {
+                borderColor: isExpanded ? colors.primary : colors.surfaceBorder,
+                backgroundColor: isExpanded ? colors.primaryLight + '30' : 'transparent',
+              }]}>
+                {/* Row header — always visible */}
+                <Pressable
+                  onPress={() => setExpandedQuiz(isExpanded ? null : quiz.id)}
+                  style={styles.quizRowHeader}
+                >
+                  <View style={[styles.quizIconWrap, { backgroundColor: entry.enabled ? colors.primaryLight : colors.surfaceBorder }]}>
+                    <Feather name={quiz.icon as any} size={15} color={entry.enabled ? colors.primary : colors.textSecondary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.quizTitle, { color: entry.enabled ? colors.text : colors.textSecondary }]} numberOfLines={1}>
+                      {quiz.title}
+                    </Text>
+                    <Text style={[styles.quizMeta, { color: colors.textSecondary }]}>
+                      {entry.isPremium ? `₹${entry.price}/mo` : 'Free'} · {quiz.category}
+                    </Text>
+                  </View>
+                  <View style={styles.quizRowBadges}>
+                    {entry.isPremium && (
+                      <View style={[styles.premiumChip, { backgroundColor: colors.warning + '22' }]}>
+                        <Text style={[styles.premiumChipText, { color: colors.warning }]}>PRO</Text>
+                      </View>
+                    )}
+                    {!entry.enabled && (
+                      <View style={[styles.disabledChip, { backgroundColor: colors.error + '22' }]}>
+                        <Text style={[styles.disabledChipText, { color: colors.error }]}>OFF</Text>
+                      </View>
+                    )}
+                    <Feather name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
+                  </View>
+                </Pressable>
+
+                {/* Expanded edit area */}
+                {isExpanded && (
+                  <View style={[styles.quizEditArea, { borderTopColor: colors.surfaceBorder }]}>
+                    {/* Enable/disable toggle */}
+                    <Pressable
+                      onPress={() => updateQuiz(quiz.id, { enabled: !entry.enabled })}
+                      style={[styles.toggleRow, { borderColor: colors.surfaceBorder }]}
+                    >
+                      <Feather name="eye" size={15} color={colors.textSecondary} />
+                      <Text style={[styles.toggleLabel, { color: colors.text, marginLeft: 8 }]}>Visible in app</Text>
+                      <View style={[styles.toggleTrack, { backgroundColor: entry.enabled ? colors.primary : colors.surfaceBorder }]}>
+                        <View style={[styles.toggleThumb, { transform: [{ translateX: entry.enabled ? 18 : 2 }] }]} />
+                      </View>
+                    </Pressable>
+
+                    {/* Premium toggle */}
+                    <Pressable
+                      onPress={() => updateQuiz(quiz.id, { isPremium: !entry.isPremium })}
+                      style={[styles.toggleRow, { borderColor: colors.surfaceBorder }]}
+                    >
+                      <Feather name="lock" size={15} color={colors.textSecondary} />
+                      <Text style={[styles.toggleLabel, { color: colors.text, marginLeft: 8 }]}>Premium (paid)</Text>
+                      <View style={[styles.toggleTrack, { backgroundColor: entry.isPremium ? colors.warning : colors.surfaceBorder }]}>
+                        <View style={[styles.toggleThumb, { transform: [{ translateX: entry.isPremium ? 18 : 2 }] }]} />
+                      </View>
+                    </Pressable>
+
+                    {/* Price — only when premium */}
+                    {entry.isPremium && (
+                      <Input
+                        label="Price (₹)"
+                        value={String(entry.price)}
+                        keyboardType="number-pad"
+                        onChangeText={(v) => updateQuiz(quiz.id, { price: Math.max(1, parseInt(v || '149', 10) || 149) })}
+                      />
+                    )}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+
+          <Button title="Save quiz catalog" loading={quizSaving} onPress={handleSaveQuizCatalog} />
         </View>
 
         <Button
@@ -204,4 +342,21 @@ const styles = StyleSheet.create({
   swatchCard: { width: '31%', borderWidth: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center', gap: 8 },
   swatchBubble: { width: 30, height: 30, borderRadius: 15 },
   swatchLabel: { fontFamily: F.medium, fontSize: 11, textAlign: 'center' },
+
+  // ── Quiz catalog ──
+  catalogHeader:     { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  catalogSubtitle:   { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
+  catalogBadge:      { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  catalogBadgeText:  { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.6 },
+  quizRow:           { borderWidth: 1, borderRadius: 14, overflow: 'hidden', marginTop: 8 },
+  quizRowHeader:     { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
+  quizIconWrap:      { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  quizTitle:         { fontFamily: F.semiBold, fontSize: 13, lineHeight: 18 },
+  quizMeta:          { fontFamily: F.regular, fontSize: 11, marginTop: 1 },
+  quizRowBadges:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  premiumChip:       { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5 },
+  premiumChipText:   { fontFamily: F.bold, fontSize: 9, letterSpacing: 0.4 },
+  disabledChip:      { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5 },
+  disabledChipText:  { fontFamily: F.bold, fontSize: 9, letterSpacing: 0.4 },
+  quizEditArea:      { borderTopWidth: 1, paddingHorizontal: 12, paddingBottom: 12, paddingTop: 4, gap: 6 },
 });

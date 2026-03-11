@@ -23,12 +23,15 @@ function buildQuestionIndex(): Record<string, QuestionEntry> {
 
 const QUESTION_INDEX = buildQuestionIndex();
 
-// ─── Difficulty accent colors ─────────────────────────────────────────────────
-const DIFF_COLOR: Record<string, string> = {
-  beginner:     '#28C76F',
-  intermediate: '#FF9F43',
-  advanced:     '#EA5455',
-};
+// ─── Difficulty accent colors — resolved from theme ───────────────────────────
+function getDiffColor(difficulty: string, colors: ReturnType<typeof useThemeColors>): string {
+  switch (difficulty) {
+    case 'beginner':     return colors.success;
+    case 'intermediate': return colors.warning;
+    case 'advanced':     return colors.error;
+    default:             return colors.primary;
+  }
+}
 
 // ─── Bookmark card ────────────────────────────────────────────────────────────
 function BookmarkCard({
@@ -42,7 +45,7 @@ function BookmarkCard({
 }) {
   const colors = useThemeColors();
   const { question, quiz } = entry;
-  const diffColor = DIFF_COLOR[quiz.difficulty] ?? '#7367F0';
+  const diffColor = getDiffColor(quiz.difficulty, colors);
 
   return (
     <Pressable
@@ -89,10 +92,10 @@ function BookmarkCard({
             onPress={(e) => { e.stopPropagation?.(); onRemove(); }}
             hitSlop={8}
             accessibilityRole="button"
-            style={[styles.removeBtn, { backgroundColor: '#EA545518' }]}
+            style={[styles.removeBtn, { backgroundColor: colors.error + '18' }]}
           >
-            <Feather name="bookmark" size={14} color="#EA5455" />
-            <Text style={styles.removeBtnText} numberOfLines={1}>Remove</Text>
+            <Feather name="bookmark" size={14} color={colors.error} />
+            <Text style={[styles.removeBtnText, { color: colors.error }]} numberOfLines={1}>Remove</Text>
           </Pressable>
         </View>
       </View>
@@ -280,7 +283,6 @@ const styles = StyleSheet.create({
   removeBtnText: {
     fontFamily: F.semiBold,
     fontSize: 11,
-    color: '#EA5455',
   },
 
   // ── Empty state ────────────────────────────────────────────────────────────

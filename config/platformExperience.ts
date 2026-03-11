@@ -34,6 +34,7 @@ export interface MobilePlatformConfig {
     showPopularCourses: boolean;
     showFlashcards: boolean;
     showGrowthWidget: boolean;
+    showDiscountBanner: boolean;
   };
   theme: {
     platformAccent: AccentPreset;
@@ -71,6 +72,7 @@ export const DEFAULT_MOBILE_PLATFORM_CONFIG: MobilePlatformConfig = {
     showPopularCourses: true,
     showFlashcards: true,
     showGrowthWidget: true,
+    showDiscountBanner: false,   // Hidden until promotion is active
   },
   theme: {
     platformAccent: 'indigo',

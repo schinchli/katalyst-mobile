@@ -1,3 +1,7 @@
+/**
+ * FlashCard — tap to flip, no color change on flip.
+ * Swipe left/right is handled by the parent via PanResponder.
+ */
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
@@ -14,7 +18,7 @@ interface FlashCardProps {
 
 export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: FlashCardProps) {
   const colors = useThemeColors();
-  const correctOption = question.options.find((option) => option.id === question.correctOptionId);
+  const correctOption = question.options.find((o) => o.id === question.correctOptionId);
 
   return (
     <Pressable onPress={onFlip} style={styles.container}>
@@ -23,17 +27,19 @@ export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: Fla
           styles.card,
           {
             backgroundColor: colors.surface,
-            borderColor: isFlipped ? colors.primary : colors.surfaceBorder,
-            shadowColor: isFlipped ? colors.primary : '#000',
+            borderColor: colors.surfaceBorder,   // never changes on flip
+            shadowColor: '#000',
           },
         ]}
       >
-        <View style={[styles.strip, { backgroundColor: isFlipped ? colors.primary : colors.gradientAccent }]} />
+        {/* Top accent strip — static color */}
+        <View style={[styles.strip, { backgroundColor: colors.primary }]} />
 
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={[styles.labelDot, { backgroundColor: isFlipped ? colors.primary : colors.gradientAccent }]} />
-            <Text style={[styles.sideLabel, { color: isFlipped ? colors.primary : colors.textSecondary }]}>
+            <View style={[styles.labelDot, { backgroundColor: colors.gradientAccent }]} />
+            <Text style={[styles.sideLabel, { color: colors.gradientAccent }]}>
               {isFlipped ? 'ANSWER' : 'QUESTION'}
             </Text>
           </View>
@@ -44,18 +50,32 @@ export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: Fla
           </View>
         </View>
 
+        {/* Body */}
         <View style={styles.body}>
           {isFlipped ? (
             <>
-              <View style={[styles.answerBubble, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '55' }]}>
-                <Text style={[styles.answerText, { color: colors.text }]}>{correctOption?.text}</Text>
+              {/* Answer bubble */}
+              <View style={[styles.answerBubble, {
+                backgroundColor: colors.primary + '18',
+                borderColor:     colors.primary + '44',
+              }]}>
+                <Text style={[styles.answerText, { color: colors.text }]}>
+                  {correctOption?.text}
+                </Text>
               </View>
-              <View style={[styles.explanationBox, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+
+              {/* Explanation box */}
+              <View style={[styles.explanationBox, {
+                backgroundColor: colors.surfaceElevated,
+                borderColor:     colors.surfaceBorder,
+              }]}>
                 <View style={styles.explanationHeader}>
-                  <Feather name="info" size={14} color={colors.primary} />
-                  <Text style={[styles.explanationTitle, { color: colors.primary }]}>Explanation</Text>
+                  <Feather name="info" size={14} color={colors.gradientAccent} />
+                  <Text style={[styles.explanationTitle, { color: colors.gradientAccent }]}>
+                    Explanation
+                  </Text>
                 </View>
-                <Text style={[styles.explanationText, { color: colors.textSecondary }]}>
+                <Text style={[styles.explanationText, { color: colors.text }]}>
                   {question.explanation || 'No explanation available.'}
                 </Text>
               </View>
@@ -65,10 +85,11 @@ export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: Fla
           )}
         </View>
 
+        {/* Footer hint */}
         <View style={[styles.footer, { borderTopColor: colors.surfaceBorder }]}>
           <Feather name="rotate-cw" size={13} color={colors.textSecondary} />
           <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-            {isFlipped ? 'Tap to flip back' : 'Tap to reveal answer'}
+            {isFlipped ? 'Tap to flip back' : 'Tap to reveal answer · Swipe to navigate'}
           </Text>
         </View>
       </View>
@@ -92,13 +113,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 8,
   },
-  strip: { height: 5 },
+  strip: { height: 4 },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 22,
-    paddingTop: 20,
+    paddingTop: 18,
     paddingBottom: 6,
   },
   headerLeft: {
@@ -134,64 +156,70 @@ const styles = StyleSheet.create({
     fontSize: 11,
     opacity: 0.6,
   },
+
   body: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 20,
-    gap: 18,
+    gap: 16,
   },
+
   questionText: {
     fontFamily: F.semiBold,
     fontSize: 24,
     lineHeight: 38,
     textAlign: 'center',
   },
+
   answerBubble: {
     borderWidth: 1,
-    borderRadius: 18,
-    paddingVertical: 18,
+    borderRadius: 16,
+    paddingVertical: 16,
     paddingHorizontal: 20,
   },
   answerText: {
     fontFamily: F.bold,
-    fontSize: 22,
-    lineHeight: 34,
+    fontSize: 20,
+    lineHeight: 30,
     textAlign: 'center',
   },
+
   explanationBox: {
     borderWidth: 1,
-    borderRadius: 18,
-    padding: 16,
-    gap: 10,
+    borderRadius: 14,
+    padding: 14,
+    gap: 8,
   },
   explanationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
   },
   explanationTitle: {
     fontFamily: F.bold,
-    fontSize: 13,
-    letterSpacing: 0.5,
+    fontSize: 12,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   explanationText: {
     fontFamily: F.medium,
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 22,
+    // no opacity — full brightness for dark mode readability
   },
+
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderTopWidth: 1,
   },
   hintText: {
     fontFamily: F.medium,
-    fontSize: 13,
+    fontSize: 12,
   },
 });

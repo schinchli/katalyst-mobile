@@ -1,5 +1,6 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useProgressStore } from '@/stores/progressStore';
@@ -24,12 +25,12 @@ export default function ProgressScreen() {
 
         <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
-            { icon: 'bell', title: 'Notifications', badge: '1' },
-            { icon: 'award', title: 'Leaderboard' },
-            { icon: 'book-open', title: 'My library' },
+            { icon: 'bell',      title: 'Notifications', badge: '1', route: null },
+            { icon: 'award',     title: 'Leaderboard',              route: '/leaderboard' as const },
+            { icon: 'book-open', title: 'My library',               route: '/(tabs)/bookmarks' as const },
           ].map((item, index) => (
             <View key={item.title}>
-              <View style={styles.menuRow}>
+              <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.menuRow}>
                 <View style={[styles.menuIcon, { backgroundColor: colors.backgroundAlt }]}>
                   <Feather name={item.icon as any} size={18} color={colors.text} />
                 </View>
@@ -40,7 +41,7 @@ export default function ProgressScreen() {
                   </View>
                 ) : null}
                 <Feather name="chevron-right" size={18} color={colors.textSecondary} />
-              </View>
+              </Pressable>
               {index < 2 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
           ))}
@@ -66,8 +67,8 @@ export default function ProgressScreen() {
               return (
                 <View key={`${label}-${index}`} style={styles.weekCell}>
                   <Text style={[styles.weekLabel, { color: colors.textSecondary }]}>{label}</Text>
-                  <View style={[styles.weekBolt, { borderColor: active ? '#F8E84A' : 'transparent' }]}>
-                    <Feather name="zap" size={20} color={active ? '#F8E84A' : '#223A70'} />
+                  <View style={[styles.weekBolt, { borderColor: active ? colors.warning : 'transparent' }]}>
+                    <Feather name="zap" size={20} color={active ? colors.warning : colors.surfaceBorder} />
                   </View>
                 </View>
               );
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
   menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   menuTitle: { fontFamily: F.semiBold, fontSize: 18, flex: 1 },
   badge: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
+  badgeText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 16 },
   divider: { height: 1, marginHorizontal: 16 },
   panel: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 16 },
   panelTitle: { fontFamily: F.bold, fontSize: 18 },

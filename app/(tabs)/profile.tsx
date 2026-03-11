@@ -29,11 +29,11 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.profileTop}>
           <View style={[styles.avatarWrap, { borderColor: colors.surfaceBorder }]}>
-            <View style={[styles.avatarInner, { backgroundColor: '#F2D7AC' }]}>
-              <Text style={styles.avatarText}>{initials}</Text>
+            <View style={[styles.avatarInner, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
             </View>
             <View style={[styles.editBadge, { backgroundColor: colors.primary }]}>
-              <Feather name="edit-2" size={16} color="#04111F" />
+              <Feather name="edit-2" size={16} color="#FFFFFF" />
             </View>
           </View>
           <Text style={[styles.profileName, { color: colors.text }]}>{user?.name ?? 'Katalyst learner'}</Text>
@@ -61,17 +61,17 @@ export default function ProfileScreen() {
 
         <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
-            { icon: 'bell', label: 'Notifications', badge: '1' },
-            { icon: 'award', label: 'Leaderboard' },
-            { icon: 'book-open', label: 'My library' },
+            { icon: 'bell',      label: 'Notifications', badge: '1', route: null },
+            { icon: 'award',     label: 'Leaderboard',               route: '/leaderboard' as const },
+            { icon: 'book-open', label: 'My library',                route: '/(tabs)/bookmarks' as const },
           ].map((item, index) => (
             <View key={item.label}>
-              <View style={styles.listRow}>
+              <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.listRow}>
                 <Feather name={item.icon as any} size={24} color={colors.text} />
                 <Text style={[styles.listLabel, { color: colors.text }]}>{item.label}</Text>
                 {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={styles.rowBadgeText}>{item.badge}</Text></View> : null}
                 <Feather name="chevron-right" size={18} color={colors.textSecondary} />
-              </View>
+              </Pressable>
               {index < 2 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
           ))}
@@ -107,9 +107,9 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <Pressable onPress={() => signOut()} style={[styles.signOutButton, { borderColor: '#FF6B7A' }]}>
-          <Feather name="log-out" size={16} color="#FF6B7A" />
-          <Text style={styles.signOutText}>Sign Out</Text>
+        <Pressable onPress={() => signOut()} style={[styles.signOutButton, { borderColor: colors.error }]}>
+          <Feather name="log-out" size={16} color={colors.error} />
+          <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   profileTop: { alignItems: 'center', gap: 10 },
   avatarWrap: { width: 164, height: 164, borderRadius: 82, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   avatarInner: { width: 152, height: 152, borderRadius: 76, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#1A1A1A', fontFamily: F.bold, fontSize: 58 },
+  avatarText: { fontFamily: F.bold, fontSize: 58 },
   editBadge: { position: 'absolute', right: 6, top: 6, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   profileName: { fontFamily: F.bold, fontSize: 28, lineHeight: 34 },
   profileHandle: { fontFamily: F.medium, fontSize: 17 },
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 18 },
   listLabel: { fontFamily: F.semiBold, fontSize: 18, flex: 1 },
   rowBadge: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  rowBadgeText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
+  rowBadgeText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 16 },
   divider: { height: 1, marginHorizontal: 18 },
   panel: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 16 },
   panelTitle: { fontFamily: F.bold, fontSize: 18 },
@@ -150,5 +150,5 @@ const styles = StyleSheet.create({
   signOutButton: { borderWidth: 1.5, borderRadius: 18, minHeight: 54, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
   adminButton: { borderWidth: 1.5, borderRadius: 18, minHeight: 54, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
   adminButtonText: { fontFamily: F.bold, fontSize: 16 },
-  signOutText: { color: '#FF6B7A', fontFamily: F.bold, fontSize: 16 },
+  signOutText: { fontFamily: F.bold, fontSize: 16 },
 });

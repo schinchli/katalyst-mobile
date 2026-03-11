@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -11,6 +11,42 @@ import { flashcards } from '@/data/flashcards';
 import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { AWS_SERVICE_ICONS, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
+
+// ── Service-specific course card visuals — brand-accurate gradients ───────────
+const CATEGORY_VISUAL: Record<string, { from: string; to: string; label: string }> = {
+  'clf-c02':           { from: '#FF9900', to: '#E8650A', label: 'CLF-C02' },
+  bedrock:             { from: '#7C3AED', to: '#4338CA', label: 'Bedrock' },
+  genai:               { from: '#0EA5E9', to: '#0369A1', label: 'GenAI'   },
+  security:            { from: '#EF4444', to: '#B91C1C', label: 'Security' },
+  mlops:               { from: '#10B981', to: '#047857', label: 'MLOps'   },
+  compute:             { from: '#F59E0B', to: '#B45309', label: 'Compute' },
+  networking:          { from: '#3B82F6', to: '#1D4ED8', label: 'Network' },
+  databases:           { from: '#8B5CF6', to: '#6D28D9', label: 'Database' },
+  'cost-optimization': { from: '#34D399', to: '#059669', label: 'Cost'    },
+};
+
+// ── Flashcard service accent colours — fallback when no AWS icon matched ──────
+const SERVICE_ACCENT: Record<string, string> = {
+  'Amazon S3':           '#FF9900',
+  'Amazon EC2':          '#FF9900',
+  'AWS Lambda':          '#FF9900',
+  'Amazon RDS':          '#527FFF',
+  'Amazon DynamoDB':     '#527FFF',
+  'Amazon VPC':          '#8A63D2',
+  'Amazon CloudFront':   '#FF9900',
+  'Amazon SQS':          '#FF9900',
+  'Amazon SNS':          '#DD344C',
+  'AWS IAM':             '#DD344C',
+  'Amazon Bedrock':      '#7C3AED',
+  'Knowledge Bases':     '#0EA5E9',
+  'Bedrock Guardrails':  '#EF4444',
+  'Titan Embeddings':    '#7C3AED',
+  'Bedrock Agents':      '#10B981',
+  'Amazon Kendra':       '#527FFF',
+  'SageMaker JumpStart': '#10B981',
+  'Prompt Guard':        '#EF4444',
+};
 
 function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap; value: string; colors: ReturnType<typeof useThemeColors> }) {
   return (
@@ -113,12 +149,20 @@ export default function HomeScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalRow}>
               {popularCourses.map((quiz, index) => (
                 <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                  <LinearGradient
-                    colors={index % 2 === 0 ? [colors.gradientAccent, colors.error] : [colors.warning, '#FACC15']}
-                    style={styles.courseVisual}
-                  >
-                    <Feather name={quiz.icon as any} size={44} color="#F8FAFC" />
-                  </LinearGradient>
+                  {(() => {
+                    const cv = CATEGORY_VISUAL[quiz.category] ?? { from: '#4B5EFA', to: '#0EA5E9', label: quiz.category.toUpperCase().slice(0, 5) };
+                    const catIcon = AWS_CATEGORY_ICONS[quiz.category];
+                    return (
+                      <LinearGradient colors={[cv.from, cv.to]} style={styles.courseVisual}>
+                        {catIcon ? (
+                          <Image source={catIcon} style={styles.courseVisualIcon} />
+                        ) : (
+                          <Feather name="book" size={30} color="rgba(255,255,255,0.85)" />
+                        )}
+                        <Text style={styles.courseVisualLabel}>{cv.label}</Text>
+                      </LinearGradient>
+                    );
+                  })()}
                   <View style={styles.courseBody}>
                     <View style={[styles.courseProgressTrack, { backgroundColor: colors.backgroundAlt }]}>
                       <View style={[styles.courseProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 1) * 14)}%` }]} />
@@ -144,11 +188,19 @@ export default function HomeScreen() {
                   onPress={() => router.push({ pathname: '/flashcards', params: { category: item.category } })}
                   style={[styles.flashcardRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
                 >
-                  <View style={[styles.flashcardBadge, { backgroundColor: index % 2 === 0 ? colors.primaryLight : colors.error + '20' }]}>
-                    <Text style={[styles.flashcardBadgeText, { color: index % 2 === 0 ? colors.primary : colors.error }]}>
-                      {item.category === 'aws-practitioner' ? 'AWS' : 'AI'}
-                    </Text>
-                  </View>
+                  {(() => {
+                    const svcIcon = AWS_SERVICE_ICONS[item.front];
+                    const accent = SERVICE_ACCENT[item.front] ?? (index % 2 === 0 ? colors.primary : colors.error);
+                    return (
+                      <View style={[styles.flashcardBadge, { backgroundColor: accent + '18' }]}>
+                        {svcIcon ? (
+                          <Image source={svcIcon} style={styles.flashcardIcon} />
+                        ) : (
+                          <Feather name="cpu" size={22} color={accent} />
+                        )}
+                      </View>
+                    );
+                  })()}
                   <View style={styles.flashcardBody}>
                     <Text style={[styles.flashcardTitle, { color: colors.text }]} numberOfLines={2}>{item.front}</Text>
                     <Text style={[styles.flashcardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -209,7 +261,7 @@ const styles = StyleSheet.create({
   progressRingInner: { width: 100, height: 100, borderRadius: 50, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
   progressRingText: { fontFamily: F.bold, fontSize: 30 },
   heroPrimaryCta: { borderRadius: 20, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
-  heroPrimaryText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
+  heroPrimaryText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 16 },
   actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   actionStack: { gap: 14 },
   actionCard: { width: '48%', borderWidth: 1, borderRadius: 24, padding: 16, minHeight: 168, gap: 12 },
@@ -221,7 +273,9 @@ const styles = StyleSheet.create({
   sectionLink: { fontFamily: F.semiBold, fontSize: 15, textDecorationLine: 'underline' },
   horizontalRow: { gap: 14, paddingRight: 16 },
   courseCard: { width: 184, borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
-  courseVisual: { height: 128, alignItems: 'center', justifyContent: 'center' },
+  courseVisual: { height: 128, alignItems: 'center', justifyContent: 'center', gap: 6 },
+  courseVisualIcon: { width: 40, height: 40 },
+  courseVisualLabel: { fontFamily: F.bold, fontSize: 11, color: 'rgba(255,255,255,0.92)', letterSpacing: 0.8, textTransform: 'uppercase' },
   courseBody: { padding: 14, gap: 12 },
   courseProgressTrack: { height: 12, borderRadius: 999, overflow: 'hidden' },
   courseProgressFill: { height: '100%', borderRadius: 999 },
@@ -230,6 +284,7 @@ const styles = StyleSheet.create({
   flashcardRow: { borderWidth: 1, borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   flashcardBadge: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   flashcardBadgeText: { fontFamily: F.bold, fontSize: 16 },
+  flashcardIcon: { width: 32, height: 32 },
   flashcardBody: { flex: 1, gap: 5 },
   flashcardTitle: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 22 },
   flashcardSubtitle: { fontFamily: F.regular, fontSize: 13 },

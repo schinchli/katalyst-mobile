@@ -1,13 +1,12 @@
+/**
+ * QuestionView — fully theme-aware, zero hardcoded hex.
+ * Layout: question at top, options flow naturally below — compact, top-aligned.
+ */
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import type { Question } from '@/types';
-
-// DataCamp dark theme
-const DC_SURFACE = '#111D35';
-const DC_BORDER  = '#1E3055';
-const DC_TEAL    = '#3DD6C0';
 
 interface QuestionViewProps {
   question: Question;
@@ -29,28 +28,29 @@ export function QuestionView({
   onReport,
 }: QuestionViewProps) {
   const colors = useThemeColors();
-  const explanationAccent = resultTone === 'correct' ? colors.success : colors.error;
+  const isCorrectTone  = resultTone === 'correct';
+  const resultAccent   = isCorrectTone ? colors.success : colors.error;
 
   return (
-    // flex:1 + space-between → question floats top, options anchor bottom
-    // (works because parent ScrollView has flexGrow:1)
     <View style={s.root}>
 
-      {/* ── Question block — top ── */}
+      {/* ── Question — anchored top ── */}
       <View style={s.questionBlock}>
-        <Text style={s.questionText}>{question.text}</Text>
-        {onReport ? (
-          <Pressable onPress={onReport} style={s.reportRow} hitSlop={8}>
-            <Feather name="alert-triangle" size={12} color="rgba(255,255,255,0.3)" />
-            <Text style={s.reportText}>Report question</Text>
+        <Text style={[s.questionText, { color: colors.text }]}>{question.text}</Text>
+        {onReport && (
+          <Pressable onPress={onReport} style={s.reportBtn} hitSlop={10}>
+            <Feather name="flag" size={12} color={colors.textMuted} />
+            <Text style={[s.reportText, { color: colors.textMuted }]}>Report</Text>
           </Pressable>
-        ) : null}
+        )}
       </View>
 
-      {/* ── Options block — bottom ── */}
+      {/* ── Options — anchored bottom ── */}
       <View style={s.optionsBlock}>
         {!showResult && (
-          <Text style={s.selectLabel}>Select the correct answer</Text>
+          <Text style={[s.selectLabel, { color: colors.gradientAccent }]}>
+            Select the correct answer
+          </Text>
         )}
 
         <View style={s.optionsList}>
@@ -59,15 +59,24 @@ export function QuestionView({
             const isCorrect  = option.id === question.correctOptionId;
             const isHidden   = hiddenOptionIds.includes(option.id);
 
+            // Card state colors — all from theme
             const card = (() => {
               if (!showResult) {
                 return isSelected
-                  ? { bg: '#162648', border: '#3DD6C0', radio: '#3DD6C0' }
-                  : { bg: DC_SURFACE,  border: DC_BORDER,  radio: 'transparent' };
+                  ? { bg: colors.primaryLight, border: colors.primary,      radio: colors.primary }
+                  : { bg: colors.surface,      border: colors.surfaceBorder, radio: 'transparent' };
               }
-              if (isCorrect) return { bg: '#0D2B1E', border: '#28C76F', radio: '#28C76F' };
-              if (isSelected) return { bg: '#2A0F12', border: '#EF4444', radio: '#EF4444' };
-              return { bg: DC_SURFACE, border: DC_BORDER, radio: 'transparent' };
+              if (isCorrect) return {
+                bg:    colors.success + '18',
+                border: colors.success,
+                radio:  colors.success,
+              };
+              if (isSelected) return {
+                bg:    colors.error + '18',
+                border: colors.error,
+                radio:  colors.error,
+              };
+              return { bg: colors.surface, border: colors.surfaceBorder, radio: 'transparent' };
             })();
 
             const radioFilled = isSelected || (showResult && (isCorrect || isSelected));
@@ -86,38 +95,34 @@ export function QuestionView({
                   },
                 ]}
               >
-                <View
-                  style={[
-                    s.radioCircle,
-                    { borderColor: card.border, backgroundColor: radioFilled ? card.radio : 'transparent' },
-                  ]}
-                >
-                  {radioFilled && <View style={s.radioDot} />}
+                <View style={[s.radio, { borderColor: card.border, backgroundColor: radioFilled ? card.radio : 'transparent' }]}>
+                  {radioFilled && <View style={[s.radioDot, { backgroundColor: colors.background }]} />}
                 </View>
-                <Text style={s.optionText}>{option.text}</Text>
+                <Text style={[s.optionText, { color: colors.text }]}>{option.text}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        {/* Explanation — inline after options */}
-        {showResult && question.explanation ? (
-          <View style={[s.explanationCard, { borderColor: explanationAccent + '50' }]}>
+        {/* Explanation */}
+        {showResult && (
+          <View style={[s.explanation, {
+            backgroundColor: resultAccent + '1A',
+            borderColor:     resultAccent + '55',
+          }]}>
             <View style={s.explanationHeader}>
-              <View style={[s.explanationBadge, { backgroundColor: explanationAccent + '22' }]}>
-                <Feather name={resultTone === 'correct' ? 'check' : 'x'} size={12} color={explanationAccent} />
+              <View style={[s.explanationBadge, { backgroundColor: resultAccent + '22' }]}>
+                <Feather name={isCorrectTone ? 'check' : 'x'} size={12} color={resultAccent} />
               </View>
-              <Text style={[s.explanationTitle, { color: explanationAccent }]}>
-                {resultTone === 'correct' ? 'Correct answer' : 'Incorrect'}
+              <Text style={[s.explanationTitle, { color: resultAccent }]}>
+                {isCorrectTone ? 'Correct answer' : 'Incorrect'}
               </Text>
             </View>
-            <Text style={s.explanationText}>{question.explanation}</Text>
+            <Text style={[s.explanationBody, { color: colors.text }]}>
+              {question.explanation ?? 'No explanation available.'}
+            </Text>
           </View>
-        ) : showResult ? (
-          <View style={[s.explanationCard, { borderColor: DC_BORDER }]}>
-            <Text style={[s.explanationText, { color: 'rgba(255,255,255,0.4)' }]}>No explanation available.</Text>
-          </View>
-        ) : null}
+        )}
       </View>
 
     </View>
@@ -125,54 +130,28 @@ export function QuestionView({
 }
 
 const s = StyleSheet.create({
-  // Outer container: question top, options bottom
-  root: {
-    flex: 1,
-    justifyContent: 'space-between',
-    gap: 32,
-  },
+  root: { gap: 24 },
 
-  // ── Question ──
-  questionBlock: { gap: 12 },
-  questionText: {
-    fontFamily: F.bold,
-    fontSize: 26,
-    lineHeight: 38,
-    color: '#FFFFFF',
-    letterSpacing: -0.3,
-  },
-  reportRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  reportText: {
-    fontFamily: F.medium,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.3)',
-  },
+  // Question
+  questionBlock: { gap: 10 },
+  questionText:  { fontFamily: F.bold, fontSize: 25, lineHeight: 36, letterSpacing: -0.3 },
+  reportBtn:     { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start' },
+  reportText:    { fontFamily: F.medium, fontSize: 11 },
 
-  // ── Options ──
-  optionsBlock: { gap: 12 },
-  selectLabel: {
-    fontFamily: F.semiBold,
-    fontSize: 13,
-    color: DC_TEAL,
-    marginBottom: 4,
-  },
-  optionsList: { gap: 10 },
+  // Options
+  optionsBlock: { gap: 10 },
+  selectLabel:  { fontFamily: F.semiBold, fontSize: 13, marginBottom: 2 },
+  optionsList:  { gap: 9 },
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 15,
   },
-  radioCircle: {
+  radio: {
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -181,49 +160,13 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  radioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#050B18',
-  },
-  optionText: {
-    fontFamily: F.semiBold,
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#FFFFFF',
-    flex: 1,
-  },
+  radioDot: { width: 8, height: 8, borderRadius: 4 },
+  optionText: { fontFamily: F.semiBold, fontSize: 15, lineHeight: 22, flex: 1 },
 
-  // ── Explanation ──
-  explanationCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    gap: 8,
-    marginTop: 4,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
-  explanationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  explanationBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  explanationTitle: {
-    fontFamily: F.bold,
-    fontSize: 13,
-  },
-  explanationText: {
-    fontFamily: F.medium,
-    fontSize: 14,
-    lineHeight: 22,
-    color: 'rgba(255,255,255,0.75)',
-  },
+  // Explanation
+  explanation: { borderWidth: 1, borderRadius: 12, padding: 14, gap: 8, marginTop: 4 },
+  explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  explanationBadge:  { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  explanationTitle:  { fontFamily: F.bold, fontSize: 13 },
+  explanationBody:   { fontFamily: F.medium, fontSize: 14, lineHeight: 22 },
 });
