@@ -566,39 +566,35 @@ export default function QuizScreen() {
       </ScrollView>
 
       {/* ── Bottom action bar ── */}
-      <View style={[s.quizBottom, {
-        backgroundColor: colors.surfaceElevated,
-        borderTopColor:  colors.surfaceBorder,
-        paddingBottom:   bottomSpacer,
-      }]}>
-        {/* All 3 states share the same symmetric two-button row */}
+      <View style={[s.quizBottom, { paddingBottom: bottomSpacer }]}>
         <View style={s.twoButtonRow}>
-          {/* Left button — always Previous */}
-          <Button
-            title="Previous"
-            variant="outline"
-            size="lg"
-            style={{ flex: 1 }}
-            disabled={currentQuestionIndex === 0}
-            onPress={isReview ? handlePrevious : (showFeedback && hasAnsweredCurrent ? handlePrevious : handlePrevious)}
-          />
+          {/* Previous — hidden on Q1 so the right button fills full width */}
+          {currentQuestionIndex > 0 && (
+            <Button
+              title="Previous"
+              variant="outline"
+              size="lg"
+              style={{ flex: 1 }}
+              onPress={handlePrevious}
+            />
+          )}
 
-          {/* Right button — context-sensitive primary action */}
+          {/* Right button — Check (success) | Next/Done/Results (outline = same as Previous) */}
           {isReview ? (
             <Button
               title={isLastQuestion ? 'Done' : 'Next'}
-              variant="primary"
+              variant="outline"
               size="lg"
               style={{ flex: 1 }}
               onPress={() => {
-                if (isLastQuestion) { exitAndReset(); }
+                if (isLastQuestion) exitAndReset();
                 else { setShowFeedback(true); nextQuestion(); }
               }}
             />
           ) : showFeedback && hasAnsweredCurrent ? (
             <Button
               title={isLastQuestion ? 'See Results' : 'Next'}
-              variant="primary"
+              variant="outline"
               size="lg"
               style={{ flex: 1 }}
               onPress={handleNext}
@@ -663,11 +659,11 @@ export default function QuizScreen() {
 
 // ── Styles — zero hardcoded colors, all from colors.* at render time ────────
 const s = StyleSheet.create({
-  flex:        { flex: 1 },
+  flex:         { flex: 1 },
   centeredFill: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   notFoundText: { fontFamily: F.semiBold, fontSize: 18, marginTop: 16 },
 
-  // ── Shared header — identical to leaderboard.tsx ──
+  // ── Shared header (results / flashcard phases) ──
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -678,37 +674,6 @@ const s = StyleSheet.create({
   },
   headerBack:  { padding: 4 },
   headerTitle: { fontFamily: F.bold, fontSize: 18, flex: 1 },
-  premiumChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  premiumChipText: { fontFamily: F.bold, fontSize: 11 },
-
-  // ── Intro ──
-  introPad: { padding: 16, paddingTop: 20, gap: 16 },
-
-  heroCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
-  },
-  heroStrip: { height: 4 },
-  heroBody:  { flexDirection: 'row', alignItems: 'flex-start', gap: 16, padding: 20, paddingBottom: 8 },
-  heroIconCircle: {
-    width: 72, height: 72, borderRadius: 20,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  heroText:    { flex: 1 },
-  heroEyebrow: { fontFamily: F.medium, fontSize: 12, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  heroTitle:   { fontFamily: F.bold, fontSize: 20, lineHeight: 28, marginBottom: 6 },
-  heroDesc:    { fontFamily: F.regular, fontSize: 13, lineHeight: 19 },
-  heroChips:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 20, paddingTop: 4 },
-  heroChip:    { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 100, borderWidth: 1 },
-  heroChipText: { fontFamily: F.semiBold, fontSize: 12 },
-
-  ctaCol: { gap: 10 },
 
   // ── Results ──
   resultsPad:   { padding: 16, paddingTop: 20, gap: 16 },
@@ -749,16 +714,7 @@ const s = StyleSheet.create({
   flashNav:    { flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
   flashNavBtn: { flex: 1 },
 
-  twoBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-  },
-
-  // ── Intro redesign — vivid gradient full-screen ──
+  // ── Intro — vivid gradient full-screen ──
   introHdr:           { paddingHorizontal: 12, paddingTop: 4 },
   introBackBtn:       { padding: 6 },
   introTopBrand:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 6 },
@@ -793,12 +749,8 @@ const s = StyleSheet.create({
     paddingBottom: 16,
   },
 
-  // Quiz bottom bar
-  quizBottom: {
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-  },
+  // Quiz bottom bar — transparent, no border, buttons sit directly on screen bg
+  quizBottom:   { paddingHorizontal: 16, paddingTop: 12 },
   twoButtonRow: { flexDirection: 'row', gap: 12 },
 
   // Report modal
