@@ -113,6 +113,7 @@ export default function FlashcardsScreen() {
         />
         <Button
           title={index < items.length - 1 ? 'Next Card' : 'Done'}
+          variant="primary"
           size="lg"
           onPress={() => {
             if (index < items.length - 1) {

@@ -613,12 +613,13 @@ export default function QuizScreen() {
           {flashIndex < questions.length - 1 ? (
             <Button
               title="Next Card"
+              variant="primary"
               onPress={() => { setFlashIndex((i) => i + 1); setFlashFlipped(false); }}
               size="lg"
               style={{ flex: 1 }}
             />
           ) : (
-            <Button title="Done" onPress={exitAndReset} size="lg" style={{ flex: 1 }} />
+            <Button title="Done" variant="primary" onPress={exitAndReset} size="lg" style={{ flex: 1 }} />
           )}
         </View>
       </SafeAreaView>
