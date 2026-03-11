@@ -208,7 +208,7 @@ export default function QuizScreen() {
     previousQuestion();
   };
 
-  const exitAndReset = () => {
+  const exitAndReset = (goLeaderboard = false) => {
     stopTimer();
     reset();
     clearPendingCoins();
@@ -221,15 +221,20 @@ export default function QuizScreen() {
     setSkipsLeft(3);
     setFlashIndex(0);
     setFlashFlipped(false);
-    router.back();
+    if (goLeaderboard) {
+      router.replace('/leaderboard' as never);
+    } else {
+      router.back();
+    }
   };
 
   const handleExit = () => {
     if (answeredCount === 0) { exitAndReset(); return; }
     Alert.alert('End Practice?', `You've answered ${answeredCount}/${questions.length} questions.`, [
       { text: 'Continue', style: 'cancel' },
+      { text: 'Leaderboard', onPress: () => exitAndReset(true) },
       { text: 'See Scoreboard', onPress: () => finishQuiz() },
-      { text: 'Exit', style: 'destructive', onPress: exitAndReset },
+      { text: 'Exit', style: 'destructive', onPress: () => exitAndReset() },
     ]);
   };
 
@@ -556,7 +561,8 @@ export default function QuizScreen() {
               onPress={() => { goToQuestion(0); setShowFeedback(true); setPhase('review'); }}
               size="lg"
             />
-            <Button title="Done" onPress={exitAndReset} size="lg" />
+            <Button title="Leaderboard" variant="secondary" onPress={() => exitAndReset(true)} size="lg" />
+            <Button title="Done" onPress={() => exitAndReset()} size="lg" />
           </View>
         </ScrollView>
       </SafeAreaView>
