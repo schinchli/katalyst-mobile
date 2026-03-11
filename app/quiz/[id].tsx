@@ -27,15 +27,12 @@ import { F } from '@/constants/Typography';
 
 const QUESTION_TIME = 30;
 
-// DataCamp dark theme constants
-const DC_BG       = '#050B18';   // page background
-const DC_SURFACE  = '#111D35';   // card background
-const DC_BORDER   = '#1E3055';   // card border
-const DC_TEXT     = '#FFFFFF';   // primary text
-const DC_MUTED    = 'rgba(255,255,255,0.5)';  // secondary text
-const DC_SUCCESS  = '#28C76F';   // green
-const DC_ERROR    = '#EF4444';   // red
-const DC_TEAL     = '#3DD6C0';   // "Select the correct answer" label
+// DataCamp-style dark constants (used in quiz/review phase)
+const DC_BG      = '#050B18';
+const DC_SURFACE = '#111D35';
+const DC_BORDER  = '#1E3055';
+const DC_SUCCESS = '#28C76F';
+const DC_ERROR   = '#EF4444';
 
 type Phase = 'intro' | 'quiz' | 'review' | 'results' | 'flashcard';
 
@@ -59,8 +56,8 @@ export default function QuizScreen() {
   const [reportSubmitted, setReportSubmitted] = useState(false);
 
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
-  const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startedAt  = useRef<number>(Date.now());
+  const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startedAt = useRef<number>(Date.now());
 
   const [fiftyFiftyUsed, setFiftyFiftyUsed] = useState(false);
   const [hiddenOptions, setHiddenOptions]   = useState<string[]>([]);
@@ -75,13 +72,13 @@ export default function QuizScreen() {
     [id],
   );
 
-  const currentQuestionIndex  = useQuizStore((s) => s.currentQuestionIndex);
-  const selectedAnswers        = useQuizStore((s) => s.selectedAnswers);
-  const selectAnswer           = useQuizStore((s) => s.selectAnswer);
-  const nextQuestion           = useQuizStore((s) => s.nextQuestion);
-  const previousQuestion       = useQuizStore((s) => s.previousQuestion);
-  const goToQuestion           = useQuizStore((s) => s.goToQuestion);
-  const reset                  = useQuizStore((s) => s.reset);
+  const currentQuestionIndex   = useQuizStore((s) => s.currentQuestionIndex);
+  const selectedAnswers         = useQuizStore((s) => s.selectedAnswers);
+  const selectAnswer            = useQuizStore((s) => s.selectAnswer);
+  const nextQuestion            = useQuizStore((s) => s.nextQuestion);
+  const previousQuestion        = useQuizStore((s) => s.previousQuestion);
+  const goToQuestion            = useQuizStore((s) => s.goToQuestion);
+  const reset                   = useQuizStore((s) => s.reset);
 
   const addResult          = useProgressStore((s) => s.addResult);
   const pendingCoins       = useProgressStore((s) => s.pendingCoins);
@@ -95,10 +92,10 @@ export default function QuizScreen() {
   const unlockCourse     = useAuthStore((s) => s.unlockCourse);
   const checkRateLimit   = useRateLimitStore((s) => s.checkAndConsume);
 
-  const currentQuestion       = questions[currentQuestionIndex];
-  const answeredCount         = Object.keys(selectedAnswers).length;
-  const isLastQuestion        = currentQuestionIndex === questions.length - 1;
-  const hasAnsweredCurrent    = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
+  const currentQuestion        = questions[currentQuestionIndex];
+  const answeredCount          = Object.keys(selectedAnswers).length;
+  const isLastQuestion         = currentQuestionIndex === questions.length - 1;
+  const hasAnsweredCurrent     = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
   const committedCurrentAnswer = currentQuestion ? selectedAnswers[currentQuestion.id] : undefined;
   const selectedCurrentAnswer  = showFeedback
     ? committedCurrentAnswer
@@ -106,12 +103,6 @@ export default function QuizScreen() {
   const isCurrentCorrect = currentQuestion
     ? selectedCurrentAnswer === currentQuestion.correctOptionId
     : false;
-  const runningScore = useMemo(
-    () => questions.reduce(
-      (score, q) => (selectedAnswers[q.id] === q.correctOptionId ? score + 1 : score), 0,
-    ),
-    [questions, selectedAnswers],
-  );
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const stopTimer = useCallback(() => {
@@ -152,7 +143,6 @@ export default function QuizScreen() {
   useEffect(() => {
     if (phase !== 'quiz' || showFeedback || timeLeft > 0) return;
     stopTimer();
-    setFeedbackDismissed(false);
     setPendingAnswerId(undefined);
     if (isLastQuestion) { finishQuiz(); } else { nextQuestion(); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -237,29 +227,7 @@ export default function QuizScreen() {
     ]);
   };
 
-  const handleFiftyFifty = () => {
-    if (fiftyFiftyUsed || showFeedback || !currentQuestion) return;
-    const wrong = currentQuestion.options
-      .filter((o) => o.id !== currentQuestion.correctOptionId)
-      .map((o) => o.id);
-    setHiddenOptions(wrong.sort(() => Math.random() - 0.5).slice(0, 2));
-    setFiftyFiftyUsed(true);
-  };
-
-  const handleSkip = () => {
-    if (skipsLeft <= 0 || showFeedback) return;
-    setSkipsLeft((s) => s - 1);
-    setShowFeedback(false);
-    setFeedbackDismissed(false);
-    setPendingAnswerId(undefined);
-    if (isLastQuestion) { finishQuiz(); } else { nextQuestion(); }
-  };
-
-  const timerColor    = timeLeft <= 10 ? DC_ERROR : DC_TEAL;
-  const timerProgress = timeLeft / QUESTION_TIME;
-
   // ── Safe-area helpers ─────────────────────────────────────────────────────
-  // Use an explicit spacer view instead of SafeAreaView for precise control
   const topSpacer    = insets.top;
   const bottomSpacer = Math.max(insets.bottom, 20);
 
@@ -267,8 +235,8 @@ export default function QuizScreen() {
   if (!quiz || questions.length === 0) {
     return (
       <View style={[s.flex, { backgroundColor: colors.background }]}>
-        <View style={{ height: topSpacer, backgroundColor: colors.background }} />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ height: topSpacer }} />
+        <View style={s.centeredFill}>
           <Feather name="alert-circle" size={48} color={colors.textSecondary} />
           <Text style={[s.notFoundText, { color: colors.text }]}>Quiz not found</Text>
           <Button title="Go Back" onPress={() => router.back()} variant="outline" style={{ marginTop: 24 }} />
@@ -278,14 +246,23 @@ export default function QuizScreen() {
   }
 
   // ── INTRO ─────────────────────────────────────────────────────────────────
+  // DataCamp-inspired: vibrant gradient bg, centered icon/title, minimal text,
+  // two action buttons pinned to the bottom.
   if (phase === 'intro') {
     const canAccess     = user?.subscription === 'premium' || (user?.unlockedCourses ?? []).includes(quiz.id);
     const isPremiumLocked = quiz.isPremium && !canAccess;
 
     return (
-      <View style={[s.flex, { backgroundColor: colors.background }]}>
-        {/* Safe-area top spacer */}
-        <View style={{ height: topSpacer, backgroundColor: colors.background }} />
+      <View style={s.flex}>
+        {/* Gradient background fills entire screen */}
+        <LinearGradient
+          colors={[colors.gradientFrom, colors.gradientTo]}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+
+        <View style={{ height: topSpacer }} />
 
         {/* Modals */}
         <DailyLimitModal
@@ -321,106 +298,68 @@ export default function QuizScreen() {
           }}
         />
 
-        {/* Header */}
-        <View style={[s.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-          <Pressable onPress={() => router.back()} style={s.navBack} hitSlop={10}>
-            <Feather name="arrow-left" size={22} color={colors.text} />
-            <Text style={[s.navBackText, { color: colors.textSecondary }]}>Back</Text>
-          </Pressable>
-          <Text style={[s.navTitle, { color: colors.text }]} numberOfLines={1}>Practice</Text>
-          <View style={{ width: 72 }} />
+        {/* ── Back arrow only — no header bar ── */}
+        <Pressable onPress={() => router.back()} style={s.introBackArrow} hitSlop={12}>
+          <Feather name="arrow-left" size={24} color="rgba(255,255,255,0.9)" />
+        </Pressable>
+
+        {/* ── Top label: dumbbell icon + "Practice Quiz" ── */}
+        <View style={s.introTopLabel}>
+          <Feather name="activity" size={22} color="rgba(255,255,255,0.9)" />
+          <Text style={s.introTopLabelText}>Practice Quiz</Text>
         </View>
 
-        <ScrollView contentContainerStyle={s.introPad} showsVerticalScrollIndicator={false}>
-          {/* Course card */}
-          <View style={[s.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[s.courseStrip, { backgroundColor: colors.primary }]} />
-            <View style={s.courseCardBody}>
-              <View style={[s.courseIconWrap, { backgroundColor: colors.primaryLight }]}>
-                <Feather name={quiz.icon as any} size={34} color={colors.primary} />
-              </View>
-              <View style={s.courseTextBlock}>
-                <View style={[s.diffChip, { backgroundColor: colors.primaryLight }]}>
-                  <View style={[s.diffChipDot, { backgroundColor: colors.primary }]} />
-                  <Text style={[s.diffChipText, { color: colors.primary }]}>
-                    {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
-                  </Text>
-                </View>
-                <Text style={[s.courseTitle, { color: colors.text }]}>{quiz.title}</Text>
-                <Text style={[s.courseDesc,  { color: colors.textSecondary }]}>{quiz.description}</Text>
-              </View>
+        {/* ── Center: icon circle + course info ── */}
+        <View style={s.introCenterBlock}>
+          <View style={s.introIconCircle}>
+            <Feather name={quiz.icon as any} size={42} color="#FFFFFF" />
+          </View>
+          <Text style={s.introCourseLabel}>Quiz</Text>
+          <Text style={s.introTitle}>{quiz.title}</Text>
+          <View style={s.introChipsRow}>
+            <View style={s.introChip}>
+              <Text style={s.introChipText}>{questions.length} Questions</Text>
+            </View>
+            <View style={s.introChip}>
+              <Text style={s.introChipText}>{quiz.duration} min</Text>
             </View>
           </View>
+        </View>
 
-          {/* Meta boxes */}
-          <View style={s.metaRow}>
-            {[
-              { icon: 'bar-chart-2', label: 'Level',     val: quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1) },
-              { icon: 'help-circle', label: 'Questions', val: String(questions.length) },
-              { icon: 'clock',       label: 'Duration',  val: `${quiz.duration}m` },
-            ].map((item) => (
-              <View key={item.label} style={[s.metaBox, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-                <View style={[s.metaIconWrap, { backgroundColor: colors.primaryLight }]}>
-                  <Feather name={item.icon as any} size={18} color={colors.primary} />
-                </View>
-                <Text style={[s.metaVal,   { color: colors.text }]}>{item.val}</Text>
-                <Text style={[s.metaLabel, { color: colors.textSecondary }]}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* What's included */}
-          <View style={[s.featuresCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[s.featuresHeader, { color: colors.text }]}>What's Included</Text>
-            {[
-              { icon: 'eye',       color: colors.success,      text: 'Instant feedback after every answer' },
-              { icon: 'book-open', color: colors.primary,      text: 'Full explanations for each question' },
-              { icon: 'bookmark',  color: colors.info,         text: 'Bookmark questions for later review' },
-              { icon: 'layers',    color: colors.gradientAccent, text: 'Flashcard mode to reinforce learning' },
-            ].map((f) => (
-              <View key={f.text} style={s.featureRow}>
-                <View style={[s.featureIconWrap, { backgroundColor: f.color + '18' }]}>
-                  <Feather name={f.icon as any} size={15} color={f.color} />
-                </View>
-                <Text style={[s.featureText, { color: colors.textSecondary }]}>{f.text}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Action buttons */}
-          <View style={s.actionCol}>
-            {isPremiumLocked ? (
-              <Button title={`Unlock — Rs ${quiz.price ?? 149}`} onPress={() => setShowPremiumGate(true)} size="lg" style={{ width: '100%' }} />
-            ) : (
-              <Button
-                title="Start Practice"
-                size="lg"
-                onPress={() => {
-                  const ok = checkRateLimit();
-                  if (!ok.ok) { setShowDailyLimit(true); return; }
-                  reset();
-                  setShowFeedback(false);
-                  setFeedbackDismissed(false);
-                  setPendingAnswerId(undefined);
-                  setFiftyFiftyUsed(false);
-                  setHiddenOptions([]);
-                  setSkipsLeft(3);
-                  resetTimer();
-                  startedAt.current = Date.now();
-                  setPhase('quiz');
-                }}
-                style={{ width: '100%' }}
-              />
-            )}
-            <Button
-              title="Review Flashcards"
-              variant="outline"
-              size="lg"
-              onPress={() => { setFlashIndex(0); setFlashFlipped(false); setPhase('flashcard'); }}
-              style={{ width: '100%' }}
-            />
-          </View>
-        </ScrollView>
+        {/* ── Bottom buttons pinned ── */}
+        <View style={[s.introBottomButtons, { paddingBottom: bottomSpacer + 8 }]}>
+          {isPremiumLocked ? (
+            <Pressable onPress={() => setShowPremiumGate(true)} style={s.introStartBtn}>
+              <Text style={s.introStartBtnText}>Unlock — Rs {quiz.price ?? 149}</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => {
+                const ok = checkRateLimit();
+                if (!ok.ok) { setShowDailyLimit(true); return; }
+                reset();
+                setShowFeedback(false);
+                setFeedbackDismissed(false);
+                setPendingAnswerId(undefined);
+                setFiftyFiftyUsed(false);
+                setHiddenOptions([]);
+                setSkipsLeft(3);
+                resetTimer();
+                startedAt.current = Date.now();
+                setPhase('quiz');
+              }}
+              style={s.introStartBtn}
+            >
+              <Text style={s.introStartBtnText}>Start Practice</Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={() => { setFlashIndex(0); setFlashFlipped(false); setPhase('flashcard'); }}
+            style={s.introFlashBtn}
+          >
+            <Text style={s.introFlashBtnText}>Review Flashcards</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -432,12 +371,6 @@ export default function QuizScreen() {
     const passed     = pct >= 70;
     const unanswered = questions.length - answeredCount;
 
-    const statCards = [
-      { icon: 'check-circle', val: score,               label: 'Correct', color: DC_SUCCESS },
-      { icon: 'x-circle',     val: answeredCount-score, label: 'Wrong',   color: DC_ERROR },
-      { icon: 'minus-circle', val: unanswered,          label: 'Skipped', color: colors.textSecondary },
-    ] as const;
-
     return (
       <View style={[s.flex, { backgroundColor: colors.background }]}>
         <View style={{ height: topSpacer, backgroundColor: colors.background }} />
@@ -445,7 +378,7 @@ export default function QuizScreen() {
 
         {/* Header */}
         <View style={[s.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-          <Pressable onPress={exitAndReset} style={s.navBack} hitSlop={8}>
+          <Pressable onPress={() => exitAndReset()} style={s.navBack} hitSlop={8}>
             <Feather name="arrow-left" size={22} color={colors.text} />
             <Text style={[s.navBackText, { color: colors.textSecondary }]}>Back</Text>
           </Pressable>
@@ -453,14 +386,17 @@ export default function QuizScreen() {
           <View style={{ width: 72 }} />
         </View>
 
-        <ScrollView contentContainerStyle={[s.resultsPad, { paddingBottom: bottomSpacer + 20 }]} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={[s.resultsPad, { paddingBottom: bottomSpacer + 20 }]}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Score circle */}
           <View style={s.scoreCenter}>
-            <View style={[s.scoreCircleOuter, { backgroundColor: (passed ? DC_SUCCESS : DC_ERROR) + '15' }]}>
+            <View style={[s.scoreCircleOuter, { backgroundColor: (passed ? DC_SUCCESS : DC_ERROR) + '18' }]}>
               <View style={[s.scoreCircle, {
-                backgroundColor: passed ? DC_SUCCESS + '22' : DC_ERROR + '22',
-                borderColor:     passed ? DC_SUCCESS       : DC_ERROR,
-                shadowColor:     passed ? DC_SUCCESS       : DC_ERROR,
+                backgroundColor: passed ? DC_SUCCESS + '20' : DC_ERROR + '20',
+                borderColor:     passed ? DC_SUCCESS : DC_ERROR,
+                shadowColor:     passed ? DC_SUCCESS : DC_ERROR,
               }]}>
                 <Text style={[s.scorePct,   { color: passed ? DC_SUCCESS : DC_ERROR }]}>{pct}%</Text>
                 <Text style={[s.scoreLabel, { color: passed ? DC_SUCCESS : DC_ERROR }]}>
@@ -468,9 +404,7 @@ export default function QuizScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={[s.scoreHeading,  { color: colors.text }]}>
-              {passed ? 'Great job!' : 'Keep Practicing'}
-            </Text>
+            <Text style={[s.scoreHeading,  { color: colors.text }]}>{passed ? 'Great job!' : 'Keep Practicing'}</Text>
             <Text style={[s.scoreSubtitle, { color: colors.textSecondary }]}>
               {quiz.title} · {passed ? 'You passed!' : '70% needed to pass'}
             </Text>
@@ -478,34 +412,40 @@ export default function QuizScreen() {
 
           <AdBanner style={{ marginBottom: 8 }} />
 
+          {/* XP banner */}
           {pendingCoins > 0 && (
             <View style={[s.rewardBanner, { backgroundColor: colors.warning + '18', borderColor: colors.warning + '44' }]}>
-              <View style={[s.rewardIconWrap, { backgroundColor: colors.warning + '28' }]}>
+              <View style={[s.rewardIcon, { backgroundColor: colors.warning + '28' }]}>
                 <Feather name="zap" size={20} color={colors.warning} />
               </View>
-              <View style={s.rewardTextBlock}>
-                <Text style={[s.rewardTitle, { color: colors.warning }]}>+{pendingCoins} experience points earned</Text>
-                <Text style={[s.rewardSub,   { color: colors.textSecondary }]}>Added to your progress total</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.rewardTitle, { color: colors.warning }]}>+{pendingCoins} XP earned</Text>
+                <Text style={[s.rewardSub,   { color: colors.textSecondary }]}>Added to your progress</Text>
               </View>
             </View>
           )}
 
+          {/* Challenge beaten */}
           {pct >= (CHALLENGE_SCORES[quiz.id] ?? 70) && (
             <View style={[s.rewardBanner, { backgroundColor: DC_SUCCESS + '18', borderColor: DC_SUCCESS + '44' }]}>
-              <View style={[s.rewardIconWrap, { backgroundColor: DC_SUCCESS + '28' }]}>
+              <View style={[s.rewardIcon, { backgroundColor: DC_SUCCESS + '28' }]}>
                 <Feather name="award" size={20} color={DC_SUCCESS} />
               </View>
-              <View style={s.rewardTextBlock}>
+              <View style={{ flex: 1 }}>
                 <Text style={[s.rewardTitle, { color: DC_SUCCESS }]}>Challenge Beaten! 🏆</Text>
-                <Text style={[s.rewardSub,   { color: colors.textSecondary }]}>You beat the CPU target score</Text>
+                <Text style={[s.rewardSub,   { color: colors.textSecondary }]}>You beat the target score</Text>
               </View>
             </View>
           )}
 
-          {/* Stat row */}
+          {/* Stats row */}
           <View style={s.statRow}>
-            {statCards.map((c) => (
-              <Card key={c.label} style={s.statCardResult}>
+            {([
+              { icon: 'check-circle', val: score,               label: 'Correct', color: DC_SUCCESS },
+              { icon: 'x-circle',     val: answeredCount-score, label: 'Wrong',   color: DC_ERROR },
+              { icon: 'minus-circle', val: unanswered,          label: 'Skipped', color: colors.textSecondary },
+            ] as const).map((c) => (
+              <Card key={c.label} style={s.statCard}>
                 <Feather name={c.icon as any} size={20} color={c.color} />
                 <Text style={[s.statVal, { color: c.color }]}>{c.val}</Text>
                 <Text style={[s.statLbl, { color: colors.textSecondary }]}>{c.label}</Text>
@@ -513,29 +453,26 @@ export default function QuizScreen() {
             ))}
           </View>
 
-          {/* Breakdown */}
+          {/* Question breakdown */}
           <Text style={[s.breakdownTitle, { color: colors.text }]}>Question Breakdown</Text>
           {questions.map((q, idx) => {
-            const userAnswer = selectedAnswers[q.id];
-            const isCorrect  = userAnswer === q.correctOptionId;
-            const skipped    = userAnswer === undefined;
-            const dotBg      = skipped ? colors.surfaceBorder : isCorrect ? DC_SUCCESS + '22' : DC_ERROR + '22';
-            const dotColor   = skipped ? colors.textSecondary : isCorrect ? DC_SUCCESS : DC_ERROR;
+            const ans     = selectedAnswers[q.id];
+            const correct = ans === q.correctOptionId;
+            const skipped = ans === undefined;
             return (
-              <Pressable
-                key={q.id}
-                onPress={() => { goToQuestion(idx); setShowFeedback(true); setPhase('review'); }}
-              >
+              <Pressable key={q.id} onPress={() => { goToQuestion(idx); setShowFeedback(true); setPhase('review'); }}>
                 <Card style={s.breakdownCard}>
                   <View style={s.breakdownRow}>
-                    <View style={[s.breakdownDot, { backgroundColor: dotBg }]}>
+                    <View style={[s.breakdownDot, {
+                      backgroundColor: skipped ? colors.surfaceBorder : correct ? DC_SUCCESS + '22' : DC_ERROR + '22',
+                    }]}>
                       {skipped
-                        ? <Text style={[s.breakdownNum, { color: dotColor }]}>{idx + 1}</Text>
-                        : <Feather name={isCorrect ? 'check' : 'x'} size={16} color={dotColor} />
+                        ? <Text style={[s.breakdownNum, { color: colors.textSecondary }]}>{idx + 1}</Text>
+                        : <Feather name={correct ? 'check' : 'x'} size={14} color={correct ? DC_SUCCESS : DC_ERROR} />
                       }
                     </View>
                     <Text style={[s.breakdownQ, { color: colors.text }]} numberOfLines={2}>{q.text}</Text>
-                    <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+                    <Feather name="chevron-right" size={14} color={colors.textSecondary} />
                   </View>
                 </Card>
               </Pressable>
@@ -558,10 +495,8 @@ export default function QuizScreen() {
     return (
       <View style={[s.flex, { backgroundColor: colors.background }]}>
         <View style={{ height: topSpacer, backgroundColor: colors.background }} />
-
-        {/* Header */}
         <View style={[s.navBar, { borderBottomColor: colors.surfaceBorder }]}>
-          <Pressable onPress={exitAndReset} style={s.navBack} hitSlop={8}>
+          <Pressable onPress={() => exitAndReset()} style={s.navBack} hitSlop={8}>
             <Feather name="arrow-left" size={22} color={colors.text} />
             <Text style={[s.navBackText, { color: colors.textSecondary }]}>Exit</Text>
           </Pressable>
@@ -571,9 +506,7 @@ export default function QuizScreen() {
             <Text style={[s.flashBadgeText, { color: colors.primary }]}>Cards</Text>
           </View>
         </View>
-
-        {/* Progress strip */}
-        <View style={[s.flashProgressRow, { borderColor: colors.surfaceBorder }]}>
+        <View style={[s.flashProgressRow, { borderBottomColor: colors.surfaceBorder }]}>
           <View style={{ flex: 1 }}>
             <ProgressBar progress={(flashIndex + 1) / questions.length} height={5} />
           </View>
@@ -581,7 +514,6 @@ export default function QuizScreen() {
             {flashIndex + 1} / {questions.length}
           </Text>
         </View>
-
         <FlashCard
           question={flashQuestion}
           isFlipped={flashFlipped}
@@ -589,27 +521,18 @@ export default function QuizScreen() {
           cardIndex={flashIndex}
           total={questions.length}
         />
-
-        {/* Nav */}
-        <View style={[s.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder, paddingBottom: bottomSpacer }]}>
-          <Button
-            title="Previous"
-            variant="outline"
-            disabled={flashIndex === 0}
-            onPress={() => { setFlashIndex((i) => i - 1); setFlashFlipped(false); }}
-            size="lg"
-            style={{ flex: 1 }}
-          />
+        <View style={[s.twoButtonBar, {
+          backgroundColor: colors.background,
+          borderTopColor: colors.surfaceBorder,
+          paddingBottom: bottomSpacer,
+        }]}>
+          <Button title="Previous" variant="outline" disabled={flashIndex === 0}
+            onPress={() => { setFlashIndex((i) => i - 1); setFlashFlipped(false); }} size="lg" style={{ flex: 1 }} />
           {flashIndex < questions.length - 1 ? (
-            <Button
-              title="Next Card"
-              variant="outline"
-              onPress={() => { setFlashIndex((i) => i + 1); setFlashFlipped(false); }}
-              size="lg"
-              style={{ flex: 1 }}
-            />
+            <Button title="Next Card" variant="outline"
+              onPress={() => { setFlashIndex((i) => i + 1); setFlashFlipped(false); }} size="lg" style={{ flex: 1 }} />
           ) : (
-            <Button title="Done" variant="outline" onPress={exitAndReset} size="lg" style={{ flex: 1 }} />
+            <Button title="Done" variant="outline" onPress={() => exitAndReset()} size="lg" style={{ flex: 1 }} />
           )}
         </View>
       </View>
@@ -617,67 +540,50 @@ export default function QuizScreen() {
   }
 
   // ── QUIZ / REVIEW ─────────────────────────────────────────────────────────
+  // Exact DataCamp reference layout:
+  // [⚠️] [──progress──] [✕]
+  // <scrollable question + options (flex space-between inside)>
+  // [Check / Continue / Prev+Next] pinned bottom
   const isReview = phase === 'review';
 
   return (
     <View style={[s.flex, { backgroundColor: DC_BG }]}>
-      {/* ── Notch / Dynamic Island spacer — explicit height, never SafeAreaView ── */}
+      {/* Notch / Dynamic Island spacer */}
       <View style={{ height: topSpacer, backgroundColor: DC_BG }} />
 
-      {/* ── Header bar: [⚠️ or ←] [─── progress ───] [timer] [✕] ── */}
-      <View style={s.quizTopBar}>
-        {/* Left icon */}
+      {/* ── Header: [⚠️ or ←] [─progress─] [✕] ── */}
+      <View style={s.quizHeader}>
         <Pressable
           onPress={isReview ? () => setPhase('results') : () => currentQuestion && setShowReport(true)}
-          hitSlop={12}
-          style={s.topBarBtn}
+          hitSlop={14}
+          style={s.quizHeaderBtn}
         >
           <Feather
             name={isReview ? 'arrow-left' : 'alert-triangle'}
             size={isReview ? 22 : 20}
-            color={DC_MUTED}
+            color="rgba(255,255,255,0.5)"
           />
         </Pressable>
 
-        {/* Progress bar */}
-        <View style={s.topBarProgress}>
+        <View style={s.quizHeaderProgress}>
           <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} height={5} />
         </View>
 
-        {/* Timer — only during live quiz, not review */}
-        {!isReview && (
-          <View style={[s.timerPill, { borderColor: timerColor + '44', backgroundColor: timerColor + '18' }]}>
-            <Feather name="clock" size={11} color={timerColor} />
-            <Text style={[s.timerText, { color: timerColor }]}>{timeLeft}s</Text>
-          </View>
-        )}
-
-        {/* Right X */}
         <Pressable
           onPress={isReview ? () => setPhase('results') : handleExit}
-          hitSlop={12}
-          style={s.topBarBtn}
+          hitSlop={14}
+          style={s.quizHeaderBtn}
         >
-          <Feather name="x" size={22} color="rgba(255,255,255,0.75)" />
+          <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
         </Pressable>
       </View>
 
-      {/* ── Question counter ── */}
-      <View style={s.questionCounter}>
-        <Text style={s.questionCounterText}>
-          Question {currentQuestionIndex + 1} of {questions.length}
-        </Text>
-        {!isReview && (
-          <Text style={[s.scoreChip, { color: DC_SUCCESS }]}>
-            ✓ {runningScore} correct
-          </Text>
-        )}
-      </View>
-
-      {/* ── Scrollable question + options ── */}
+      {/* ── Question + options scroll area ──
+           flexGrow:1 lets QuestionView (flex:1 + space-between) work correctly:
+           question floats to top, options anchor to bottom of available space  ── */}
       <ScrollView
         style={s.flex}
-        contentContainerStyle={s.questionPad}
+        contentContainerStyle={s.quizScroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -697,16 +603,9 @@ export default function QuizScreen() {
       {/* ── Bottom action bar ── */}
       <View style={[s.quizBottomBar, { paddingBottom: bottomSpacer }]}>
         {isReview ? (
-          /* Review: Previous + Next side by side */
           <View style={s.twoButtonRow}>
-            <Button
-              title="Previous"
-              variant="outline"
-              onPress={handlePrevious}
-              size="lg"
-              disabled={currentQuestionIndex === 0}
-              style={{ flex: 1 }}
-            />
+            <Button title="Previous" variant="outline" onPress={handlePrevious}
+              disabled={currentQuestionIndex === 0} size="lg" style={{ flex: 1 }} />
             <Button
               title={isLastQuestion ? 'Done' : 'Next'}
               variant="outline"
@@ -714,57 +613,46 @@ export default function QuizScreen() {
                 if (isLastQuestion) { exitAndReset(); }
                 else { setShowFeedback(true); nextQuestion(); }
               }}
-              size="lg"
-              style={{ flex: 1 }}
+              size="lg" style={{ flex: 1 }}
             />
           </View>
         ) : showFeedback && hasAnsweredCurrent ? (
-          /* After checking — Continue / See Results */
+          /* Continue / See Results — gradient button */
           <Pressable onPress={handleNext} style={s.continueBtn}>
             <LinearGradient
               colors={[colors.gradientFrom, colors.gradientTo]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={[StyleSheet.absoluteFillObject, { borderRadius: 14 }]}
             />
-            <Text style={s.continueBtnText}>
-              {isLastQuestion ? 'See Results' : 'Continue'}
-            </Text>
+            <Text style={s.continueBtnText}>{isLastQuestion ? 'See Results' : 'Continue'}</Text>
             <Feather name="arrow-right" size={18} color="#04111F" />
           </Pressable>
         ) : (
-          /* Before checking — Check button */
+          /* Check — solid green, always opaque */
           <Pressable
             onPress={handleCheckAnswer}
             disabled={!pendingAnswerId}
-            style={[s.checkBtn, !pendingAnswerId && s.checkBtnDisabled]}
+            style={[s.checkBtn, !pendingAnswerId && s.checkBtnOff]}
           >
-            <Text style={s.checkBtnText}>Check</Text>
+            <Text style={[s.checkBtnText, !pendingAnswerId && s.checkBtnTextOff]}>Check</Text>
           </Pressable>
         )}
       </View>
 
-      {/* ── Report question modal ── */}
-      <Modal
-        visible={showReport}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowReport(false)}
-      >
+      {/* ── Report modal ── */}
+      <Modal visible={showReport} transparent animationType="fade" onRequestClose={() => setShowReport(false)}>
         <Pressable style={s.modalOverlay} onPress={() => setShowReport(false)}>
-          <Pressable style={[s.reportSheet, { backgroundColor: colors.surface }]} onPress={() => {}}>
+          <Pressable style={s.reportSheet} onPress={() => {}}>
             {reportSubmitted ? (
               <View style={s.reportThanks}>
                 <View style={[s.reportThanksIcon, { backgroundColor: DC_SUCCESS + '22' }]}>
                   <Feather name="check-circle" size={36} color={DC_SUCCESS} />
                 </View>
-                <Text style={[s.reportThanksTitle, { color: colors.text }]}>Thank you!</Text>
-                <Text style={[s.reportThanksSub,   { color: colors.textSecondary }]}>
-                  Your report has been submitted. We'll review it shortly.
-                </Text>
+                <Text style={s.reportThanksTitle}>Thank you!</Text>
+                <Text style={s.reportThanksSub}>Your report has been submitted.</Text>
                 <Pressable
                   onPress={() => { setShowReport(false); setReportSubmitted(false); }}
-                  style={[s.reportCloseBtn, { backgroundColor: colors.primary }]}
+                  style={s.reportCloseBtn}
                 >
                   <Text style={s.reportCloseBtnText}>Close</Text>
                 </Pressable>
@@ -772,26 +660,21 @@ export default function QuizScreen() {
             ) : (
               <>
                 <View style={s.reportHeader}>
-                  <Text style={[s.reportTitle, { color: colors.text }]}>Report Question</Text>
+                  <Text style={s.reportTitle}>Report Question</Text>
                   <Pressable onPress={() => setShowReport(false)} hitSlop={8}>
-                    <Feather name="x" size={20} color={colors.textSecondary} />
+                    <Feather name="x" size={20} color="rgba(255,255,255,0.5)" />
                   </Pressable>
                 </View>
-                <Text style={[s.reportSub, { color: colors.textSecondary }]}>
-                  Help us improve by reporting an issue.
-                </Text>
-                {['Incorrect answer marked', 'Unclear or ambiguous question', 'Outdated information', 'Other issue'].map((reason) => (
+                <Text style={s.reportSub}>Help us improve by reporting an issue.</Text>
+                {['Incorrect answer marked', 'Unclear or ambiguous', 'Outdated information', 'Other'].map((reason) => (
                   <Pressable
                     key={reason}
                     onPress={() => setReportSubmitted(true)}
-                    style={({ pressed }) => [
-                      s.reportOption,
-                      { backgroundColor: pressed ? colors.primaryLight : colors.background, borderColor: colors.surfaceBorder },
-                    ]}
+                    style={({ pressed }) => [s.reportOption, pressed && { backgroundColor: DC_SURFACE }]}
                   >
-                    <Feather name="flag" size={14} color={colors.textSecondary} />
-                    <Text style={[s.reportOptionText, { color: colors.text }]}>{reason}</Text>
-                    <Feather name="chevron-right" size={14} color={colors.textSecondary} />
+                    <Feather name="flag" size={14} color="rgba(255,255,255,0.4)" />
+                    <Text style={s.reportOptionText}>{reason}</Text>
+                    <Feather name="chevron-right" size={14} color="rgba(255,255,255,0.3)" />
                   </Pressable>
                 ))}
               </>
@@ -805,50 +688,113 @@ export default function QuizScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  flex: { flex: 1 },
+  flex:        { flex: 1 },
+  centeredFill: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   notFoundText: { fontFamily: F.semiBold, fontSize: 18, marginTop: 16 },
 
-  // ── Universal nav bar (intro / results / flashcard) ──
-  navBar: {
+  // ── Shared nav bar (results / flashcard) ──
+  navBar:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, paddingHorizontal: 16, paddingVertical: 14, minHeight: 52 },
+  navBack:    { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 72 },
+  navBackText: { fontFamily: F.medium, fontSize: 15 },
+  navTitle:   { fontFamily: F.bold, fontSize: 17, flex: 1, textAlign: 'center' },
+
+  // ── Intro: DataCamp-style practice screen ──
+  introBackArrow: {
+    alignSelf: 'flex-start',
+    marginLeft: 16,
+    marginTop: 8,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  introTopLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    minHeight: 52,
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
   },
-  navBack:     { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 72 },
-  navBackText: { fontFamily: F.medium, fontSize: 15 },
-  navTitle:    { fontFamily: F.bold, fontSize: 17, flex: 1, textAlign: 'center' },
-
-  // ── Intro ──
-  introPad: { padding: 20, paddingTop: 14, paddingBottom: 40 },
-
-  courseCard:     { borderRadius: 16, borderWidth: 1, marginBottom: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 12, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
-  courseStrip:    { height: 5 },
-  courseCardBody: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, padding: 18 },
-  courseIconWrap: { width: 68, height: 68, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  courseTextBlock: { flex: 1 },
-  courseTitle:    { fontFamily: F.bold, fontSize: 18, lineHeight: 26, marginBottom: 5 },
-  courseDesc:     { fontFamily: F.regular, fontSize: 13, lineHeight: 19 },
-  diffChip:       { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 8 },
-  diffChipDot:    { width: 6, height: 6, borderRadius: 3 },
-  diffChipText:   { fontFamily: F.semiBold, fontSize: 11 },
-
-  metaRow:     { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  metaBox:     { flex: 1, alignItems: 'center', minHeight: 112, padding: 14, borderRadius: 12, borderWidth: 1, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
-  metaIconWrap: { width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  metaVal:     { fontFamily: F.bold,    fontSize: 14, marginBottom: 2, textAlign: 'center' },
-  metaLabel:   { fontFamily: F.regular, fontSize: 11, textAlign: 'center' },
-
-  featuresCard:   { borderRadius: 14, borderWidth: 1, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
-  featuresHeader: { fontFamily: F.semiBold, fontSize: 15, marginBottom: 12 },
-  featureRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
-  featureIconWrap: { width: 34, height: 34, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  featureText:    { fontFamily: F.regular, fontSize: 13, lineHeight: 19, flex: 1 },
-
-  actionCol: { flexDirection: 'column', gap: 12 },
+  introTopLabelText: {
+    fontFamily: F.bold,
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  introCenterBlock: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 12,
+  },
+  introIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  introCourseLabel: {
+    fontFamily: F.medium,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.5,
+  },
+  introTitle: {
+    fontFamily: F.bold,
+    fontSize: 26,
+    lineHeight: 34,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  introChipsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  introChip: {
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 100,
+  },
+  introChipText: {
+    fontFamily: F.semiBold,
+    fontSize: 13,
+    color: '#FFFFFF',
+  },
+  introBottomButtons: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 12,
+  },
+  introStartBtn: {
+    height: 58,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  introStartBtnText: {
+    fontFamily: F.bold,
+    fontSize: 17,
+    color: '#FFFFFF',
+  },
+  introFlashBtn: {
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  introFlashBtnText: {
+    fontFamily: F.semiBold,
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.9)',
+  },
 
   // ── Results ──
   resultsPad:    { padding: 20, paddingTop: 16 },
@@ -857,13 +803,18 @@ const s = StyleSheet.create({
   scoreCircle:   { width: 118, height: 118, borderRadius: 59, alignItems: 'center', justifyContent: 'center', borderWidth: 4, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
   scorePct:      { fontFamily: F.bold,     fontSize: 36 },
   scoreLabel:    { fontFamily: F.semiBold, fontSize: 11, letterSpacing: 1, marginTop: -2 },
-  scoreHeading:  { fontFamily: F.bold,    fontSize: 22, marginBottom: 4 },
-  scoreSubtitle: { fontFamily: F.regular, fontSize: 14 },
+  scoreHeading:  { fontFamily: F.bold,     fontSize: 22, marginBottom: 4 },
+  scoreSubtitle: { fontFamily: F.regular,  fontSize: 14 },
 
-  statRow:        { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  statCardResult: { flex: 1, alignItems: 'center', paddingVertical: 16 },
-  statVal:        { fontFamily: F.bold, fontSize: 22, marginTop: 6, marginBottom: 2 },
-  statLbl:        { fontFamily: F.medium, fontSize: 11 },
+  statRow:  { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  statCard: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+  statVal:  { fontFamily: F.bold,   fontSize: 22, marginTop: 6, marginBottom: 2 },
+  statLbl:  { fontFamily: F.medium, fontSize: 11 },
+
+  rewardBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 12 },
+  rewardIcon:   { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  rewardTitle:  { fontFamily: F.bold,    fontSize: 14, marginBottom: 2 },
+  rewardSub:    { fontFamily: F.regular, fontSize: 12 },
 
   breakdownTitle: { fontFamily: F.bold, fontSize: 16, marginBottom: 12 },
   breakdownCard:  { marginBottom: 8, paddingVertical: 12, paddingHorizontal: 14 },
@@ -871,13 +822,7 @@ const s = StyleSheet.create({
   breakdownDot:   { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   breakdownNum:   { fontFamily: F.semiBold, fontSize: 13 },
   breakdownQ:     { fontFamily: F.regular, flex: 1, fontSize: 14, lineHeight: 20 },
-
   resultsActions: { gap: 12, marginTop: 20 },
-  rewardBanner:   { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 12 },
-  rewardIconWrap: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  rewardTextBlock: { flex: 1 },
-  rewardTitle:    { fontFamily: F.bold,    fontSize: 14, marginBottom: 2 },
-  rewardSub:      { fontFamily: F.regular, fontSize: 12 },
 
   // ── Flashcard ──
   flashBadge:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, minWidth: 72, justifyContent: 'flex-end' },
@@ -885,59 +830,35 @@ const s = StyleSheet.create({
   flashProgressRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
   flashProgressText: { fontFamily: F.semiBold, fontSize: 12, minWidth: 44, textAlign: 'right' },
 
-  // ── Quiz / Review — full-dark DataCamp theme ──
-  // Header bar
-  quizTopBar: {
+  // ── Quiz / Review ──
+  // Header bar — matches reference: ⚠️ | progress | X
+  quizHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     gap: 8,
     backgroundColor: DC_BG,
   },
-  topBarBtn:      { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  topBarProgress: { flex: 1 },
+  quizHeaderBtn:      { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  quizHeaderProgress: { flex: 1 },
 
-  // Timer pill
-  timerPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  timerText: { fontFamily: F.bold, fontSize: 12 },
-
-  // Question counter row
-  questionCounter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  // Question scroll — flexGrow:1 is the key that lets QuestionView's flex:1 work
+  quizScroll: {
+    flexGrow: 1,
     paddingHorizontal: 20,
-    paddingVertical: 6,
-    backgroundColor: DC_BG,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
-  questionCounterText: { fontFamily: F.medium, fontSize: 13, color: DC_MUTED },
-  scoreChip:           { fontFamily: F.semiBold, fontSize: 13 },
-
-  // Question scroll area
-  questionPad: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32 },
 
   // Bottom bar
   quizBottomBar: {
     backgroundColor: DC_BG,
-    borderTopWidth: 1,
-    borderTopColor: DC_BORDER,
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 12,
   },
 
-  // Two-button row (review Previous/Next)
-  twoButtonRow: { flexDirection: 'row', gap: 12 },
-
-  // Continue button — explicit gradient wrapper (no variant="primary" opacity issues)
+  // Continue button (gradient)
   continueBtn: {
     height: 56,
     borderRadius: 14,
@@ -946,11 +867,11 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#7367F0', // fallback if gradient fails
+    backgroundColor: '#7367F0',
   },
-  continueBtnText: { fontFamily: F.bold, fontSize: 16, color: '#04111F' },
+  continueBtnText: { fontFamily: F.bold, fontSize: 16, color: '#FFFFFF', zIndex: 1 },
 
-  // Check button — solid green, always visible
+  // Check button (solid green — always crisp)
   checkBtn: {
     height: 56,
     borderRadius: 14,
@@ -960,29 +881,16 @@ const s = StyleSheet.create({
     shadowColor: DC_SUCCESS,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  checkBtnDisabled: { backgroundColor: DC_SURFACE, shadowOpacity: 0 },
-  checkBtnText:     { fontFamily: F.bold, fontSize: 16, color: '#04111F' },
+  checkBtnOff:     { backgroundColor: DC_SURFACE, shadowOpacity: 0, elevation: 0 },
+  checkBtnText:    { fontFamily: F.bold, fontSize: 17, color: '#04111F' },
+  checkBtnTextOff: { color: 'rgba(255,255,255,0.25)' },
 
-  // Report modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  reportSheet:  { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36 },
-  reportHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  reportTitle:  { fontFamily: F.bold,    fontSize: 17 },
-  reportSub:    { fontFamily: F.regular, fontSize: 13, marginBottom: 16 },
-  reportOption: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, marginBottom: 8 },
-  reportOptionText: { fontFamily: F.medium, flex: 1, fontSize: 14 },
-  reportThanks:     { alignItems: 'center', paddingVertical: 16, gap: 10 },
-  reportThanksIcon: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
-  reportThanksTitle: { fontFamily: F.bold,    fontSize: 20 },
-  reportThanksSub:   { fontFamily: F.regular, fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  reportCloseBtn:    { marginTop: 8, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
-  reportCloseBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 15 },
-
-  // Bottom bar for flashcard
-  bottomBar: {
+  // Two-button row (Previous / Next in review)
+  twoButtonRow: { flexDirection: 'row', gap: 12 },
+  twoButtonBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -990,4 +898,19 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
   },
+
+  // Report modal
+  modalOverlay:      { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
+  reportSheet:       { backgroundColor: '#0D1B34', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 40 },
+  reportHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  reportTitle:       { fontFamily: F.bold,    fontSize: 17, color: '#FFFFFF' },
+  reportSub:         { fontFamily: F.regular, fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 },
+  reportOption:      { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 10, marginBottom: 6 },
+  reportOptionText:  { fontFamily: F.medium, flex: 1, fontSize: 14, color: '#FFFFFF' },
+  reportThanks:      { alignItems: 'center', paddingVertical: 16, gap: 10 },
+  reportThanksIcon:  { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
+  reportThanksTitle: { fontFamily: F.bold,    fontSize: 20, color: '#FFFFFF' },
+  reportThanksSub:   { fontFamily: F.regular, fontSize: 14, color: 'rgba(255,255,255,0.6)', textAlign: 'center' },
+  reportCloseBtn:    { marginTop: 8, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10, backgroundColor: DC_SUCCESS },
+  reportCloseBtnText: { fontFamily: F.semiBold, color: '#04111F', fontSize: 15 },
 });
