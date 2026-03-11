@@ -24,11 +24,12 @@ export function QuestionView({
   onReport,
 }: QuestionViewProps) {
   const colors = useThemeColors();
-  const explanationAccent = resultTone === 'correct' ? colors.primary : colors.error;
-  const explanationTitle = resultTone === 'correct' ? 'Why this answer is right' : 'Why this answer was not right';
+  const explanationAccent = resultTone === 'correct' ? colors.success : colors.error;
+  const explanationTitle = resultTone === 'correct' ? 'Correct answer' : 'Incorrect';
 
   return (
     <View style={styles.container}>
+      {/* Question */}
       <View style={styles.questionBlock}>
         <Text style={[styles.questionText, { color: colors.text }]}>{question.text}</Text>
         {onReport ? (
@@ -39,10 +40,12 @@ export function QuestionView({
         ) : null}
       </View>
 
+      {/* "Select the correct answer" label — teal, only before result */}
       {!showResult && (
-        <Text style={[styles.selectLabel, { color: colors.textSecondary }]}>Select the correct answer</Text>
+        <Text style={[styles.selectLabel, { color: colors.gradientAccent }]}>Select the correct answer</Text>
       )}
 
+      {/* Options */}
       <View style={styles.optionsList}>
         {question.options.map((option) => {
           const isSelected = selectedOptionId === option.id;
@@ -53,18 +56,11 @@ export function QuestionView({
             if (!showResult) {
               return isSelected
                 ? { background: colors.surfaceElevated, border: colors.primary, radioBg: colors.primary }
-                : { background: colors.surface, border: colors.surfaceBorder, radioBg: 'transparent' };
+                : { background: colors.surfaceElevated, border: colors.surfaceBorder, radioBg: 'transparent' };
             }
-
-            if (isCorrect) {
-              return { background: colors.surfaceElevated, border: colors.success, radioBg: colors.success };
-            }
-
-            if (isSelected) {
-              return { background: '#221841', border: colors.error, radioBg: colors.error };
-            }
-
-            return { background: colors.surface, border: colors.surfaceBorder, radioBg: 'transparent' };
+            if (isCorrect) return { background: colors.success + '18', border: colors.success, radioBg: colors.success };
+            if (isSelected) return { background: colors.error + '12', border: colors.error, radioBg: colors.error };
+            return { background: colors.surfaceElevated, border: colors.surfaceBorder, radioBg: 'transparent' };
           })();
 
           const radioFilled = isSelected || (showResult && (isCorrect || isSelected));
@@ -79,12 +75,15 @@ export function QuestionView({
                 {
                   backgroundColor: stateColors.background,
                   borderColor: stateColors.border,
-                  opacity: isHidden ? 0.2 : pressed ? 0.9 : 1,
+                  opacity: isHidden ? 0.2 : pressed ? 0.85 : 1,
                 },
               ]}
             >
               <View style={styles.optionContent}>
-                <View style={[styles.radioCircle, { borderColor: stateColors.border, backgroundColor: radioFilled ? stateColors.radioBg : 'transparent' }]}>
+                <View style={[
+                  styles.radioCircle,
+                  { borderColor: stateColors.border, backgroundColor: radioFilled ? stateColors.radioBg : 'transparent' },
+                ]}>
                   {radioFilled && <View style={styles.radioDot} />}
                 </View>
                 <Text style={[styles.optionText, { color: colors.text }]}>{option.text}</Text>
@@ -94,8 +93,9 @@ export function QuestionView({
         })}
       </View>
 
+      {/* Explanation inline */}
       {showResult && question.explanation ? (
-        <View style={[styles.explanationCard, { backgroundColor: colors.backgroundAlt, borderColor: explanationAccent + '55' }]}>
+        <View style={[styles.explanationCard, { backgroundColor: colors.surfaceElevated, borderColor: explanationAccent + '50' }]}>
           <View style={styles.explanationHeader}>
             <View style={[styles.explanationBadge, { backgroundColor: explanationAccent + '22' }]}>
               <Feather name={resultTone === 'correct' ? 'check' : 'x'} size={12} color={explanationAccent} />
@@ -105,7 +105,7 @@ export function QuestionView({
           <Text style={[styles.explanationText, { color: colors.text }]}>{question.explanation}</Text>
         </View>
       ) : showResult ? (
-        <View style={[styles.explanationCard, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+        <View style={[styles.explanationCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.explanationText, { color: colors.textSecondary }]}>No explanation available.</Text>
         </View>
       ) : null}
@@ -114,21 +114,21 @@ export function QuestionView({
 }
 
 const styles = StyleSheet.create({
-  container: { gap: 14 },
-  questionBlock: { paddingTop: 8, gap: 14 },
-  questionText: { fontFamily: F.bold, fontSize: 24, lineHeight: 42 },
-  reportRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  reportText: { fontFamily: F.medium, fontSize: 12 },
-  selectLabel: { fontFamily: F.medium, fontSize: 13, marginBottom: 2 },
-  optionsList: { gap: 12 },
-  optionCard: { width: '100%', borderWidth: 1, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 18, alignItems: 'flex-start' },
-  optionContent: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 14 },
-  radioCircle: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#04111F' },
-  optionText: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 24, flex: 1 },
-  explanationCard: { borderWidth: 1, borderRadius: 18, padding: 16, gap: 10 },
+  container:       { gap: 16 },
+  questionBlock:   { paddingTop: 4, gap: 14 },
+  questionText:    { fontFamily: F.bold, fontSize: 28, lineHeight: 40 },
+  reportRow:       { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  reportText:      { fontFamily: F.medium, fontSize: 12 },
+  selectLabel:     { fontFamily: F.semiBold, fontSize: 14, marginBottom: 2 },
+  optionsList:     { gap: 12 },
+  optionCard:      { width: '100%', borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 18 },
+  optionContent:   { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 16 },
+  radioCircle:     { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  radioDot:        { width: 9, height: 9, borderRadius: 5, backgroundColor: '#04111F' },
+  optionText:      { fontFamily: F.bold, fontSize: 17, lineHeight: 26, flex: 1 },
+  explanationCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
   explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  explanationBadge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  explanationTitle: { fontFamily: F.bold, fontSize: 13 },
-  explanationText: { fontFamily: F.medium, fontSize: 15, lineHeight: 25 },
+  explanationBadge:  { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  explanationTitle:  { fontFamily: F.bold, fontSize: 13 },
+  explanationText:   { fontFamily: F.medium, fontSize: 15, lineHeight: 25 },
 });

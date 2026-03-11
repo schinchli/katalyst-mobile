@@ -649,34 +649,25 @@ export default function QuizScreen() {
 
   return (
     <SafeAreaView style={[s.flex, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[s.quizHeader, { backgroundColor: colors.background, borderBottomColor: colors.surfaceBorder }]}>
+      {/* Header: [⚠️ report] [progress bar] [X exit] */}
+      <View style={[s.quizTopBar, { backgroundColor: colors.background }]}>
         <Pressable
-          onPress={isReview ? () => setPhase('results') : handleExit}
-          hitSlop={8}
-          style={isReview ? s.backBtn : undefined}
+          onPress={isReview ? () => setPhase('results') : (currentQuestion ? () => setShowReport(true) : undefined)}
+          hitSlop={10}
+          style={s.topBarSideBtn}
         >
-          <Feather name={isReview ? 'arrow-left' : 'x'} size={isReview ? 22 : 24} color={colors.text} />
-          {isReview && <Text style={[s.backLabel, { color: colors.textSecondary }]}>Results</Text>}
+          <Feather
+            name={isReview ? 'arrow-left' : 'alert-triangle'}
+            size={isReview ? 22 : 19}
+            color={colors.textSecondary}
+          />
         </Pressable>
-
-        <View style={s.quizProgressWrap}>
-          <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} height={6} />
+        <View style={s.topBarProgressWrap}>
+          <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} height={4} />
         </View>
-
-        <Text style={[s.quizCount, { color: colors.textSecondary }]}>
-          {currentQuestionIndex + 1}/{questions.length}
-        </Text>
-
-        {currentQuestion && (
-          <Pressable onPress={() => toggleBookmark(currentQuestion.id)} hitSlop={8}>
-            <Feather
-              name="bookmark"
-              size={20}
-              color={bookmarked ? colors.primary : colors.textSecondary}
-            />
-          </Pressable>
-        )}
+        <Pressable onPress={isReview ? () => setPhase('results') : handleExit} hitSlop={10} style={s.topBarSideBtn}>
+          <Feather name="x" size={22} color={colors.text} />
+        </Pressable>
       </View>
 
 
@@ -694,36 +685,6 @@ export default function QuizScreen() {
           />
         )}
       </ScrollView>
-
-      {showFeedbackBanner ? (
-        <View style={[s.feedbackBanner, { backgroundColor: colors.surfaceElevated, borderColor: isCurrentCorrect ? colors.primary : colors.error }]}>
-          <View style={s.feedbackTopRow}>
-            <View style={s.feedbackLeft}>
-              <View style={[s.feedbackIconCircle, { backgroundColor: isCurrentCorrect ? colors.primaryLight : colors.error + '18' }]}>
-                <Feather name={isCurrentCorrect ? 'check' : 'x'} size={28} color={isCurrentCorrect ? colors.primary : colors.error} />
-              </View>
-              <View style={s.feedbackTextWrap}>
-                <Text style={[s.feedbackEyebrow, { color: isCurrentCorrect ? colors.primary : colors.error }]}>
-                  {isCurrentCorrect ? 'Correct answer' : 'Not right'}
-                </Text>
-                <Text style={[s.feedbackText, { color: colors.text }]}>
-                  {isCurrentCorrect ? 'Well done. Keep the streak going.' : "That's not right. Review the explanation and keep moving."}
-                </Text>
-              </View>
-            </View>
-            <Pressable onPress={() => setFeedbackDismissed(true)} hitSlop={8} style={s.feedbackCloseBtn}>
-              <Feather name="x" size={18} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-          <Pressable
-            onPress={handleNext}
-            style={({ pressed }) => [s.feedbackAction, { backgroundColor: isCurrentCorrect ? colors.primary : colors.error, opacity: pressed ? 0.88 : 1 }]}
-          >
-            <Text style={s.feedbackActionText}>{isLastQuestion ? 'See results' : 'Next question'}</Text>
-            <Feather name="arrow-right" size={16} color="#04111F" />
-          </Pressable>
-        </View>
-      ) : null}
 
       {/* Bottom nav */}
       <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
@@ -749,11 +710,13 @@ export default function QuizScreen() {
             />
           </View>
         ) : showFeedback && hasAnsweredCurrent ? (
-          <View style={s.promptWrap}>
-            <Text style={[s.promptText, { color: colors.textSecondary }]}>
-              {feedbackDismissed ? 'Use the explanation above, then continue.' : 'Use the feedback card to continue'}
-            </Text>
-          </View>
+          <Button
+            title={isLastQuestion ? 'See Results' : 'Continue'}
+            variant="primary"
+            onPress={handleNext}
+            size="lg"
+            style={{ width: '100%' }}
+          />
         ) : (
           <Button
             title="Check"
@@ -1028,10 +991,14 @@ const s = StyleSheet.create({
   },
   reportCloseBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 15 },
 
-  // ── Quiz / Review header ──
-  quizHeader:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 10, borderBottomWidth: 1 },
-  quizProgressWrap: { flex: 1 },
-  quizCount:        { fontFamily: F.semiBold, fontSize: 13, minWidth: 36, textAlign: 'right' },
+  // ── Quiz / Review header (DataCamp style) ──
+  quizTopBar:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
+  topBarSideBtn:     { width: 36, alignItems: 'center', justifyContent: 'center' },
+  topBarProgressWrap:{ flex: 1 },
+  // keep old keys as no-ops so nothing breaks:
+  quizHeader:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 10 },
+  quizProgressWrap:  { flex: 1 },
+  quizCount:         { fontFamily: F.semiBold, fontSize: 13, minWidth: 36, textAlign: 'right' },
 
   // ── Timer ──
   timerShell: { marginHorizontal: 16, marginTop: 8, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderRadius: 18 },
@@ -1055,7 +1022,7 @@ const s = StyleSheet.create({
   runningScoreText: { fontFamily: F.semiBold, fontSize: 12 },
 
   // ── Question area ──
-  questionPad: { paddingHorizontal: 18, paddingTop: 12, paddingBottom: 144 },
+  questionPad: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 160 },
   answerPrompt: { fontFamily: F.medium, fontSize: 15, marginBottom: 16 },
   feedbackBanner: {
     marginHorizontal: 16,
