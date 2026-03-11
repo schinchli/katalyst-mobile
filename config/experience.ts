@@ -1,8 +1,8 @@
 export const EXPERIENCE_COPY = {
   appName: 'Katalyst',
-  themeName: 'DataCamp',
+  themeName: 'Signature',
   auth: {
-    eyebrow: 'Datacamp-inspired learning',
+    eyebrow: 'Focused daily learning',
     headline: 'Build data and AI skills. Anytime, anywhere.',
     subheadline: 'Daily streaks, flashcards, premium practice, and polished progress tracking in one mobile workflow.',
     socialProof: 'Join 18M+ learners',

@@ -12,6 +12,10 @@ export default function ProgressScreen() {
   const colors = useThemeColors();
   const progress = useProgressStore((s) => s.progress);
   const activeDay = Math.min(6, Math.max(0, new Date().getDay() === 0 ? 6 : new Date().getDay() - 1));
+  const streakLength = Math.max(0, Math.min(7, progress.currentStreak));
+  const streakMessage = progress.currentStreak > 0
+    ? 'Keep showing up today to protect your streak.'
+    : 'Open the app daily to build your first streak.';
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
@@ -44,6 +48,7 @@ export default function ProgressScreen() {
 
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.panelTitle, { color: colors.text }]}>{EXPERIENCE_COPY.progress.streakTitle}</Text>
+          <Text style={[styles.panelHint, { color: colors.textSecondary }]}>{streakMessage}</Text>
           <View style={styles.streakNumbers}>
             <View>
               <Text style={[styles.bigValue, { color: colors.text }]}>{progress.currentStreak} days</Text>
@@ -56,7 +61,8 @@ export default function ProgressScreen() {
           </View>
           <View style={styles.weekRow}>
             {WEEK.map((label, index) => {
-              const active = index === activeDay;
+              const distance = (activeDay - index + 7) % 7;
+              const active = distance < streakLength;
               return (
                 <View key={`${label}-${index}`} style={styles.weekCell}>
                   <Text style={[styles.weekLabel, { color: colors.textSecondary }]}>{label}</Text>
@@ -73,7 +79,7 @@ export default function ProgressScreen() {
           <Text style={[styles.panelTitle, { color: colors.text }]}>{EXPERIENCE_COPY.progress.xpTitle}</Text>
           <View style={styles.streakNumbers}>
             <View>
-              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.xp ?? 0} XP</Text>
+              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.xp ?? 0}</Text>
               <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Last 30 days</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
@@ -112,6 +118,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, marginHorizontal: 16 },
   panel: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 16 },
   panelTitle: { fontFamily: F.bold, fontSize: 18 },
+  panelHint: { fontFamily: F.medium, fontSize: 13, lineHeight: 20, marginTop: -6 },
   streakNumbers: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   bigValue: { fontFamily: F.bold, fontSize: 22 },
   subLabel: { fontFamily: F.regular, fontSize: 14, marginTop: 4 },
