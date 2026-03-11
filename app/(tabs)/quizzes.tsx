@@ -13,14 +13,15 @@ import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 
 const CATEGORY_GRADIENT: Record<string, [string, string]> = {
-  'clf-c02':  ['#FF9900', '#E8650A'],
-  bedrock:    ['#7C3AED', '#4338CA'],
-  genai:      ['#0EA5E9', '#0369A1'],
-  security:   ['#EF4444', '#B91C1C'],
-  mlops:      ['#10B981', '#047857'],
-  compute:    ['#F59E0B', '#B45309'],
-  networking: ['#3B82F6', '#1D4ED8'],
-  databases:  ['#8B5CF6', '#6D28D9'],
+  'clf-c02':           ['#FF9900', '#E8650A'],
+  bedrock:             ['#7C3AED', '#4338CA'],
+  genai:               ['#0EA5E9', '#0369A1'],
+  security:            ['#EF4444', '#B91C1C'],
+  mlops:               ['#10B981', '#047857'],
+  compute:             ['#F59E0B', '#B45309'],
+  networking:          ['#3B82F6', '#1D4ED8'],
+  databases:           ['#8B5CF6', '#6D28D9'],
+  'cost-optimization': ['#34D399', '#059669'],
 };
 
 const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [

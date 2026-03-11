@@ -11,7 +11,7 @@ import { flashcards } from '@/data/flashcards';
 import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
-import { AWS_SERVICE_ICONS, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
+import { AWS_SERVICE_ICONS, AWS_SERVICE_ACCENT, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 
 // ── Service-specific course card visuals — brand-accurate gradients ───────────
 const CATEGORY_VISUAL: Record<string, { from: string; to: string; label: string }> = {
@@ -26,27 +26,6 @@ const CATEGORY_VISUAL: Record<string, { from: string; to: string; label: string 
   'cost-optimization': { from: '#34D399', to: '#059669', label: 'Cost'    },
 };
 
-// ── Flashcard service accent colours — fallback when no AWS icon matched ──────
-const SERVICE_ACCENT: Record<string, string> = {
-  'Amazon S3':           '#FF9900',
-  'Amazon EC2':          '#FF9900',
-  'AWS Lambda':          '#FF9900',
-  'Amazon RDS':          '#527FFF',
-  'Amazon DynamoDB':     '#527FFF',
-  'Amazon VPC':          '#8A63D2',
-  'Amazon CloudFront':   '#FF9900',
-  'Amazon SQS':          '#FF9900',
-  'Amazon SNS':          '#DD344C',
-  'AWS IAM':             '#DD344C',
-  'Amazon Bedrock':      '#7C3AED',
-  'Knowledge Bases':     '#0EA5E9',
-  'Bedrock Guardrails':  '#EF4444',
-  'Titan Embeddings':    '#7C3AED',
-  'Bedrock Agents':      '#10B981',
-  'Amazon Kendra':       '#527FFF',
-  'SageMaker JumpStart': '#10B981',
-  'Prompt Guard':        '#EF4444',
-};
 
 function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap; value: string; colors: ReturnType<typeof useThemeColors> }) {
   return (
@@ -190,7 +169,7 @@ export default function HomeScreen() {
                 >
                   {(() => {
                     const svcIcon = AWS_SERVICE_ICONS[item.front];
-                    const accent = SERVICE_ACCENT[item.front] ?? (index % 2 === 0 ? colors.primary : colors.error);
+                    const accent = AWS_SERVICE_ACCENT[item.front] ?? (index % 2 === 0 ? colors.primary : colors.error);
                     return (
                       <View style={[styles.flashcardBadge, { backgroundColor: accent + '18' }]}>
                         {svcIcon ? (

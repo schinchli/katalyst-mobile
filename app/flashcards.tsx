@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { flashcards, type FlashcardCategory } from '@/data/flashcards';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { F } from '@/constants/Typography';
+import { AWS_SERVICE_ICONS, AWS_SERVICE_ACCENT } from '@/constants/awsIcons';
 
 const FILTERS: { key: FlashcardCategory | 'all'; label: string }[] = [
   { key: 'all', label: 'All packs' },
@@ -85,7 +86,16 @@ export default function FlashcardsScreen() {
               </View>
             </View>
             <View style={styles.cardBody}>
-              <Text style={[styles.cardMain, { color: colors.text }]}>{flipped ? active.back : active.front}</Text>
+              {!flipped && AWS_SERVICE_ICONS[active.front] ? (
+                <>
+                  <View style={[styles.serviceIconWrap, { backgroundColor: (AWS_SERVICE_ACCENT[active.front] ?? colors.primary) + '18' }]}>
+                    <Image source={AWS_SERVICE_ICONS[active.front]!} style={styles.serviceIcon} />
+                  </View>
+                  <Text style={[styles.cardMain, { color: colors.text }]}>{active.front}</Text>
+                </>
+              ) : (
+                <Text style={[styles.cardMain, { color: colors.text, fontSize: flipped ? 18 : 24 }]}>{flipped ? active.back : active.front}</Text>
+              )}
             </View>
             <View style={[styles.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
               <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
@@ -149,8 +159,10 @@ const styles = StyleSheet.create({
   cardLabel: { fontFamily: F.bold, fontSize: 12, letterSpacing: 1.2 },
   tagPill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   tagPillText: { fontFamily: F.semiBold, fontSize: 12 },
-  cardBody: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 24 },
+  cardBody: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 24, gap: 20 },
   cardMain: { fontFamily: F.bold, fontSize: 24, lineHeight: 38, textAlign: 'center' },
+  serviceIconWrap: { width: 88, height: 88, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  serviceIcon: { width: 56, height: 56 },
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderTopWidth: 1, paddingHorizontal: 18, paddingVertical: 14 },
   cardFooterText: { fontFamily: F.medium, fontSize: 13 },
   emptyCard: { minHeight: 220, borderWidth: 1, borderRadius: 24, alignItems: 'center', justifyContent: 'center', padding: 24 },
