@@ -17,46 +17,51 @@ export default function LearnScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.darkHeader, { borderBottomColor: colors.surfaceBorder }]}>
+      <View style={[styles.header, { borderBottomColor: colors.surfaceBorder }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>{platformConfig.copy.resourcesTitle}</Text>
       </View>
 
-      <View style={[styles.filterBar, { backgroundColor: platformConfig.colors.resourcesBackground }]}>
+      <View style={[styles.filterBar, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }]}>
         <View style={styles.filterHeader}>
-          <Text style={styles.filterTitle}>{platformConfig.copy.resourcesFilter}</Text>
-          <Text style={styles.filterSecondary}>{EXPERIENCE_COPY.resources.secondaryFilter}</Text>
+          <Text style={[styles.filterTitle, { color: colors.textSecondary }]}>{platformConfig.copy.resourcesFilter}</Text>
+          <Text style={[styles.filterSecondary, { color: colors.textSecondary }]}>{EXPERIENCE_COPY.resources.secondaryFilter}</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
           {tags.map((tag) => {
             const active = tag === selectedTag;
             return (
-              <Pressable key={tag} onPress={() => setSelectedTag(tag)} style={[styles.chip, { backgroundColor: active ? '#D7FEE7' : '#FFFFFF', borderColor: active ? '#00ED64' : '#D5DBE6' }]}>
-                <Text style={[styles.chipText, { color: active ? '#04111F' : '#1E293B' }]}>{tag}</Text>
+              <Pressable
+                key={tag}
+                onPress={() => setSelectedTag(tag)}
+                style={[styles.chip, { backgroundColor: active ? colors.primaryLight : colors.backgroundAlt, borderColor: active ? colors.primary : colors.surfaceBorder }]}
+              >
+                <Text style={[styles.chipText, { color: active ? colors.primaryText : colors.text }]}>{tag}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.articleScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.articleScroll, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
         {visibleItems.map((item) => (
-          <View key={item.id} style={styles.articleShell}>
-            <View style={styles.articleCard}>
-              <View style={[styles.articleTag, { backgroundColor: item.tagColor }]}>
-                <Text style={styles.articleTagText}>{item.tag.toUpperCase()}</Text>
-              </View>
-              <Text style={styles.articleTitle}>{item.title}</Text>
-              <Text style={styles.articleDescription}>{item.description}</Text>
-              <Text style={styles.articleMeta}>DataCamp Team • January 2026</Text>
-              <View style={styles.chapterList}>
-                {item.chapters?.slice(0, 3).map((chapter) => (
-                  <View key={`${item.id}-${chapter.time}`} style={styles.chapterRow}>
-                    <Feather name="play-circle" size={14} color="#3A4B6E" />
-                    <Text style={styles.chapterText}>{chapter.label}</Text>
-                    <Text style={styles.chapterTime}>{chapter.time}</Text>
-                  </View>
-                ))}
-              </View>
+          <View key={item.id} style={[styles.articleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={[styles.articleTag, { backgroundColor: item.tagColor + '22', borderColor: item.tagColor + '55', borderWidth: 1 }]}>
+              <Text style={[styles.articleTagText, { color: item.tagColor }]}>{item.tag.toUpperCase()}</Text>
+            </View>
+            <Text style={[styles.articleTitle, { color: colors.text }]}>{item.title}</Text>
+            <Text style={[styles.articleDescription, { color: colors.textSecondary }]}>{item.description}</Text>
+            <Text style={[styles.articleMeta, { color: colors.textSecondary }]}>Katalyst Team • January 2026</Text>
+            <View style={[styles.chapterList, { borderTopColor: colors.surfaceBorder, borderTopWidth: 1, paddingTop: 14 }]}>
+              {item.chapters?.slice(0, 3).map((chapter) => (
+                <View key={`${item.id}-${chapter.time}`} style={styles.chapterRow}>
+                  <Feather name="play-circle" size={14} color={colors.primary} />
+                  <Text style={[styles.chapterText, { color: colors.text }]}>{chapter.label}</Text>
+                  <Text style={[styles.chapterTime, { color: colors.textSecondary }]}>{chapter.time}</Text>
+                </View>
+              ))}
             </View>
           </View>
         ))}
@@ -67,25 +72,24 @@ export default function LearnScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  darkHeader: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 20, borderBottomWidth: 1 },
+  header: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 20, borderBottomWidth: 1 },
   headerTitle: { fontFamily: F.bold, fontSize: 34, lineHeight: 40, letterSpacing: -0.9, textAlign: 'center' },
   filterBar: { paddingVertical: 14, gap: 12 },
   filterHeader: { paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  filterTitle: { fontFamily: F.bold, fontSize: 17, color: '#10233D', letterSpacing: 1.6, textTransform: 'uppercase' },
-  filterSecondary: { fontFamily: F.medium, fontSize: 17, color: '#10233D' },
+  filterTitle: { fontFamily: F.bold, fontSize: 13, letterSpacing: 1.6, textTransform: 'uppercase' },
+  filterSecondary: { fontFamily: F.medium, fontSize: 13 },
   filterChips: { paddingHorizontal: 16, gap: 10 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   chipText: { fontFamily: F.bold, fontSize: 12 },
-  articleScroll: { backgroundColor: '#ECEFF4', paddingVertical: 18, paddingHorizontal: 16, gap: 18, paddingBottom: 40 },
-  articleShell: { borderRadius: 18 },
-  articleCard: { backgroundColor: '#FAFAFA', borderColor: '#D7D6CF', borderWidth: 1, borderRadius: 12, padding: 18, gap: 18 },
+  articleScroll: { paddingVertical: 18, paddingHorizontal: 16, gap: 18, paddingBottom: 40 },
+  articleCard: { borderWidth: 1, borderRadius: 18, padding: 18, gap: 14 },
   articleTag: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
-  articleTagText: { color: '#04111F', fontFamily: F.bold, fontSize: 12 },
-  articleTitle: { color: '#091433', fontFamily: F.bold, fontSize: 26, lineHeight: 34 },
-  articleDescription: { color: '#6B7280', fontFamily: F.regular, fontSize: 16, lineHeight: 28 },
-  articleMeta: { color: '#6B7280', fontFamily: F.medium, fontSize: 14 },
+  articleTagText: { fontFamily: F.bold, fontSize: 12 },
+  articleTitle: { fontFamily: F.bold, fontSize: 22, lineHeight: 30 },
+  articleDescription: { fontFamily: F.regular, fontSize: 15, lineHeight: 26 },
+  articleMeta: { fontFamily: F.medium, fontSize: 13 },
   chapterList: { gap: 10 },
   chapterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  chapterText: { color: '#10233D', fontFamily: F.medium, fontSize: 14, flex: 1 },
-  chapterTime: { color: '#64748B', fontFamily: F.semiBold, fontSize: 12 },
+  chapterText: { fontFamily: F.medium, fontSize: 14, flex: 1 },
+  chapterTime: { fontFamily: F.semiBold, fontSize: 12 },
 });
