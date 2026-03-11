@@ -6,6 +6,7 @@
 
 **Build and repo hygiene:**
 - Added `scripts/clean.js` plus `npm run clean` and `npm run clean:cache` in `package.json`
+- Removed unused `react-native-webview` from the mobile dependency set to shrink install footprint
 - Expanded `.gitignore` to exclude generated cache/build output including `.turbo`, `coverage`, and `ios/DerivedData`
 - Removed generated mobile output directories during cleanup so the repo no longer carries stale `dist` and iOS build artifacts
 - `metro.config.js` now disables hierarchical lookup and keeps `watchFolders` empty to reduce monorepo resolver overhead
