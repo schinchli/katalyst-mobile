@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useTypography } from '@/hooks/useTypography';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { quizzes, quizQuestions } from '@/data/quizzes';
 import { F } from '@/constants/Typography';
@@ -44,6 +45,7 @@ function BookmarkCard({
   onPress:  () => void;
 }) {
   const colors = useThemeColors();
+  const t = useTypography();
   const { question, quiz } = entry;
   const diffColor = getDiffColor(quiz.difficulty, colors);
 
@@ -80,7 +82,7 @@ function BookmarkCard({
         </View>
 
         {/* Question text */}
-        <Text style={[styles.questionText, { color: colors.text }]} numberOfLines={3}>
+        <Text style={[styles.questionText, { color: colors.text, fontSize: t.body }]} numberOfLines={3}>
           {question.text}
         </Text>
 
@@ -132,6 +134,7 @@ function EmptyState({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function BookmarksScreen() {
   const colors         = useThemeColors();
+  const t              = useTypography();
   const bookmarkedIds  = useBookmarkStore((s) => s.bookmarkedIds);
   const toggle         = useBookmarkStore((s) => s.toggle);
   const { isDesktop, contentContainerWeb } = useWebLayout();
@@ -152,7 +155,7 @@ export default function BookmarksScreen() {
       >
         {/* Page title */}
         <View style={styles.pageHeader}>
-          <Text style={[styles.title, { color: colors.text }]}>Bookmarks</Text>
+          <Text style={[styles.title, { color: colors.text, fontSize: t.screenTitle }]}>Bookmarks</Text>
           {entries.length > 0 && (
             <View style={[styles.countBadge, { backgroundColor: colors.primaryLight }]}>
               <Text style={[styles.countBadgeText, { color: colors.primary }]}>{entries.length}</Text>
@@ -180,49 +183,49 @@ export default function BookmarksScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll:   { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 52 },
+  scroll:   { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40 },
 
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 18,
+    gap: 8,
+    marginBottom: 12,
   },
   title: {
     fontFamily: F.bold,
-    fontSize: 26,
+    fontSize: 22,
   },
   countBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   countBadgeText: {
     fontFamily: F.bold,
-    fontSize: 13,
+    fontSize: 11,
   },
 
   // ── Card ───────────────────────────────────────────────────────────────────
   card: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 13,
+    marginBottom: 10,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   accentBar: {
-    width: 4,
+    width: 3,
     flexShrink: 0,
   },
   cardContent: {
     flex: 1,
-    padding: 15,
-    gap: 9,
+    padding: 11,
+    gap: 7,
   },
 
   quizRow: {
@@ -257,8 +260,8 @@ const styles = StyleSheet.create({
 
   questionText: {
     fontFamily: F.medium,
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 19,
   },
 
   footer: {
@@ -302,28 +305,28 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontFamily: F.bold,
-    fontSize: 20,
+    fontSize: 16,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontFamily: F.regular,
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    lineHeight: 21,
+    lineHeight: 18,
   },
   emptyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-    minHeight: 46,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    gap: 7,
+    marginTop: 6,
+    minHeight: 38,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   emptyBtnText: {
     fontFamily: F.semiBold,
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
   },
 });

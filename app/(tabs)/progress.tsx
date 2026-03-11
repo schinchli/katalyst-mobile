@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useTypography } from '@/hooks/useTypography';
 import { useProgressStore } from '@/stores/progressStore';
 import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
@@ -11,6 +12,7 @@ const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function ProgressScreen() {
   const colors = useThemeColors();
+  const t = useTypography();
   const progress = useProgressStore((s) => s.progress);
   const activeDay = Math.min(6, Math.max(0, new Date().getDay() === 0 ? 6 : new Date().getDay() - 1));
   const streakLength = Math.max(0, Math.min(7, progress.currentStreak));
@@ -21,7 +23,7 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.screenTitle, { color: colors.text }]}>Growth</Text>
+        <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Growth</Text>
 
         <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
@@ -34,7 +36,7 @@ export default function ProgressScreen() {
                 <View style={[styles.menuIcon, { backgroundColor: colors.backgroundAlt }]}>
                   <Feather name={item.icon as any} size={18} color={colors.text} />
                 </View>
-                <Text style={[styles.menuTitle, { color: colors.text }]}>{item.title}</Text>
+                <Text style={[styles.menuTitle, { color: colors.text, fontSize: t.cardTitle }]}>{item.title}</Text>
                 {item.badge ? (
                   <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                     <Text style={styles.badgeText}>{item.badge}</Text>
@@ -48,16 +50,16 @@ export default function ProgressScreen() {
         </View>
 
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.panelTitle, { color: colors.text }]}>{EXPERIENCE_COPY.progress.streakTitle}</Text>
-          <Text style={[styles.panelHint, { color: colors.textSecondary }]}>{streakMessage}</Text>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>{EXPERIENCE_COPY.progress.streakTitle}</Text>
+          <Text style={[styles.panelHint, { color: colors.textSecondary, fontSize: t.caption }]}>{streakMessage}</Text>
           <View style={styles.streakNumbers}>
             <View>
-              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.currentStreak} days</Text>
-              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Total</Text>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.currentStreak} days</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Total</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[styles.bigValue, { color: colors.text }]}>{Math.max(0, 2 - Math.min(2, progress.currentStreak))} freezes</Text>
-              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Left</Text>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{Math.max(0, 2 - Math.min(2, progress.currentStreak))} freezes</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Left</Text>
             </View>
           </View>
           <View style={styles.weekRow}>
@@ -68,7 +70,7 @@ export default function ProgressScreen() {
                 <View key={`${label}-${index}`} style={styles.weekCell}>
                   <Text style={[styles.weekLabel, { color: colors.textSecondary }]}>{label}</Text>
                   <View style={[styles.weekBolt, { borderColor: active ? colors.warning : 'transparent' }]}>
-                    <Feather name="zap" size={20} color={active ? colors.warning : colors.surfaceBorder} />
+                    <Feather name="zap" size={16} color={active ? colors.warning : colors.surfaceBorder} />
                   </View>
                 </View>
               );
@@ -77,15 +79,15 @@ export default function ProgressScreen() {
         </View>
 
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.panelTitle, { color: colors.text }]}>{EXPERIENCE_COPY.progress.xpTitle}</Text>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>{EXPERIENCE_COPY.progress.xpTitle}</Text>
           <View style={styles.streakNumbers}>
             <View>
-              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.xp ?? 0}</Text>
-              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Last 30 days</Text>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.xp ?? 0}</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Last 30 days</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[styles.bigValue, { color: colors.text }]}>{progress.averageScore}%</Text>
-              <Text style={[styles.subLabel, { color: colors.textSecondary }]}>Today</Text>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.averageScore}%</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Today</Text>
             </View>
           </View>
           <View style={styles.chartArea}>
@@ -108,29 +110,29 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 18 },
-  screenTitle: { fontFamily: F.bold, fontSize: 34, lineHeight: 40, letterSpacing: -1.1 },
-  menuCard: { borderWidth: 1, borderRadius: 28, overflow: 'hidden' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 18 },
-  menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  menuTitle: { fontFamily: F.semiBold, fontSize: 18, flex: 1 },
-  badge: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 16 },
-  divider: { height: 1, marginHorizontal: 16 },
-  panel: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 16 },
-  panelTitle: { fontFamily: F.bold, fontSize: 18 },
-  panelHint: { fontFamily: F.medium, fontSize: 13, lineHeight: 20, marginTop: -6 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 14 },
+  screenTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
+  menuCard: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  menuIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  menuTitle: { fontFamily: F.semiBold, fontSize: 15, flex: 1 },
+  badge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 12 },
+  divider: { height: 1, marginHorizontal: 14 },
+  panel: { borderWidth: 1, borderRadius: 16, padding: 12, gap: 12 },
+  panelTitle: { fontFamily: F.bold, fontSize: 17 },
+  panelHint: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -4 },
   streakNumbers: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  bigValue: { fontFamily: F.bold, fontSize: 22 },
-  subLabel: { fontFamily: F.regular, fontSize: 14, marginTop: 4 },
+  bigValue: { fontFamily: F.bold, fontSize: 20 },
+  subLabel: { fontFamily: F.regular, fontSize: 12, marginTop: 3 },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  weekCell: { alignItems: 'center', gap: 10 },
-  weekLabel: { fontFamily: F.medium, fontSize: 13 },
-  weekBolt: { width: 52, height: 52, borderRadius: 26, borderWidth: 4, alignItems: 'center', justifyContent: 'center' },
-  chartArea: { gap: 16, marginTop: 4 },
-  chartRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  chartAxisLabel: { width: 14, fontFamily: F.regular, fontSize: 14 },
+  weekCell: { alignItems: 'center', gap: 6 },
+  weekLabel: { fontFamily: F.medium, fontSize: 11 },
+  weekBolt: { width: 38, height: 38, borderRadius: 19, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  chartArea: { gap: 12, marginTop: 2 },
+  chartRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  chartAxisLabel: { width: 12, fontFamily: F.regular, fontSize: 11 },
   chartLine: { flex: 1, borderBottomWidth: 1, borderStyle: 'dotted' },
   chartFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  chartFooterText: { fontFamily: F.regular, fontSize: 13 },
+  chartFooterText: { fontFamily: F.regular, fontSize: 11 },
 });

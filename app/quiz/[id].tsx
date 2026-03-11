@@ -29,6 +29,7 @@ import { PremiumGateModal } from '@/components/ui/PremiumGateModal';
 import { DailyLimitModal } from '@/components/ui/DailyLimitModal';
 import { useInterstitialAd, INTERSTITIAL_AD_INTERVAL } from '@/hooks/useInterstitialAd';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useFontScale } from '@/hooks/useFontScale';
 import { useQuizStore } from '@/stores/quizStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
@@ -38,6 +39,7 @@ import { openCheckout, openCourseUnlock } from '@/services/razorpayService';
 import { quizzes, quizQuestions } from '@/data/quizzes';
 import { CHALLENGE_SCORES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
+import { supabase } from '@/config/supabase';
 
 const QUESTION_TIME = 30;
 const MEDAL_GOLD    = '#FFD700';
@@ -50,6 +52,7 @@ export default function QuizScreen() {
   const { id }   = useLocalSearchParams<{ id: string }>();
   const colors   = useThemeColors();
   const insets   = useSafeAreaInsets();
+  const fScale   = useFontScale();
 
   const [phase, setPhase]               = useState<Phase>('intro');
   const [showFeedback, setShowFeedback] = useState(false);
@@ -118,9 +121,11 @@ export default function QuizScreen() {
   const isLastQuestion         = currentQuestionIndex === questions.length - 1;
   const hasAnsweredCurrent     = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
   const committedCurrentAnswer = currentQuestion ? selectedAnswers[currentQuestion.id] : undefined;
-  const selectedCurrentAnswer  = showFeedback
-    ? committedCurrentAnswer
-    : (pendingAnswerId ?? committedCurrentAnswer);
+  const selectedCurrentAnswer  = (phase === 'review' && pendingAnswerId !== undefined)
+    ? pendingAnswerId
+    : showFeedback
+      ? committedCurrentAnswer
+      : (pendingAnswerId ?? committedCurrentAnswer);
   const isCurrentCorrect = currentQuestion
     ? selectedCurrentAnswer === currentQuestion.correctOptionId
     : false;
@@ -166,7 +171,7 @@ export default function QuizScreen() {
   }, [phase]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleSelectAnswer = (optionId: string) => { if (!showFeedback) setPendingAnswerId(optionId); };
+  const handleSelectAnswer = (optionId: string) => { if (!showFeedback || phase === 'review') setPendingAnswerId(optionId); };
   const handleCheckAnswer  = () => {
     if (!currentQuestion || !pendingAnswerId || showFeedback) return;
     stopTimer(); selectAnswer(currentQuestion.id, pendingAnswerId); setFeedbackDismissed(false); setShowFeedback(true);
@@ -421,11 +426,20 @@ export default function QuizScreen() {
           })}
 
           <View style={s.resultsActions}>
-            <Button title="Review All Answers" variant="outline" size="lg"
-              onPress={() => { goToQuestion(0); setShowFeedback(true); setPhase('review'); }} />
-            <Button title="Leaderboard" variant="secondary" size="lg"
-              onPress={() => exitAndReset(true)} />
-            <Button title="Done" size="lg" onPress={() => exitAndReset()} />
+            <View style={s.resultTopRow}>
+              <Button title="Review Answers" variant="outline" size="lg" style={s.resultActionBtn}
+                onPress={() => { goToQuestion(0); setShowFeedback(true); setPhase('review'); }} />
+              <Button title="Leaderboard" variant="secondary" size="lg" style={s.resultActionBtn}
+                onPress={() => exitAndReset(true)} />
+            </View>
+            <Pressable
+              onPress={() => exitAndReset()}
+              hitSlop={8}
+              style={[s.navBtn, { borderColor: colors.primary, justifyContent: 'center', alignSelf: 'center', paddingHorizontal: 32 }]}
+            >
+              <Text style={[s.navBtnText, { color: colors.primary }]}>Done</Text>
+              <Feather name="check" size={18} color={colors.primary} />
+            </Pressable>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -471,37 +485,38 @@ export default function QuizScreen() {
           />
         </View>
 
-        {/* Navigation bar — Previous (left) | Next → (right, primary) */}
+        {/* Navigation bar — Previous (left) | Next (right) */}
         <View style={[s.flashNav, {
           backgroundColor: colors.surface,
           borderTopColor:  colors.surfaceBorder,
           paddingBottom:   bottomSpacer,
         }]}>
-          <Button
-            title="← Prev"
-            variant="outline"
-            disabled={flashIndex === 0}
+          <Pressable
             onPress={() => { setFlashIndex((i) => i - 1); setFlashFlipped(false); }}
-            size="lg"
-            style={s.flashNavBtn}
-          />
-          {flashIndex < questions.length - 1 ? (
-            <Button
-              title="Next →"
-              variant="primary"
-              onPress={() => { setFlashIndex((i) => i + 1); setFlashFlipped(false); }}
-              size="lg"
-              style={s.flashNavBtn}
+            disabled={flashIndex === 0}
+            hitSlop={8}
+            style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: flashIndex === 0 ? 0.3 : 1 }]}
+          >
+            <Feather name="chevrons-left" size={18} color={colors.text} />
+            <Text style={[s.navBtnText, { color: colors.text }]}>Previous</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => flashIndex < questions.length - 1
+              ? (setFlashIndex((i) => i + 1), setFlashFlipped(false))
+              : exitAndReset()
+            }
+            hitSlop={8}
+            style={[s.navBtn, { borderColor: colors.primary }]}
+          >
+            <Text style={[s.navBtnText, { color: colors.primary }]}>
+              {flashIndex < questions.length - 1 ? 'Next' : 'Done'}
+            </Text>
+            <Feather
+              name={flashIndex < questions.length - 1 ? 'chevrons-right' : 'check'}
+              size={18}
+              color={colors.primary}
             />
-          ) : (
-            <Button
-              title="Done"
-              variant="primary"
-              onPress={() => exitAndReset()}
-              size="lg"
-              style={s.flashNavBtn}
-            />
-          )}
+          </Pressable>
         </View>
       </SafeAreaView>
     );
@@ -520,17 +535,13 @@ export default function QuizScreen() {
 
       {/* ── Quiz header ── */}
       <View style={[s.quizHeader, { backgroundColor: colors.background }]}>
-        <Pressable
-          onPress={isReview ? () => setPhase('results') : () => currentQuestion && setShowReport(true)}
-          hitSlop={14}
-          style={s.quizHeaderBtn}
-        >
-          <Feather
-            name={isReview ? 'arrow-left' : 'alert-triangle'}
-            size={isReview ? 22 : 20}
-            color={colors.textSecondary}
-          />
-        </Pressable>
+        {isReview ? (
+          <Pressable onPress={() => setPhase('results')} hitSlop={14} style={s.quizHeaderBtn}>
+            <Feather name="arrow-left" size={22} color={colors.textSecondary} />
+          </Pressable>
+        ) : (
+          <View style={s.quizHeaderBtn} />
+        )}
 
         <View style={s.quizHeaderProgress}>
           <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} height={5} />
@@ -557,7 +568,7 @@ export default function QuizScreen() {
             question={currentQuestion}
             selectedOptionId={selectedCurrentAnswer}
             onSelectOption={handleSelectAnswer}
-            showResult={showFeedback && hasAnsweredCurrent}
+            showResult={phase === 'review' ? (hasAnsweredCurrent || pendingAnswerId !== undefined) : (showFeedback && hasAnsweredCurrent)}
             resultTone={isCurrentCorrect ? 'correct' : 'incorrect'}
             hiddenOptionIds={hiddenOptions}
             onReport={!isReview ? () => setShowReport(true) : undefined}
@@ -565,49 +576,53 @@ export default function QuizScreen() {
         )}
       </ScrollView>
 
-      {/* ── Bottom action bar ── */}
+      {/* ── Bottom action bar — bordered nav buttons matching flashcard style ── */}
       <View style={[s.quizBottom, { paddingBottom: bottomSpacer }]}>
-        <View style={s.twoButtonRow}>
-          {/* Previous — hidden on Q1 so the right button fills full width */}
-          {currentQuestionIndex > 0 && (
-            <Button
-              title="Previous"
-              variant="outline"
-              size="lg"
-              style={{ flex: 1 }}
-              onPress={handlePrevious}
-            />
-          )}
+        <View style={s.navRow}>
+          {/* Left — Previous */}
+          <Pressable
+            onPress={handlePrevious}
+            disabled={currentQuestionIndex === 0}
+            hitSlop={8}
+            style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: currentQuestionIndex === 0 ? 0.3 : 1 }]}
+          >
+            <Feather name="chevrons-left" size={18} color={colors.text} />
+            <Text style={[s.navBtnText, { color: colors.text }]}>Previous</Text>
+          </Pressable>
 
-          {/* Right button — Check (success) | Next/Done/Results (outline = same as Previous) */}
+          {/* Right — Check / Next / Done */}
           {isReview ? (
-            <Button
-              title={isLastQuestion ? 'Done' : 'Next'}
-              variant="outline"
-              size="lg"
-              style={{ flex: 1 }}
-              onPress={() => {
-                if (isLastQuestion) exitAndReset();
-                else { setShowFeedback(true); nextQuestion(); }
-              }}
-            />
+            <Pressable
+              hitSlop={8}
+              onPress={() => isLastQuestion ? exitAndReset() : (setShowFeedback(true), nextQuestion())}
+              style={[s.navBtn, { borderColor: colors.primary }]}
+            >
+              <Text style={[s.navBtnText, { color: colors.primary }]}>
+                {isLastQuestion ? 'Done' : 'Next'}
+              </Text>
+              <Feather name={isLastQuestion ? 'check' : 'chevrons-right'} size={18} color={colors.primary} />
+            </Pressable>
           ) : showFeedback && hasAnsweredCurrent ? (
-            <Button
-              title={isLastQuestion ? 'See Results' : 'Next'}
-              variant="outline"
-              size="lg"
-              style={{ flex: 1 }}
+            <Pressable
               onPress={handleNext}
-            />
+              hitSlop={8}
+              style={[s.navBtn, { borderColor: colors.primary }]}
+            >
+              <Text style={[s.navBtnText, { color: colors.primary }]}>
+                {isLastQuestion ? 'Results' : 'Next'}
+              </Text>
+              <Feather name={isLastQuestion ? 'award' : 'chevrons-right'} size={18} color={colors.primary} />
+            </Pressable>
           ) : (
-            <Button
-              title="Check"
-              variant="success"
-              size="lg"
-              style={{ flex: 1 }}
-              disabled={!pendingAnswerId}
+            <Pressable
               onPress={handleCheckAnswer}
-            />
+              disabled={!pendingAnswerId}
+              hitSlop={8}
+              style={[s.navBtn, { borderColor: pendingAnswerId ? colors.primary : colors.surfaceBorder, opacity: pendingAnswerId ? 1 : 0.45 }]}
+            >
+              <Text style={[s.navBtnText, { color: pendingAnswerId ? colors.primary : colors.textSecondary }]}>Check</Text>
+              <Feather name="check" size={18} color={pendingAnswerId ? colors.primary : colors.textSecondary} />
+            </Pressable>
           )}
         </View>
       </View>
@@ -615,7 +630,8 @@ export default function QuizScreen() {
       {/* ── Report modal ── */}
       <Modal visible={showReport} transparent animationType="slide" onRequestClose={() => setShowReport(false)}>
         <Pressable style={[s.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]} onPress={() => setShowReport(false)}>
-          <Pressable style={[s.reportSheet, { backgroundColor: colors.surface }]} onPress={() => {}}>
+          {/* View (not Pressable) so nested Pressables get full layout width */}
+          <View style={[s.reportSheet, { backgroundColor: colors.surface }]}>
             {reportSubmitted ? (
               <View style={s.reportThanks}>
                 <View style={[s.reportThanksIcon, { backgroundColor: colors.success + '22' }]}>
@@ -629,7 +645,7 @@ export default function QuizScreen() {
                 </Pressable>
               </View>
             ) : (
-              <>
+              <View>
                 <View style={s.reportHeader}>
                   <Text style={[s.reportTitle, { color: colors.text }]}>Report Question</Text>
                   <Pressable onPress={() => setShowReport(false)} hitSlop={8}>
@@ -638,19 +654,42 @@ export default function QuizScreen() {
                 </View>
                 <Text style={[s.reportSub, { color: colors.textSecondary }]}>Select an issue to report.</Text>
                 {['Incorrect answer', 'Unclear question', 'Outdated info', 'Other'].map((r) => (
-                  <Pressable key={r} onPress={() => setReportSubmitted(true)}
-                    style={({ pressed }) => [s.reportOption, {
-                      backgroundColor: pressed ? colors.primaryLight : colors.surfaceElevated,
-                      borderColor: colors.surfaceBorder,
-                    }]}>
-                    <Feather name="flag" size={14} color={colors.textSecondary} />
+                  <Pressable
+                    key={r}
+                    onPress={async () => {
+                      setReportSubmitted(true);
+                      try {
+                        const newEntry = {
+                          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                          quizId: quiz?.id ?? id,
+                          questionId: currentQuestion?.id ?? '',
+                          questionText: (currentQuestion?.text ?? '').slice(0, 120),
+                          reason: r,
+                          reportedAt: new Date().toISOString(),
+                        };
+                        const { data: existing } = await supabase
+                          .from('app_settings')
+                          .select('value')
+                          .eq('key', 'question_reports')
+                          .single();
+                        const prev: typeof newEntry[] = Array.isArray(existing?.value) ? existing.value : [];
+                        await supabase
+                          .from('app_settings')
+                          .upsert({ key: 'question_reports', value: [...prev, newEntry] }, { onConflict: 'key' });
+                      } catch {
+                        // best-effort — don't block the thank-you screen
+                      }
+                    }}
+                    style={[s.reportOption, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}
+                  >
+                    <Feather name="flag" size={14} color={colors.primary} />
                     <Text style={[s.reportOptionText, { color: colors.text }]}>{r}</Text>
                     <Feather name="chevron-right" size={14} color={colors.textSecondary} />
                   </Pressable>
                 ))}
-              </>
+              </View>
             )}
-          </Pressable>
+          </View>
         </Pressable>
       </Modal>
     </SafeAreaView>
@@ -704,15 +743,16 @@ const s = StyleSheet.create({
   breakdownNum:  { fontFamily: F.semiBold, fontSize: 13 },
   breakdownQ:    { fontFamily: F.regular, flex: 1, fontSize: 14, lineHeight: 20 },
 
-  resultsActions: { gap: 10 },
+  resultsActions:   { gap: 10 },
+  resultTopRow:     { flexDirection: 'row', gap: 10 },
+  resultActionBtn:  { flex: 1 },
 
   // ── Flashcard ──
   flashBadge:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, minWidth: 60, justifyContent: 'flex-end' },
   flashBadgeText:    { fontFamily: F.semiBold, fontSize: 12 },
   flashProgress:     { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
   flashProgressText: { fontFamily: F.semiBold, fontSize: 12, minWidth: 44, textAlign: 'right' },
-  flashNav:    { flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
-  flashNavBtn: { flex: 1 },
+  flashNav:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
 
   // ── Intro — vivid gradient full-screen ──
   introHdr:           { paddingHorizontal: 12, paddingTop: 4 },
@@ -745,13 +785,15 @@ const s = StyleSheet.create({
   // Quiz scroll — padding around QuestionView content
   quizScroll: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 28,
+    paddingBottom: 20,
   },
 
-  // Quiz bottom bar — transparent, no border, buttons sit directly on screen bg
-  quizBottom:   { paddingHorizontal: 16, paddingTop: 12 },
-  twoButtonRow: { flexDirection: 'row', gap: 12 },
+  // Quiz bottom bar — bordered nav buttons
+  quizBottom: { paddingHorizontal: 16, paddingTop: 14 },
+  navRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  navBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 11 },
+  navBtnText: { fontFamily: F.bold, fontSize: 15 },
 
   // Report modal
   modalOverlay:       { flex: 1, justifyContent: 'flex-end' },

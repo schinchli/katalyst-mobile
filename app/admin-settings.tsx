@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -16,6 +16,14 @@ import { QUIZ_CATALOG_OVERRIDES_KEY } from '@/config/quizCatalog';
 import { F } from '@/constants/Typography';
 
 type QuizEntry = { isPremium: boolean; price: number; enabled: boolean };
+type QuestionReport = {
+  id: string;
+  quizId: string;
+  questionId: string;
+  questionText: string;
+  reason: string;
+  reportedAt: string;
+};
 
 const PRESETS: AccentPreset[] = ['indigo', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'emerald'];
 
@@ -36,6 +44,24 @@ export default function AdminSettingsScreen() {
   );
   const [quizSaving, setQuizSaving] = useState(false);
   const [expandedQuiz, setExpandedQuiz] = useState<string | null>(null);
+
+  // ── Question reports ─────────────────────────────────────────────────────
+  const [reports, setReports] = useState<QuestionReport[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    setReportsLoading(true);
+    supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'question_reports')
+      .single()
+      .then(({ data }) => {
+        setReports(Array.isArray(data?.value) ? (data.value as QuestionReport[]) : []);
+      })
+      .finally(() => setReportsLoading(false));
+  }, [isAdmin]);
 
   const handleSaveQuizCatalog = async () => {
     setQuizSaving(true);
@@ -297,6 +323,45 @@ export default function AdminSettingsScreen() {
           <Button title="Save quiz catalog" loading={quizSaving} onPress={handleSaveQuizCatalog} />
         </View>
 
+        {/* ── Question Reports ── */}
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={styles.catalogHeader}>
+            <View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Question Reports</Text>
+              <Text style={[styles.catalogSubtitle, { color: colors.textSecondary }]}>
+                {reportsLoading ? 'Loading…' : `${reports.length} report${reports.length !== 1 ? 's' : ''} submitted`}
+              </Text>
+            </View>
+            <View style={[styles.catalogBadge, { backgroundColor: colors.error + '22' }]}>
+              <Feather name="flag" size={14} color={colors.error} />
+              <Text style={[styles.catalogBadgeText, { color: colors.error }]}>USER</Text>
+            </View>
+          </View>
+
+          {reports.length === 0 && !reportsLoading ? (
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>No reports yet.</Text>
+          ) : (
+            [...reports].reverse().map((report) => (
+              <View key={report.id} style={[styles.reportItem, { borderColor: colors.surfaceBorder }]}>
+                <View style={styles.reportItemHeader}>
+                  <View style={[styles.reportReasonChip, { backgroundColor: colors.error + '22' }]}>
+                    <Text style={[styles.reportReasonText, { color: colors.error }]}>{report.reason}</Text>
+                  </View>
+                  <Text style={[styles.reportDate, { color: colors.textSecondary }]}>
+                    {new Date(report.reportedAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                <Text style={[styles.reportQuestionText, { color: colors.text }]} numberOfLines={2}>
+                  {report.questionText || '(no text)'}
+                </Text>
+                <Text style={[styles.reportMeta, { color: colors.textSecondary }]}>
+                  Quiz: {report.quizId}
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
+
         <Button
           title="Save platform settings"
           loading={saving}
@@ -359,4 +424,13 @@ const styles = StyleSheet.create({
   disabledChip:      { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5 },
   disabledChipText:  { fontFamily: F.bold, fontSize: 9, letterSpacing: 0.4 },
   quizEditArea:      { borderTopWidth: 1, paddingHorizontal: 12, paddingBottom: 12, paddingTop: 4, gap: 6 },
+
+  // ── Question reports ──
+  reportItem:        { borderWidth: 1, borderRadius: 14, padding: 12, gap: 6 },
+  reportItemHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  reportReasonChip:  { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  reportReasonText:  { fontFamily: F.bold, fontSize: 11, letterSpacing: 0.3 },
+  reportDate:        { fontFamily: F.regular, fontSize: 11 },
+  reportQuestionText:{ fontFamily: F.medium, fontSize: 13, lineHeight: 18 },
+  reportMeta:        { fontFamily: F.regular, fontSize: 11 },
 });

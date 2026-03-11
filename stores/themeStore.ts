@@ -45,38 +45,57 @@ export const ACCENT_PRESETS: Record<AccentPreset, AccentConfig> = {
   indigo:   { primary: '#4B5EFA', primaryLight: '#E8EAFF', primaryText: '#2B3ECC', primaryTextDark: '#A5B4FC', gradientFrom: '#4B5EFA', gradientTo: '#0EA5E9', gradientAccent: '#22D3EE', label: 'Deep Indigo',    emoji: '🔵' },
 };
 
+export type FontSizePreset = 'small' | 'medium' | 'large';
+
+// Best-practice scale ratios (Apple HIG + Material Design)
+// Small  → 87.5% — readable but compact
+// Medium → 100%  — default, matches platform norms
+// Large  → 112.5% — accessible, comfortable for longer reading
+export const FONT_SCALE: Record<FontSizePreset, number> = {
+  small:  0.875,
+  medium: 1.0,
+  large:  1.125,
+};
+
 interface ThemeState {
-  accent:       AccentPreset;
-  darkMode:     boolean;
-  usePlatform:  boolean;
-  setAccent:    (preset: AccentPreset) => void;
-  toggleDark:   () => void;
-  setDarkMode:  (value: boolean) => void;
-  setUsePlatform: (value: boolean) => void;
+  accent:              AccentPreset;
+  darkMode:            boolean;
+  usePlatform:         boolean;
+  animationsEnabled:   boolean;
+  fontSizePreset:      FontSizePreset;
+  setAccent:           (preset: AccentPreset) => void;
+  toggleDark:          () => void;
+  setDarkMode:         (value: boolean) => void;
+  setUsePlatform:      (value: boolean) => void;
+  setAnimationsEnabled:(value: boolean) => void;
+  setFontSizePreset:   (preset: FontSizePreset) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      accent:      'indigo',
-      darkMode:    true,
-      usePlatform: true,
-      setAccent:   (accent)  => set({ accent }),
-      toggleDark:  ()        => set((s) => ({ darkMode: !s.darkMode })),
-      setDarkMode: (darkMode) => set({ darkMode }),
-      setUsePlatform: (usePlatform) => set({ usePlatform }),
+      accent:            'indigo',
+      darkMode:          true,
+      usePlatform:       true,
+      animationsEnabled: true,
+      fontSizePreset:    'medium',
+      setAccent:           (accent)            => set({ accent }),
+      toggleDark:          ()                  => set((s) => ({ darkMode: !s.darkMode })),
+      setDarkMode:         (darkMode)          => set({ darkMode }),
+      setUsePlatform:      (usePlatform)       => set({ usePlatform }),
+      setAnimationsEnabled:(animationsEnabled) => set({ animationsEnabled }),
+      setFontSizePreset:   (fontSizePreset)    => set({ fontSizePreset }),
     }),
     {
       name:    'theme-store',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 2,
+      version: 3,
       migrate: async (persisted) => {
         const state = persisted as ThemeState | undefined;
-        if (!state) return { accent: 'indigo', darkMode: true, usePlatform: true } as ThemeState;
-        // Normalize legacy preset ids (purple → aurora, teal → ocean, datacamp → indigo)
+        if (!state) return { accent: 'indigo', darkMode: true, usePlatform: true, animationsEnabled: true, fontSizePreset: 'medium' } as ThemeState;
         const legacyMap: Record<string, AccentPreset> = { purple: 'aurora', teal: 'ocean', datacamp: 'indigo' };
         const nextAccent = legacyMap[state.accent as string] ?? state.accent ?? 'indigo';
-        return { ...state, accent: nextAccent, darkMode: state.darkMode ?? true, usePlatform: state.usePlatform ?? true };
+        return { ...state, accent: nextAccent, darkMode: state.darkMode ?? true, usePlatform: state.usePlatform ?? true, animationsEnabled: state.animationsEnabled ?? true, fontSizePreset: state.fontSizePreset ?? 'medium' };
       },
     },
   ),

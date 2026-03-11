@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useTypography } from '@/hooks/useTypography';
 import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore, calculateLevel, LEVEL_NAMES } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
@@ -38,12 +39,11 @@ function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap
 
 export default function HomeScreen() {
   const colors = useThemeColors();
+  const t = useTypography();
   const user = useAuthStore((s) => s.user);
   const progress = useProgressStore((s) => s.progress);
-  const featuredQuiz = quizzes[0];
   const popularCourses = quizzes.slice(0, 6);
   const flashcardItems = flashcards.slice(0, 4);
-  const courseCompletion = featuredQuiz ? Math.min(100, Math.max(8, Math.round((progress.completedQuizzes / quizzes.length) * 100))) : 0;
   const firstName = user?.name?.split(' ')[0] ?? 'Learner';
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const streak = progress.currentStreak;
@@ -74,32 +74,11 @@ export default function HomeScreen() {
         ) : null}
 
         <LinearGradient colors={[colors.backgroundAlt, colors.surface, colors.surfaceElevated]} style={[styles.heroCard, { borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.heroEyebrow, { color: colors.primary }]}>{EXPERIENCE_COPY.home.heroEyebrow}</Text>
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Hi {firstName}, {platformConfig.copy.homeHeroTitle}</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>{platformConfig.copy.homeHeroSubtitle}</Text>
-          <Text style={[styles.heroStreakMessage, { color: colors.textSecondary }]}>{streakMessage}</Text>
+          <Text style={[styles.heroEyebrow, { color: colors.primary, fontSize: t.micro }]}>{EXPERIENCE_COPY.home.heroEyebrow}</Text>
+          <Text style={[styles.heroTitle, { color: colors.text, fontSize: t.screenTitle }]}>Hi {firstName}, {platformConfig.copy.homeHeroTitle}</Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary, fontSize: t.body }]}>{platformConfig.copy.homeHeroSubtitle}</Text>
+          <Text style={[styles.heroStreakMessage, { color: colors.textSecondary, fontSize: t.caption }]}>{streakMessage}</Text>
 
-          <View style={[styles.heroCourseCard, { backgroundColor: platformConfig.colors.homeHeroCourseBg }]}>
-            <View style={styles.heroCourseTop}>
-              <View>
-                <Text style={[styles.heroCourseTitle, { color: colors.text }]}>{featuredQuiz?.title ?? 'Featured course'}</Text>
-                <View style={[styles.desktopOnlyChip, { backgroundColor: colors.primaryLight }]}>
-                  <Text style={[styles.desktopOnlyText, { color: colors.primary }]}>
-                    {featuredQuiz?.isPremium ? 'Premium track' : 'Available everywhere'}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.progressRing, { borderColor: colors.primary + '25' }]}>
-                <View style={[styles.progressRingInner, { borderColor: colors.primary }]}>
-                  <Text style={[styles.progressRingText, { color: colors.text }]}>{courseCompletion}%</Text>
-                </View>
-              </View>
-            </View>
-
-            <Pressable onPress={() => router.push(featuredQuiz ? `/quiz/${featuredQuiz.id}` : '/(tabs)/quizzes')} style={[styles.heroPrimaryCta, { backgroundColor: colors.primary }]}>
-              <Text style={styles.heroPrimaryText}>{EXPERIENCE_COPY.home.primaryCta}</Text>
-            </Pressable>
-          </View>
         </LinearGradient>
 
         {platformConfig.widgets.showHomeActions ? (
@@ -107,10 +86,10 @@ export default function HomeScreen() {
             {actionCards.map((item) => (
             <Pressable key={item.title} onPress={() => router.push(item.route as any)} style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               <View style={[styles.actionIcon, { backgroundColor: item.tone + '20' }]}>
-                <Feather name={item.icon as any} size={22} color={item.tone} />
+                <Feather name={item.icon as any} size={18} color={item.tone} />
               </View>
-              <Text style={[styles.actionTitle, { color: colors.text }]}>{item.title}</Text>
-              <Text style={[styles.actionSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
+              <Text style={[styles.actionTitle, { color: colors.text, fontSize: t.cardTitle }]}>{item.title}</Text>
+              <Text style={[styles.actionSubtitle, { color: colors.textSecondary, fontSize: t.caption }]}>{item.subtitle}</Text>
             </Pressable>
             ))}
           </View>
@@ -119,7 +98,7 @@ export default function HomeScreen() {
         {platformConfig.widgets.showPopularCourses ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Courses</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Popular Courses</Text>
               <Pressable onPress={() => router.push('/(tabs)/quizzes')}>
                 <Text style={[styles.sectionLink, { color: colors.text }]}>{'See All'}</Text>
               </Pressable>
@@ -146,7 +125,7 @@ export default function HomeScreen() {
                     <View style={[styles.courseProgressTrack, { backgroundColor: colors.backgroundAlt }]}>
                       <View style={[styles.courseProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 1) * 14)}%` }]} />
                     </View>
-                    <Text style={[styles.courseTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
+                    <Text style={[styles.courseTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{quiz.title}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -157,7 +136,7 @@ export default function HomeScreen() {
         {platformConfig.widgets.showFlashcards ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Flashcard Packs</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Flashcard Packs</Text>
             </View>
 
             <View style={styles.flashcardList}>
@@ -181,8 +160,8 @@ export default function HomeScreen() {
                     );
                   })()}
                   <View style={styles.flashcardBody}>
-                    <Text style={[styles.flashcardTitle, { color: colors.text }]} numberOfLines={2}>{item.front}</Text>
-                    <Text style={[styles.flashcardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                    <Text style={[styles.flashcardTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{item.front}</Text>
+                    <Text style={[styles.flashcardSubtitle, { color: colors.textSecondary, fontSize: t.caption }]} numberOfLines={1}>
                       {item.tag ?? 'Core concept'} · tap to review
                     </Text>
                   </View>
@@ -196,21 +175,21 @@ export default function HomeScreen() {
         {platformConfig.widgets.showGrowthWidget ? (
           <LinearGradient colors={[colors.surface, colors.surfaceElevated]} style={[styles.growthCard, { borderColor: colors.surfaceBorder }]}>
             <View style={styles.growthHeader}>
-              <Text style={[styles.growthTitle, { color: colors.text }]}>Growth snapshot</Text>
+              <Text style={[styles.growthTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Growth snapshot</Text>
               <Text style={[styles.growthChip, { color: colors.primary }]}>{progress.currentStreak} day streak</Text>
             </View>
             <View style={styles.growthGrid}>
               <View>
-                <Text style={[styles.growthValue, { color: colors.text }]}>{progress.completedQuizzes}</Text>
-                <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>Completed</Text>
+                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.completedQuizzes}</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Completed</Text>
               </View>
               <View>
-                <Text style={[styles.growthValue, { color: colors.text }]}>{progress.averageScore}%</Text>
-                <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>Average score</Text>
+                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.averageScore}%</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Average score</Text>
               </View>
               <View>
-                <Text style={[styles.growthValue, { color: colors.text }]}>{progress.badges.length}</Text>
-                <Text style={[styles.growthLabel, { color: colors.textSecondary }]}>Badges</Text>
+                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.badges.length}</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Badges</Text>
               </View>
             </View>
           </LinearGradient>
@@ -222,56 +201,46 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll: { paddingHorizontal: 16, paddingBottom: 44, gap: 18 },
-  topStats: { flexDirection: 'row', gap: 12, marginBottom: 6 },
-  statPill: { flex: 1, borderWidth: 1, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  statPillText: { fontFamily: F.bold, fontSize: 16 },
-  heroCard: { borderWidth: 1, borderRadius: 30, padding: 20, gap: 14 },
-  heroEyebrow: { fontFamily: F.bold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.8 },
-  heroTitle: { fontFamily: F.bold, fontSize: 28, lineHeight: 34, letterSpacing: -0.8 },
-  heroSubtitle: { fontFamily: F.regular, fontSize: 15, lineHeight: 24 },
-  heroStreakMessage: { fontFamily: F.medium, fontSize: 13, lineHeight: 20, marginTop: -4 },
-  heroCourseCard: { backgroundColor: '#0E1830', borderRadius: 24, padding: 18, gap: 18 },
-  heroCourseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  heroCourseTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24, maxWidth: 190 },
-  desktopOnlyChip: { alignSelf: 'flex-start', borderRadius: 999, marginTop: 8, paddingHorizontal: 12, paddingVertical: 7 },
-  desktopOnlyText: { fontFamily: F.semiBold, fontSize: 13 },
-  progressRing: { width: 124, height: 124, borderRadius: 62, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
-  progressRingInner: { width: 100, height: 100, borderRadius: 50, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
-  progressRingText: { fontFamily: F.bold, fontSize: 30 },
-  heroPrimaryCta: { borderRadius: 20, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
-  heroPrimaryText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 16 },
-  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  actionStack: { gap: 14 },
-  actionCard: { width: '48%', borderWidth: 1, borderRadius: 24, padding: 16, minHeight: 168, gap: 12 },
-  actionIcon: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  actionTitle: { fontFamily: F.bold, fontSize: 18 },
-  actionSubtitle: { fontFamily: F.regular, fontSize: 14, lineHeight: 22 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
-  sectionTitle: { fontFamily: F.bold, fontSize: 18 },
-  sectionLink: { fontFamily: F.semiBold, fontSize: 15, textDecorationLine: 'underline' },
-  horizontalRow: { gap: 14, paddingRight: 16 },
-  courseCard: { width: 184, borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
-  courseVisual: { height: 128, alignItems: 'center', justifyContent: 'center', gap: 6 },
-  courseVisualIcon: { width: 40, height: 40 },
-  courseVisualLabel: { fontFamily: F.bold, fontSize: 11, color: 'rgba(255,255,255,0.92)', letterSpacing: 0.8, textTransform: 'uppercase' },
-  courseBody: { padding: 14, gap: 12 },
-  courseProgressTrack: { height: 12, borderRadius: 999, overflow: 'hidden' },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 14 },
+  topStats: { flexDirection: 'row', gap: 10, marginBottom: 2 },
+  statPill: { flex: 1, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  statPillText: { fontFamily: F.bold, fontSize: 14 },
+  heroCard: { borderWidth: 1, borderRadius: 20, padding: 14, gap: 10 },
+  heroEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  heroTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.6 },
+  heroSubtitle: { fontFamily: F.regular, fontSize: 14, lineHeight: 21 },
+  heroStreakMessage: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -2 },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  actionStack: { gap: 12 },
+  actionCard: { width: '48%', borderWidth: 1, borderRadius: 16, padding: 12, minHeight: 130, gap: 8 },
+  actionIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  actionTitle: { fontFamily: F.bold, fontSize: 15 },
+  actionSubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 18 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
+  sectionTitle: { fontFamily: F.bold, fontSize: 17 },
+  sectionLink: { fontFamily: F.semiBold, fontSize: 14, textDecorationLine: 'underline' },
+  horizontalRow: { gap: 12, paddingRight: 16 },
+  courseCard: { width: 148, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  courseVisual: { height: 96, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  courseVisualIcon: { width: 30, height: 30 },
+  courseVisualLabel: { fontFamily: F.bold, fontSize: 10, color: 'rgba(255,255,255,0.92)', letterSpacing: 0.8, textTransform: 'uppercase' },
+  courseBody: { padding: 10, gap: 8 },
+  courseProgressTrack: { height: 8, borderRadius: 999, overflow: 'hidden' },
   courseProgressFill: { height: '100%', borderRadius: 999 },
-  courseTitle: { fontFamily: F.bold, fontSize: 17, lineHeight: 24 },
-  flashcardList: { gap: 12 },
-  flashcardRow: { borderWidth: 1, borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  flashcardBadge: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  flashcardBadgeText: { fontFamily: F.bold, fontSize: 16 },
-  flashcardIcon: { width: 32, height: 32 },
-  flashcardBody: { flex: 1, gap: 5 },
-  flashcardTitle: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 22 },
-  flashcardSubtitle: { fontFamily: F.regular, fontSize: 13 },
-  growthCard: { borderWidth: 1, borderRadius: 28, padding: 18, gap: 18, marginTop: 4 },
+  courseTitle: { fontFamily: F.bold, fontSize: 14, lineHeight: 20 },
+  flashcardList: { gap: 10 },
+  flashcardRow: { borderWidth: 1, borderRadius: 14, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  flashcardBadge: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  flashcardBadgeText: { fontFamily: F.bold, fontSize: 13 },
+  flashcardIcon: { width: 24, height: 24 },
+  flashcardBody: { flex: 1, gap: 4 },
+  flashcardTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
+  flashcardSubtitle: { fontFamily: F.regular, fontSize: 12 },
+  growthCard: { borderWidth: 1, borderRadius: 18, padding: 12, gap: 12, marginTop: 2 },
   growthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  growthTitle: { fontFamily: F.bold, fontSize: 18 },
-  growthChip: { fontFamily: F.semiBold, fontSize: 13 },
+  growthTitle: { fontFamily: F.bold, fontSize: 17 },
+  growthChip: { fontFamily: F.semiBold, fontSize: 11 },
   growthGrid: { flexDirection: 'row', justifyContent: 'space-between' },
-  growthValue: { fontFamily: F.bold, fontSize: 26 },
-  growthLabel: { fontFamily: F.regular, fontSize: 13, marginTop: 4 },
+  growthValue: { fontFamily: F.bold, fontSize: 20 },
+  growthLabel: { fontFamily: F.regular, fontSize: 11, marginTop: 3 },
 });
