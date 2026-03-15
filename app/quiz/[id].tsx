@@ -66,6 +66,7 @@ export default function QuizScreen() {
   const [showReport, setShowReport]           = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [timeLeft, setTimeLeft]               = useState(QUESTION_TIME);
+  const [pointScore, setPointScore]           = useState(0);
   const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAt    = useRef<number>(Date.now());
   // Flashcard swipe — ref tracks latest index to avoid stale closure in PanResponder
@@ -89,13 +90,19 @@ export default function QuizScreen() {
   const [hiddenOptions, setHiddenOptions]     = useState<string[]>([]);
   const [skipsLeft, setSkipsLeft]             = useState(3);
 
-  const quiz         = quizzes.find((q) => q.id === id);
-  const rawQuestions = quizQuestions[id ?? ''] ?? [];
-  const questions    = useMemo(
-    () => rawQuestions.map((q) => ({ ...q, options: [...q.options].sort(() => Math.random() - 0.5) })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id],
+  const quiz               = quizzes.find((q) => q.id === id);
+  const rawQuestions       = quizQuestions[id ?? ''] ?? [];
+  const fixedQuestionCount = Math.max(0, quiz?.fixedQuestionCount ?? 0);
+  const questionPool       = useMemo(
+    () => (fixedQuestionCount > 0 ? rawQuestions.slice(0, Math.min(fixedQuestionCount, rawQuestions.length)) : rawQuestions),
+    [fixedQuestionCount, rawQuestions],
   );
+  const questions          = useMemo(
+    () => questionPool.map((q) => ({ ...q, options: [...q.options].sort(() => Math.random() - 0.5) })),
+    [questionPool],
+  );
+  const correctPoints      = quiz?.correctScore ?? 1;
+  const wrongPoints        = quiz?.wrongScore ?? 0;
 
   const currentQuestionIndex   = useQuizStore((s) => s.currentQuestionIndex);
   const selectedAnswers         = useQuizStore((s) => s.selectedAnswers);
@@ -138,15 +145,24 @@ export default function QuizScreen() {
   const calculateScore = useCallback(() =>
     questions.reduce((s, q) => (selectedAnswers[q.id] === q.correctOptionId ? s + 1 : s), 0),
   [questions, selectedAnswers]);
+  const calculatePointScore = useCallback(() =>
+    questions.reduce((sum, q) => {
+      const answer = selectedAnswers[q.id];
+      if (answer === undefined) return sum;
+      return sum + (answer === q.correctOptionId ? correctPoints : wrongPoints);
+    }, 0),
+  [correctPoints, questions, selectedAnswers, wrongPoints]);
 
   const finishQuiz = useCallback(() => {
     stopTimer();
     const score     = calculateScore();
+    const points    = calculatePointScore();
     const timeTaken = Math.round((Date.now() - startedAt.current) / 1000);
+    setPointScore(points);
     addResult({ quizId: id ?? '', score, totalQuestions: questions.length, timeTaken, answers: selectedAnswers, completedAt: new Date().toISOString() });
     setPhase('results');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stopTimer, calculateScore, addResult, id, questions.length, selectedAnswers]);
+  }, [stopTimer, calculateScore, calculatePointScore, addResult, id, questions.length, selectedAnswers]);
 
   useEffect(() => {
     if (phase !== 'quiz' || showFeedback || !currentQuestion) { stopTimer(); return; }
@@ -190,6 +206,7 @@ export default function QuizScreen() {
     stopTimer(); reset(); clearPendingCoins(); clearPendingBadges();
     setShowFeedback(false); setFeedbackDismissed(false); setPendingAnswerId(undefined);
     setFiftyFiftyUsed(false); setHiddenOptions([]); setSkipsLeft(3);
+    setPointScore(0);
     setFlashIndex(0); setFlashFlipped(false);
     if (goLeaderboard) router.replace('/leaderboard' as never); else router.back();
   };
@@ -232,6 +249,7 @@ export default function QuizScreen() {
       if (!ok.ok) { setShowDailyLimit(true); return; }
       reset(); setShowFeedback(false); setFeedbackDismissed(false); setPendingAnswerId(undefined);
       setFiftyFiftyUsed(false); setHiddenOptions([]); setSkipsLeft(3);
+      setPointScore(0);
       resetTimer(); startedAt.current = Date.now(); setPhase('quiz');
     };
 
@@ -319,9 +337,11 @@ export default function QuizScreen() {
   // ══════════════════════════════════════════════════════════════════════════
   if (phase === 'results') {
     const score      = calculateScore();
-    const pct        = Math.round((score / questions.length) * 100);
+    const maxPoints  = Math.max(1, questions.length * Math.max(1, correctPoints));
+    const pct        = Math.max(0, Math.round((pointScore / maxPoints) * 100));
     const passed     = pct >= 70;
     const unanswered = questions.length - answeredCount;
+    const wrongCount = Math.max(0, answeredCount - score);
     const resultColor = passed ? colors.success : colors.error;
 
     return (
@@ -384,8 +404,9 @@ export default function QuizScreen() {
           {/* Stats row */}
           <View style={s.statRow}>
             {([
+              { icon: 'zap',          val: pointScore,          label: 'Points',  color: resultColor },
               { icon: 'check-circle', val: score,               label: 'Correct', color: colors.success },
-              { icon: 'x-circle',     val: answeredCount-score, label: 'Wrong',   color: colors.error },
+              { icon: 'x-circle',     val: wrongCount,          label: 'Wrong',   color: colors.error },
               { icon: 'minus-circle', val: unanswered,          label: 'Skipped', color: colors.textSecondary },
             ] as const).map((c) => (
               <Card key={c.label} style={s.statCard}>
@@ -540,7 +561,10 @@ export default function QuizScreen() {
             <Feather name="arrow-left" size={22} color={colors.textSecondary} />
           </Pressable>
         ) : (
-          <View style={s.quizHeaderBtn} />
+          <View style={[s.quizHeaderBtn, s.quizHeaderScore]}>
+            <Feather name="zap" size={14} color={colors.primary} />
+            <Text style={[s.quizHeaderScoreText, { color: colors.primary }]}>{pointScore}</Text>
+          </View>
         )}
 
         <View style={s.quizHeaderProgress}>
@@ -781,6 +805,8 @@ const s = StyleSheet.create({
   },
   quizHeaderBtn:      { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   quizHeaderProgress: { flex: 1 },
+  quizHeaderScore:    { flexDirection: 'row', gap: 4 },
+  quizHeaderScoreText:{ fontFamily: F.bold, fontSize: 14 },
 
   // Quiz scroll — padding around QuestionView content
   quizScroll: {

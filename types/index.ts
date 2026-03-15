@@ -25,6 +25,9 @@ export interface Quiz {
   certLevel?: CertLevel;
   examCode?: string;
   enabled?: boolean;
+  fixedQuestionCount?: number;
+  correctScore?: number;
+  wrongScore?: number;
 }
 
 export interface Question {
