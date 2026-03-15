@@ -31,6 +31,7 @@ export default function ProgressScreen() {
   const dailyQuizResult = dailyQuiz
     ? progress.recentResults.find((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
     : undefined;
+  const recentAttempts = progress.recentResults.slice(0, 3);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
@@ -133,6 +134,43 @@ export default function ProgressScreen() {
             <Text style={[styles.chartFooterText, { color: colors.textSecondary }]}>Today</Text>
           </View>
         </View>
+
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Recent attempts</Text>
+          {recentAttempts.length === 0 ? (
+            <Text style={[styles.panelHint, { color: colors.textSecondary, fontSize: t.caption }]}>
+              Your latest quiz attempts will appear here.
+            </Text>
+          ) : (
+            <View style={styles.attemptList}>
+              {recentAttempts.map((result) => {
+                const quiz = quizzes.find((item) => item.id === result.quizId);
+                const pct = Math.round((result.score / Math.max(1, result.totalQuestions)) * 100);
+                const isDailyQuizAttempt = dailyQuiz?.id === result.quizId && isSameLocalDay(result.completedAt);
+                return (
+                  <View key={`${result.quizId}-${result.completedAt}`} style={[styles.attemptCard, { borderColor: colors.surfaceBorder, backgroundColor: colors.backgroundAlt }]}>
+                    <View style={styles.attemptHeader}>
+                      <View style={styles.attemptTitleWrap}>
+                        <Text style={[styles.attemptTitle, { color: colors.text }]} numberOfLines={1}>
+                          {quiz?.title ?? result.quizId}
+                        </Text>
+                        {isDailyQuizAttempt ? (
+                          <View style={[styles.dailyAttemptBadge, { backgroundColor: colors.warning + '18' }]}>
+                            <Text style={[styles.dailyAttemptBadgeText, { color: colors.warning }]}>{systemFeatures.dailyQuizLabel}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={[styles.attemptScore, { color: pct >= 70 ? colors.success : colors.error }]}>{pct}%</Text>
+                    </View>
+                    <Text style={[styles.attemptMeta, { color: colors.textSecondary }]}>
+                      {result.score}/{result.totalQuestions} · {new Date(result.completedAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -159,6 +197,15 @@ const styles = StyleSheet.create({
   dailyQuizSubtitle: { fontFamily: F.regular, lineHeight: 18 },
   dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   dailyQuizStatusText: { fontFamily: F.bold, fontSize: 11 },
+  attemptList: { gap: 10 },
+  attemptCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 6 },
+  attemptHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  attemptTitleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  attemptTitle: { fontFamily: F.semiBold, fontSize: 14, flexShrink: 1 },
+  attemptScore: { fontFamily: F.bold, fontSize: 14 },
+  attemptMeta: { fontFamily: F.regular, fontSize: 12 },
+  dailyAttemptBadge: { borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3 },
+  dailyAttemptBadgeText: { fontFamily: F.bold, fontSize: 9, textTransform: 'uppercase' },
   streakNumbers: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   bigValue: { fontFamily: F.bold, fontSize: 20 },
   subLabel: { fontFamily: F.regular, fontSize: 12, marginTop: 3 },
