@@ -11,8 +11,10 @@ import { quizzes } from '@/data/quizzes';
 import type { QuizCategory } from '@/types';
 import { F } from '@/constants/Typography';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
 
 const CATEGORY_GRADIENT: Record<string, [string, string]> = {
   'clf-c02':           ['#FF9900', '#E8650A'],
@@ -42,6 +44,8 @@ export default function QuizzesScreen() {
   const [filter, setFilter] = useState<QuizCategory | 'all'>('all');
   const completedIds = new Set(progress.recentResults.map((item) => item.quizId));
   const platformConfig = usePlatformConfigStore((s) => s.config);
+  const systemFeatures = useSystemFeatureStore((s) => s.config);
+  const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
 
   const visibleCourses = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -90,10 +94,11 @@ export default function QuizzesScreen() {
               {(() => {
                 const grad = CATEGORY_GRADIENT[quiz.category] ?? [colors.error, colors.gradientAccent];
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
+                const isDailyQuiz = dailyQuiz?.id === quiz.id;
                 return (
                   <LinearGradient colors={grad} style={styles.trackVisual}>
                     <View style={[styles.trackBadge, { backgroundColor: 'rgba(0,0,0,0.45)' }]}>
-                      <Text style={styles.trackBadgeText}>{quiz.isPremium ? 'Track' : 'Start'}</Text>
+                      <Text style={styles.trackBadgeText}>{isDailyQuiz ? 'Daily' : quiz.isPremium ? 'Track' : 'Start'}</Text>
                     </View>
                     {catIcon ? (
                       <Image source={catIcon} style={styles.trackIcon} />
@@ -124,6 +129,7 @@ export default function QuizzesScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.courseRow}>
           {visibleCourses.map((quiz) => {
             const playableQuestionCount = getPlayableQuestionCount(quiz);
+            const isDailyQuiz = dailyQuiz?.id === quiz.id;
             return (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
@@ -141,7 +147,14 @@ export default function QuizzesScreen() {
               })()}
               <View style={styles.courseBody}>
                 <View style={styles.metaRow}>
-                  <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{quiz.category.toUpperCase()}</Text>
+                  <View style={styles.metaLabelRow}>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{quiz.category.toUpperCase()}</Text>
+                    {isDailyQuiz ? (
+                      <View style={[styles.dailyBadge, { backgroundColor: colors.warning + '18' }]}>
+                        <Text style={[styles.dailyBadgeText, { color: colors.warning }]}>{systemFeatures.dailyQuizLabel}</Text>
+                      </View>
+                    ) : null}
+                  </View>
                   {quiz.isPremium ? <Feather name="lock" size={14} color={colors.textSecondary} /> : null}
                 </View>
                 <Text style={[styles.courseTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{quiz.title}</Text>
@@ -197,7 +210,10 @@ const styles = StyleSheet.create({
   courseIcon: { width: 34, height: 34 },
   courseBody: { padding: 9, gap: 6, minHeight: 110 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  metaLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   metaLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.6 },
+  dailyBadge: { borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3 },
+  dailyBadgeText: { fontFamily: F.bold, fontSize: 9, textTransform: 'uppercase' },
   courseTitle: { fontFamily: F.bold, fontSize: 14, lineHeight: 20 },
   courseSubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 17 },
   cardFooter: { marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
