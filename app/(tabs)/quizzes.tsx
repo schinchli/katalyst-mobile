@@ -36,6 +36,10 @@ const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
   { key: 'clf-c02', label: 'CLF-C02' },
 ];
 
+function isSameLocalDay(isoDate: string, reference = new Date()) {
+  return new Date(isoDate).toDateString() === reference.toDateString();
+}
+
 export default function QuizzesScreen() {
   const colors = useThemeColors();
   const t = useTypography();
@@ -46,6 +50,9 @@ export default function QuizzesScreen() {
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const systemFeatures = useSystemFeatureStore((s) => s.config);
   const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
+  const dailyQuizCompleted = dailyQuiz
+    ? progress.recentResults.some((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    : false;
 
   const visibleCourses = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -98,7 +105,7 @@ export default function QuizzesScreen() {
                 return (
                   <LinearGradient colors={grad} style={styles.trackVisual}>
                     <View style={[styles.trackBadge, { backgroundColor: 'rgba(0,0,0,0.45)' }]}>
-                      <Text style={styles.trackBadgeText}>{isDailyQuiz ? 'Daily' : quiz.isPremium ? 'Track' : 'Start'}</Text>
+                      <Text style={styles.trackBadgeText}>{isDailyQuiz ? (dailyQuizCompleted ? 'Review' : 'Daily') : quiz.isPremium ? 'Track' : 'Start'}</Text>
                     </View>
                     {catIcon ? (
                       <Image source={catIcon} style={styles.trackIcon} />
@@ -130,6 +137,7 @@ export default function QuizzesScreen() {
           {visibleCourses.map((quiz) => {
             const playableQuestionCount = getPlayableQuestionCount(quiz);
             const isDailyQuiz = dailyQuiz?.id === quiz.id;
+            const dailyQuizActionLabel = isDailyQuiz ? (dailyQuizCompleted ? 'Review Daily Quiz' : 'Play Daily Quiz') : null;
             return (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
@@ -163,7 +171,9 @@ export default function QuizzesScreen() {
                   <Text style={[styles.footerText, { color: colors.textSecondary }]}>
                     {playableQuestionCount} questions
                   </Text>
-                  {completedIds.has(quiz.id) ? (
+                  {dailyQuizActionLabel ? (
+                    <Text style={[styles.footerDone, { color: dailyQuizCompleted ? colors.success : colors.warning }]}>{dailyQuizActionLabel}</Text>
+                  ) : completedIds.has(quiz.id) ? (
                     <Text style={[styles.footerDone, { color: colors.primary }]}>Completed</Text>
                   ) : (
                     <Text style={[styles.footerDone, { color: colors.text }]}>Open</Text>
