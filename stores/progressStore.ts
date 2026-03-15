@@ -191,6 +191,7 @@ export const useProgressStore = create<ProgressState>()(
           // ── Pass / fail ─────────────────────────────────────────────────────
           const pct    = pctForResult(result);
           const passed = pct >= 70;
+          const perfectScore = pct === 100;
 
           // ── Streak ──────────────────────────────────────────────────────────
           let streak = prev.currentStreak;
@@ -232,7 +233,7 @@ export const useProgressStore = create<ProgressState>()(
           // Badges only when quiz is passed (>= 70%)
           if (passed) {
             if (completed === 1)                                           award('first-quiz');
-            if (result.score === result.totalQuestions)                    award('perfect-score');
+            if (perfectScore)                                              award('perfect-score');
             if (streak >= 7)                                               award('seven-day-streak');
             if (result.timeTaken > 0 && result.timeTaken < 60)             award('speed-demon');
             if (completed >= 6)                                            award('half-way');
@@ -256,7 +257,7 @@ export const useProgressStore = create<ProgressState>()(
           const totalNewCoins = passed
             ? result.score * 10                                           // 10 per correct answer
               + 20                                                        // completion bonus
-              + (result.score === result.totalQuestions ? 50 : 0)        // perfect score bonus
+              + (perfectScore ? 50 : 0)                                   // perfect score bonus
               + newBadges.length * 100                                    // badge rewards
             : 0;
 
