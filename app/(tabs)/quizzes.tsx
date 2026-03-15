@@ -63,6 +63,7 @@ export default function QuizzesScreen() {
       return matchFilter && matchQuery;
     });
   }, [filter, query]);
+  const dailyQuizFilteredOut = Boolean(dailyQuiz && !visibleCourses.some((quiz) => quiz.id === dailyQuiz.id));
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
@@ -132,6 +133,27 @@ export default function QuizzesScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Available courses</Text>
           <Text style={[styles.sectionMeta, { color: colors.textSecondary }]}>{visibleCourses.length} total</Text>
         </View>
+
+        {dailyQuiz && dailyQuizFilteredOut ? (
+          <Pressable
+            onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
+            style={[styles.pinnedDailyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+          >
+            <View style={styles.pinnedDailyCopy}>
+              <View style={styles.pinnedDailyHeader}>
+                <Text style={[styles.pinnedDailyEyebrow, { color: colors.warning }]}>{systemFeatures.dailyQuizLabel}</Text>
+                <Text style={[styles.pinnedDailyState, { color: dailyQuizCompleted ? colors.success : colors.textSecondary }]}>
+                  {dailyQuizCompleted ? 'Review available' : 'Pinned above filters'}
+                </Text>
+              </View>
+              <Text style={[styles.pinnedDailyTitle, { color: colors.text }]} numberOfLines={2}>{dailyQuiz.title}</Text>
+              <Text style={[styles.pinnedDailySubtitle, { color: colors.textSecondary }]} numberOfLines={2}>
+                Your current search or category filter hides today&apos;s featured quiz, so it stays visible here.
+              </Text>
+            </View>
+            <Feather name="arrow-right-circle" size={20} color={dailyQuizCompleted ? colors.success : colors.primary} />
+          </Pressable>
+        ) : null}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.courseRow}>
           {visibleCourses.map((quiz) => {
@@ -213,6 +235,21 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
   sectionTitle: { fontFamily: F.bold, fontSize: 17 },
   sectionMeta: { fontFamily: F.medium, fontSize: 12 },
+  pinnedDailyCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  pinnedDailyCopy: { flex: 1, gap: 4 },
+  pinnedDailyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
+  pinnedDailyEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  pinnedDailyState: { fontFamily: F.bold, fontSize: 11 },
+  pinnedDailyTitle: { fontFamily: F.bold, fontSize: 15, lineHeight: 21 },
+  pinnedDailySubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 18 },
   courseRow: { gap: 10, paddingRight: 16 },
   courseCard: { width: 140, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   courseCardSingleWide: { width: 180 },

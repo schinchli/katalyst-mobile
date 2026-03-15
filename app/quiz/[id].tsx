@@ -129,6 +129,7 @@ export default function QuizScreen() {
   const currentQuestion        = questions[currentQuestionIndex];
   const dailyQuiz              = resolveDailyQuiz(systemFeatures, quizzes.filter((item) => item.enabled !== false));
   const isDailyQuiz            = dailyQuiz?.id === quiz?.id;
+  const isTrueFalseQuiz        = questionPool.length > 0 && questionPool.every((question) => question.options.length === 2);
   const answeredCount          = Object.keys(selectedAnswers).length;
   const isLastQuestion         = currentQuestionIndex === questions.length - 1;
   const hasAnsweredCurrent     = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
@@ -308,11 +309,16 @@ export default function QuizScreen() {
                 <Text style={s.introDailyBadgeText}>{systemFeatures.dailyQuizLabel}</Text>
               </View>
             ) : null}
+            {isTrueFalseQuiz ? (
+              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+                <Text style={s.introDailyBadgeText}>True / False</Text>
+              </View>
+            ) : null}
             <Text style={s.introCourseLabel}>Course</Text>
             <Text style={s.introCourseTitle} numberOfLines={3}>{quiz.title}</Text>
             <View style={s.introMetaChip}>
               <Text style={s.introMetaChipText}>
-                {questions.length} Questions · {quiz.duration} min
+                {questions.length} Questions · {quiz.duration} min{isTrueFalseQuiz ? ' · 2-option mode' : ''}
               </Text>
             </View>
             {isDailyQuiz ? (
