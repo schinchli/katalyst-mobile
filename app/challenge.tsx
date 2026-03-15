@@ -9,6 +9,7 @@ import { quizzes } from '@/data/quizzes';
 import { CHALLENGE_SCORES, CPU_NAMES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
+import { getResultPercent } from '@/utils/quizResults';
 import type { Quiz } from '@/types';
 
 type Difficulty = 'all' | 'beginner' | 'intermediate' | 'advanced';
@@ -129,7 +130,7 @@ export default function ChallengeScreen() {
   // Build best score per quiz
   const bestScores: Record<string, number> = {};
   recentResults.forEach((r) => {
-    const pct = Math.round((r.score / r.totalQuestions) * 100);
+    const pct = getResultPercent(r);
     if (bestScores[r.quizId] === undefined || pct > bestScores[r.quizId]) {
       bestScores[r.quizId] = pct;
     }

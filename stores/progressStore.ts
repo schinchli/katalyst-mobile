@@ -6,6 +6,7 @@ import { quizzes } from '@/data/quizzes';
 import { submitQuiz, type ProgressResponse } from '@/services/apiService';
 import { saveQuizResult, getQuizResults } from '@/config/db';
 import { supabase } from '@/config/supabase';
+import { getResultPercent } from '@/utils/quizResults';
 
 // ─── Badge definitions ────────────────────────────────────────────────────────
 const BADGE_DEFS: Record<BadgeId, Omit<Badge, 'id' | 'earnedAt'>> = {
@@ -52,7 +53,7 @@ export function xpToNextLevel(xp: number, level: number): { current: number; nee
 }
 
 function pctForResult(result: QuizResult): number {
-  return Math.round((result.score / result.totalQuestions) * 100);
+  return getResultPercent(result);
 }
 
 function dayKey(iso: string): string {
@@ -188,7 +189,7 @@ export const useProgressStore = create<ProgressState>()(
           const yesterdayStr = yesterday();
 
           // ── Pass / fail ─────────────────────────────────────────────────────
-          const pct    = Math.round((result.score / result.totalQuestions) * 100);
+          const pct    = pctForResult(result);
           const passed = pct >= 70;
 
           // ── Streak ──────────────────────────────────────────────────────────
@@ -207,7 +208,7 @@ export const useProgressStore = create<ProgressState>()(
           const completed = prev.completedQuizzes + 1;
           const totalScore =
             prev.averageScore * prev.completedQuizzes +
-            (result.score / result.totalQuestions) * 100;
+            pct;
           const avgScore = Math.round(totalScore / completed);
 
           const newProgress: Progress = {
@@ -262,7 +263,7 @@ export const useProgressStore = create<ProgressState>()(
           const diffMult = quizMeta?.difficulty === 'advanced' ? 2
             : quizMeta?.difficulty === 'intermediate' ? 1.5 : 1;
           const xpEarned = passed
-            ? Math.round((result.score / result.totalQuestions) * 100 * diffMult)
+            ? Math.round(pct * diffMult)
             : 0;
 
           const newXP    = prev.xp + xpEarned;
