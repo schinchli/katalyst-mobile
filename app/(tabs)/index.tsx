@@ -13,6 +13,7 @@ import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
 import { AWS_SERVICE_ICONS, AWS_SERVICE_ACCENT, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 
 // ── Service-specific course card visuals — brand-accurate gradients ───────────
@@ -53,9 +54,7 @@ export default function HomeScreen() {
   const xp = progress.xp ?? 0;
   const level = calculateLevel(xp);
   const levelName = LEVEL_NAMES[level - 1] ?? 'Novice';
-  const dailyQuiz = systemFeatures.dailyQuizEnabled
-    ? visibleQuizzes.find((quiz) => quiz.id === systemFeatures.dailyQuizQuizId) ?? null
-    : null;
+  const dailyQuiz = resolveDailyQuiz(systemFeatures, visibleQuizzes);
   const streakMessage =
     streak === 0 ? '🚀 Start your learning streak today!'
     : streak === 1 ? '🔥 1 day streak! Come back tomorrow to keep it going!'
