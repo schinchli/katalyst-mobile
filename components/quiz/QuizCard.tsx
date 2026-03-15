@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import type { Quiz } from '@/types';
+import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 
 const DIFF_COLOR: Record<string, string> = {
   beginner:     '#28C76F',
@@ -20,6 +21,7 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
   const accent  = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
   const badgeBg = accent + '18';
   const iconBg  = accent + '22';
+  const playableQuestionCount = getPlayableQuestionCount(quiz);
 
   return (
     <Pressable
@@ -62,7 +64,7 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
           <View style={s.meta}>
             <Feather name="help-circle" size={12} color={colors.textSecondary} />
             <Text style={[s.metaText, { color: colors.textSecondary }]}>
-              {quiz.questionCount}q
+              {playableQuestionCount}q
             </Text>
           </View>
           <View style={s.meta}>

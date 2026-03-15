@@ -9,6 +9,7 @@ import type { Quiz } from '@/types';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { COMPANY_TONES } from '@/config/themePresets';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 
 type Tab = 'course' | 'pro';
 
@@ -24,6 +25,7 @@ export function PremiumGateModal({ visible, quiz, onClose, onUpgrade }: PremiumG
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const [tab, setTab] = useState<Tab>('pro');
   const [loading, setLoading] = useState(false);
+  const playableQuestionCount = getPlayableQuestionCount(quiz);
 
   const handleAction = async (type: 'subscription' | 'course') => {
     if (!onUpgrade) return onClose();
@@ -36,7 +38,7 @@ export function PremiumGateModal({ visible, quiz, onClose, onUpgrade }: PremiumG
   };
 
   const courseFeatures = [
-    `${quiz.questionCount} questions in ${quiz.title}`,
+    `${playableQuestionCount} questions in ${quiz.title}`,
     'Instant feedback with detailed explanations',
     'Unlimited retries and saved results',
     'Premium practice experience on mobile',

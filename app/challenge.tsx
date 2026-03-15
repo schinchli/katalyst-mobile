@@ -8,6 +8,7 @@ import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
 import { CHALLENGE_SCORES, CPU_NAMES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
+import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import type { Quiz } from '@/types';
 
 type Difficulty = 'all' | 'beginner' | 'intermediate' | 'advanced';
@@ -39,6 +40,7 @@ function ChallengeCard({
   const cpuName   = CPU_NAMES[quiz.id] ?? 'BotAI';
   const diffColor = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
   const beaten    = bestPct !== null && bestPct >= target;
+  const playableQuestionCount = getPlayableQuestionCount(quiz);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -60,7 +62,7 @@ function ChallengeCard({
                 </Text>
               </View>
               <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                {quiz.questionCount}Q · {quiz.duration}min
+                {playableQuestionCount}Q · {quiz.duration}min
               </Text>
             </View>
           </View>

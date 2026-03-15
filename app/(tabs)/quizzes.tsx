@@ -12,6 +12,7 @@ import type { QuizCategory } from '@/types';
 import { F } from '@/constants/Typography';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
+import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 
 const CATEGORY_GRADIENT: Record<string, [string, string]> = {
   'clf-c02':           ['#FF9900', '#E8650A'],
@@ -121,7 +122,9 @@ export default function QuizzesScreen() {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.courseRow}>
-          {visibleCourses.map((quiz, index) => (
+          {visibleCourses.map((quiz) => {
+            const playableQuestionCount = getPlayableQuestionCount(quiz);
+            return (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
                 const grad = CATEGORY_GRADIENT[quiz.category] ?? [colors.primary, colors.gradientAccent];
@@ -145,7 +148,7 @@ export default function QuizzesScreen() {
                 <Text style={[styles.courseSubtitle, { color: colors.textSecondary, fontSize: t.caption }]} numberOfLines={2}>{quiz.description}</Text>
                 <View style={styles.cardFooter}>
                   <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-                    {quiz.questionCount} questions
+                    {playableQuestionCount} questions
                   </Text>
                   {completedIds.has(quiz.id) ? (
                     <Text style={[styles.footerDone, { color: colors.primary }]}>Completed</Text>
@@ -155,7 +158,8 @@ export default function QuizzesScreen() {
                 </View>
               </View>
             </Pressable>
-          ))}
+            );
+          })}
         </ScrollView>
       </ScrollView>
     </SafeAreaView>
