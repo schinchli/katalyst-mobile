@@ -208,7 +208,7 @@ export default function QuizScreen() {
   const bottomSpacer  = Math.max(insets.bottom, 20);
 
   // ── Not found ──────────────────────────────────────────────────────────────
-  if (!quiz || questions.length === 0) {
+  if (!quiz || quiz.enabled === false || questions.length === 0) {
     return (
       <SafeAreaView edges={['top']} style={[s.flex, { backgroundColor: colors.background }]}>
         <View style={s.centeredFill}>

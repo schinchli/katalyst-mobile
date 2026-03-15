@@ -45,6 +45,7 @@ export default function QuizzesScreen() {
   const visibleCourses = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return quizzes.filter((quiz) => {
+      if (quiz.enabled === false) return false;
       const matchFilter = filter === 'all' || quiz.category === filter;
       const matchQuery = normalized.length === 0 || quiz.title.toLowerCase().includes(normalized) || quiz.description.toLowerCase().includes(normalized);
       return matchFilter && matchQuery;
@@ -83,7 +84,7 @@ export default function QuizzesScreen() {
         </ScrollView>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trackRow}>
-          {quizzes.slice(0, 4).map((quiz, index) => (
+          {quizzes.filter((quiz) => quiz.enabled !== false).slice(0, 4).map((quiz, index) => (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
                 const grad = CATEGORY_GRADIENT[quiz.category] ?? [colors.error, colors.gradientAccent];

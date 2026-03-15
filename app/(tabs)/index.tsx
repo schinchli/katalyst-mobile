@@ -12,6 +12,7 @@ import { flashcards } from '@/data/flashcards';
 import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { AWS_SERVICE_ICONS, AWS_SERVICE_ACCENT, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 
 // ── Service-specific course card visuals — brand-accurate gradients ───────────
@@ -42,14 +43,19 @@ export default function HomeScreen() {
   const t = useTypography();
   const user = useAuthStore((s) => s.user);
   const progress = useProgressStore((s) => s.progress);
-  const popularCourses = quizzes.slice(0, 6);
-  const flashcardItems = flashcards.slice(0, 4);
   const firstName = user?.name?.split(' ')[0] ?? 'Learner';
   const platformConfig = usePlatformConfigStore((s) => s.config);
+  const systemFeatures = useSystemFeatureStore((s) => s.config);
+  const visibleQuizzes = quizzes.filter((quiz) => quiz.enabled !== false);
+  const popularCourses = visibleQuizzes.slice(0, 6);
+  const flashcardItems = flashcards.slice(0, 4);
   const streak = progress.currentStreak;
   const xp = progress.xp ?? 0;
   const level = calculateLevel(xp);
   const levelName = LEVEL_NAMES[level - 1] ?? 'Novice';
+  const dailyQuiz = systemFeatures.dailyQuizEnabled
+    ? visibleQuizzes.find((quiz) => quiz.id === systemFeatures.dailyQuizQuizId) ?? null
+    : null;
   const streakMessage =
     streak === 0 ? '🚀 Start your learning streak today!'
     : streak === 1 ? '🔥 1 day streak! Come back tomorrow to keep it going!'
@@ -71,6 +77,17 @@ export default function HomeScreen() {
             <StatPill icon="zap" value={`${xp} XP · Lv.${level} ${levelName}`} colors={colors} />
             <StatPill icon="activity" value={streak > 0 ? `🔥 ${streak} day streak` : '🚀 Start streak'} colors={colors} />
           </View>
+        ) : null}
+
+        {dailyQuiz ? (
+          <Pressable onPress={() => router.push(`/quiz/${dailyQuiz.id}`)} style={[styles.dailyQuizCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={styles.dailyQuizCopy}>
+              <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+              <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
+              <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{dailyQuiz.description}</Text>
+            </View>
+            <Feather name="arrow-right-circle" size={22} color={colors.primary} />
+          </Pressable>
         ) : null}
 
         <LinearGradient colors={[colors.backgroundAlt, colors.surface, colors.surfaceElevated]} style={[styles.heroCard, { borderColor: colors.surfaceBorder }]}>
@@ -210,6 +227,11 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.6 },
   heroSubtitle: { fontFamily: F.regular, fontSize: 14, lineHeight: 21 },
   heroStreakMessage: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -2 },
+  dailyQuizCard: { borderWidth: 1, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  dailyQuizCopy: { flex: 1, gap: 4 },
+  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24 },
+  dailyQuizSubtitle: { fontFamily: F.regular, fontSize: 13, lineHeight: 18 },
   actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   actionStack: { gap: 12 },
   actionCard: { width: '48%', borderWidth: 1, borderRadius: 16, padding: 12, minHeight: 130, gap: 8 },

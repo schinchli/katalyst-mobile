@@ -12,6 +12,8 @@ import { Colors } from '@/constants/Colors';
 import { syncPlatformThemeFromSupabase, syncUserThemeFromSupabase } from '@/services/themeSyncService';
 import { syncPlatformConfigFromSupabase } from '@/services/platformConfigService';
 import { syncQuizCatalogOverridesFromSupabase } from '@/services/quizCatalogService';
+import { syncSystemFeaturesFromSupabase } from '@/services/systemFeatureService';
+import { syncManagedQuizContentFromSupabase } from '@/services/managedQuizContentService';
 import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
@@ -84,6 +86,10 @@ function ThemedApp() {
         <Stack.Screen name="admin-settings" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="challenge"      options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="contest"        options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="privacy"        options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="terms"          options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="about"          options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="instructions"   options={{ headerShown: false, presentation: 'card' }} />
       </Stack>
     </ThemeProvider>
   );
@@ -111,7 +117,9 @@ export default function RootLayout() {
         .then(async () => {
           await syncPlatformThemeFromSupabase().catch(() => {});
           await syncPlatformConfigFromSupabase().catch(() => {});
+          await syncManagedQuizContentFromSupabase().catch(() => {});
           await syncQuizCatalogOverridesFromSupabase().catch(() => {});
+          await syncSystemFeaturesFromSupabase().catch(() => {});
           const userId = useAuthStore.getState().user?.id;
           if (userId) await syncUserThemeFromSupabase(userId).catch(() => {});
         })

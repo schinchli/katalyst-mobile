@@ -69,6 +69,10 @@ export default function ProfileScreen() {
             { icon: 'bell',      label: 'Notifications', badge: '1', route: null },
             { icon: 'award',     label: 'Leaderboard',               route: '/leaderboard' as const },
             { icon: 'book-open', label: 'My library',                route: '/(tabs)/bookmarks' as const },
+            { icon: 'shield',    label: 'Privacy Policy',            route: '/privacy' as const },
+            { icon: 'file-text', label: 'Terms & Conditions',        route: '/terms' as const },
+            { icon: 'info',      label: 'About Us',                  route: '/about' as const },
+            { icon: 'help-circle', label: 'How To Play',             route: '/instructions' as const },
           ].map((item, index) => (
             <View key={item.label}>
               <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.listRow}>
@@ -77,7 +81,7 @@ export default function ProfileScreen() {
                 {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={styles.rowBadgeText}>{item.badge}</Text></View> : null}
                 <Feather name="chevron-right" size={18} color={colors.textSecondary} />
               </Pressable>
-              {index < 2 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
+              {index < 6 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
           ))}
         </View>

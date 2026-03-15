@@ -72,16 +72,35 @@ jest.mock('react-native-safe-area-context', () => {
 // Mock themeStore to avoid Zustand/AsyncStorage initialization issues in tests
 jest.mock('@/stores/themeStore', () => {
   const ACCENT_PRESETS = {
-    purple:  { primary: '#7367F0', primaryLight: '#EBE9FD', label: 'Vuexy Purple', emoji: '🟣' },
-    teal:    { primary: '#00BAD1', primaryLight: '#E0F9FC', label: 'Ocean Teal',   emoji: '🩵' },
+    ocean:   { primary: '#0EA5E9', primaryLight: '#E0F7FF', label: 'Ocean Glass',   emoji: '🌊' },
+    aurora:  { primary: '#0EA5E9', primaryLight: '#E6F4FF', label: 'Neon Aurora',   emoji: '🌈' },
+    forest:  { primary: '#10B981', primaryLight: '#DCFCE7', label: 'Forest Mint',   emoji: '🌿' },
+    sunset:  { primary: '#F97316', primaryLight: '#FFEDD5', label: 'Sunset Coral',  emoji: '🌇' },
+    midnight:{ primary: '#22D3EE', primaryLight: '#123043', label: 'Midnight Focus',emoji: '🌌' },
+    sand:    { primary: '#0EA5E9', primaryLight: '#E6F8FF', label: 'Sandstone Calm',emoji: '🏜️' },
+    slate:   { primary: '#475569', primaryLight: '#F1F5F9', label: 'Slate Minimal', emoji: '🪨' },
     emerald: { primary: '#28C76F', primaryLight: '#D1F7E2', label: 'Emerald',      emoji: '🟢' },
-    amber:   { primary: '#FF9F43', primaryLight: '#FFF3E8', label: 'Amber',        emoji: '🟡' },
-    rose:    { primary: '#EA5455', primaryLight: '#FFE0E0', label: 'Rose',         emoji: '🔴' },
-    indigo:  { primary: '#4B5EFA', primaryLight: '#E8EAFF', label: 'Deep Indigo', emoji: '🔵' },
+    amber:   { primary: '#F59E0B', primaryLight: '#FEF3C7', label: 'Amber',        emoji: '🟡' },
+    rose:    { primary: '#EF4444', primaryLight: '#FCEAEA', label: 'Rose Quartz',  emoji: '🌸' },
+    indigo:  { primary: '#4B5EFA', primaryLight: '#E8EAFF', label: 'Deep Indigo',  emoji: '🔵' },
   };
-  const state = { accent: 'purple', darkMode: false, setAccent: jest.fn(), toggleDark: jest.fn(), setDarkMode: jest.fn() };
+  const FONT_SCALE = { small: 0.875, medium: 1, large: 1.125 };
+  const state = {
+    accent: 'indigo',
+    darkMode: false,
+    usePlatform: true,
+    animationsEnabled: true,
+    fontSizePreset: 'medium',
+    setAccent: jest.fn(),
+    toggleDark: jest.fn(),
+    setDarkMode: jest.fn(),
+    setUsePlatform: jest.fn(),
+    setAnimationsEnabled: jest.fn(),
+    setFontSizePreset: jest.fn(),
+  };
   return {
     ACCENT_PRESETS,
+    FONT_SCALE,
     useThemeStore: (selector: (s: typeof state) => unknown) =>
       selector ? selector(state) : state,
   };

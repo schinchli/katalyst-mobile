@@ -88,9 +88,16 @@ export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: Fla
         {/* Footer hint */}
         <View style={[styles.footer, { borderTopColor: colors.surfaceBorder }]}>
           <Feather name="rotate-cw" size={13} color={colors.textSecondary} />
-          <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-            {isFlipped ? 'Tap to flip back' : 'Tap to reveal answer · Swipe to navigate'}
-          </Text>
+          <View style={styles.hintCopy}>
+            <Text style={[styles.hintText, { color: colors.textSecondary }]}>
+              {isFlipped ? 'Tap to flip back' : 'Tap to reveal answer'}
+            </Text>
+            {!isFlipped && (
+              <Text style={[styles.hintTextSecondary, { color: colors.textSecondary }]}>
+                Swipe to navigate
+              </Text>
+            )}
+          </View>
         </View>
       </View>
     </Pressable>
@@ -218,8 +225,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
   },
+  hintCopy: {
+    alignItems: 'center',
+    gap: 2,
+  },
   hintText: {
     fontFamily: F.medium,
     fontSize: 12,
+  },
+  hintTextSecondary: {
+    fontFamily: F.regular,
+    fontSize: 11,
   },
 });
