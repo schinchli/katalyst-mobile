@@ -35,11 +35,13 @@ import { useProgressStore } from '@/stores/progressStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { useRateLimitStore } from '@/stores/rateLimitStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { openCheckout, openCourseUnlock } from '@/services/razorpayService';
 import { quizzes, quizQuestions } from '@/data/quizzes';
 import { CHALLENGE_SCORES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
 import { supabase } from '@/config/supabase';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
 
 const QUESTION_TIME = 30;
 const MEDAL_GOLD    = '#FFD700';
@@ -119,11 +121,14 @@ export default function QuizScreen() {
   const toggleBookmark          = useBookmarkStore((s) => s.toggle);
   const isBookmarked            = useBookmarkStore((s) => s.isBookmarked);
   const user                    = useAuthStore((s) => s.user);
+  const systemFeatures          = useSystemFeatureStore((s) => s.config);
   const upgradeToPremium        = useAuthStore((s) => s.upgradeToPremium);
   const unlockCourse            = useAuthStore((s) => s.unlockCourse);
   const checkRateLimit          = useRateLimitStore((s) => s.checkAndConsume);
 
   const currentQuestion        = questions[currentQuestionIndex];
+  const dailyQuiz              = resolveDailyQuiz(systemFeatures, quizzes.filter((item) => item.enabled !== false));
+  const isDailyQuiz            = dailyQuiz?.id === quiz?.id;
   const answeredCount          = Object.keys(selectedAnswers).length;
   const isLastQuestion         = currentQuestionIndex === questions.length - 1;
   const hasAnsweredCurrent     = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
@@ -298,6 +303,11 @@ export default function QuizScreen() {
             <View style={s.introCourseCircle}>
               <Feather name={(quiz.icon ?? 'cpu') as any} size={44} color="#fff" />
             </View>
+            {isDailyQuiz ? (
+              <View style={s.introDailyBadge}>
+                <Text style={s.introDailyBadgeText}>{systemFeatures.dailyQuizLabel}</Text>
+              </View>
+            ) : null}
             <Text style={s.introCourseLabel}>Course</Text>
             <Text style={s.introCourseTitle} numberOfLines={3}>{quiz.title}</Text>
             <View style={s.introMetaChip}>
@@ -305,6 +315,9 @@ export default function QuizScreen() {
                 {questions.length} Questions · {quiz.duration} min
               </Text>
             </View>
+            {isDailyQuiz ? (
+              <Text style={s.introDailyHint}>Today&apos;s featured quiz. Complete it to update your daily progress across the app.</Text>
+            ) : null}
           </View>
 
           {/* ── Bottom CTA buttons ── */}
@@ -358,6 +371,19 @@ export default function QuizScreen() {
         </View>
 
         <ScrollView contentContainerStyle={[s.resultsPad, { paddingBottom: bottomSpacer + 20 }]} showsVerticalScrollIndicator={false}>
+          {isDailyQuiz ? (
+            <View style={[s.banner, { backgroundColor: (passed ? colors.success : colors.warning) + '18', borderColor: (passed ? colors.success : colors.warning) + '44' }]}>
+              <View style={[s.bannerIcon, { backgroundColor: (passed ? colors.success : colors.warning) + '28' }]}>
+                <Feather name={passed ? 'check-circle' : 'sun'} size={18} color={passed ? colors.success : colors.warning} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.bannerTitle, { color: passed ? colors.success : colors.warning }]}>{systemFeatures.dailyQuizLabel}</Text>
+                <Text style={[s.bannerSub, { color: colors.textSecondary }]}>
+                  {passed ? 'Daily quiz completed and reflected in your app summary.' : 'Daily quiz attempt saved. Retry anytime to improve today’s result.'}
+                </Text>
+              </View>
+            </View>
+          ) : null}
 
           {/* Score circle */}
           <View style={s.scoreCenter}>
@@ -785,10 +811,13 @@ const s = StyleSheet.create({
   introTopBrandText:  { fontFamily: F.bold, fontSize: 14, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.5 },
   introCenterBlock:   { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 28 },
   introCourseCircle:  { width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.28)' },
+  introDailyBadge:    { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(255,216,77,0.18)' },
+  introDailyBadgeText:{ fontFamily: F.bold, fontSize: 11, color: 'rgba(255,244,194,0.95)', textTransform: 'uppercase', letterSpacing: 0.8 },
   introCourseLabel:   { fontFamily: F.medium, fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   introCourseTitle:   { fontFamily: F.bold, fontSize: 26, color: '#fff', textAlign: 'center', lineHeight: 36, letterSpacing: -0.3 },
   introMetaChip:      { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.22)', marginTop: 2 },
   introMetaChipText:  { fontFamily: F.semiBold, fontSize: 14, color: 'rgba(255,255,255,0.9)' },
+  introDailyHint:     { fontFamily: F.medium, fontSize: 13, lineHeight: 19, color: 'rgba(255,255,255,0.82)', textAlign: 'center', maxWidth: 280 },
   introFooter:        { paddingHorizontal: 20, gap: 12 },
   introMainBtn:       { height: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: 'rgba(0,0,0,0.32)' },
   introMainBtnText:   { fontFamily: F.bold, fontSize: 17, color: '#fff', letterSpacing: 0.1 },
