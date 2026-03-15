@@ -145,10 +145,19 @@ export default function LeaderboardScreen() {
                 <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
                 <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
               </View>
-              <View style={[styles.dailyQuizPill, { backgroundColor: dailyQuizResult ? colors.success + '18' : colors.warning + '18' }]}>
-                <Text style={[styles.dailyQuizPillText, { color: dailyQuizResult ? colors.success : colors.warning }]}>
-                  {dailyQuizResult ? `${Math.round((dailyQuizResult.score / Math.max(1, dailyQuizResult.totalQuestions)) * 100)}%` : 'Open today'}
-                </Text>
+              <View style={styles.dailyQuizActions}>
+                <View style={[styles.dailyQuizPill, { backgroundColor: dailyQuizResult ? colors.success + '18' : colors.warning + '18' }]}>
+                  <Text style={[styles.dailyQuizPillText, { color: dailyQuizResult ? colors.success : colors.warning }]}>
+                    {dailyQuizResult ? `${Math.round((dailyQuizResult.score / Math.max(1, dailyQuizResult.totalQuestions)) * 100)}%` : 'Open today'}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
+                  style={[styles.dailyQuizCta, { backgroundColor: colors.primary }]}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.dailyQuizCtaText}>{dailyQuizResult ? 'Review' : 'Play'}</Text>
+                </Pressable>
               </View>
             </View>
           ) : null}
@@ -228,10 +237,13 @@ const styles = StyleSheet.create<Record<string, ViewStyle & TextStyle>>({
     justifyContent: 'space-between',
     gap: 12,
   },
+  dailyQuizActions: { alignItems: 'flex-end', gap: 8 },
   dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
   dailyQuizTitle: { fontFamily: F.semiBold, fontSize: 15, marginTop: 4 },
   dailyQuizPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   dailyQuizPillText: { fontFamily: F.bold, fontSize: 11 },
+  dailyQuizCta: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+  dailyQuizCtaText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 11 },
 
   // Podium
   podium: {

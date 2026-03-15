@@ -108,6 +108,14 @@ export default function ProgressScreen() {
               <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary, fontSize: t.caption }]}>
                 {dailyQuizResult ? 'Completed today. Reopen the daily quiz from Home to improve your result.' : 'Today\'s daily quiz is still available from Home.'}
               </Text>
+              <Pressable
+                onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
+                style={[styles.dailyQuizCta, { backgroundColor: colors.primary }]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.dailyQuizCtaText}>{dailyQuizResult ? 'Review Daily Quiz' : 'Open Daily Quiz'}</Text>
+                <Feather name="arrow-right" size={14} color="#FFFFFF" />
+              </Pressable>
             </View>
           ) : null}
           <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>{EXPERIENCE_COPY.progress.xpTitle}</Text>
@@ -197,6 +205,17 @@ const styles = StyleSheet.create({
   dailyQuizSubtitle: { fontFamily: F.regular, lineHeight: 18 },
   dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   dailyQuizStatusText: { fontFamily: F.bold, fontSize: 11 },
+  dailyQuizCta: {
+    marginTop: 4,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dailyQuizCtaText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 12 },
   attemptList: { gap: 10 },
   attemptCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 6 },
   attemptHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
