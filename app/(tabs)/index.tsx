@@ -39,6 +39,10 @@ function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap
   );
 }
 
+function isSameLocalDay(isoDate: string, reference = new Date()) {
+  return new Date(isoDate).toDateString() === reference.toDateString();
+}
+
 export default function HomeScreen() {
   const colors = useThemeColors();
   const t = useTypography();
@@ -55,6 +59,9 @@ export default function HomeScreen() {
   const level = calculateLevel(xp);
   const levelName = LEVEL_NAMES[level - 1] ?? 'Novice';
   const dailyQuiz = resolveDailyQuiz(systemFeatures, visibleQuizzes);
+  const dailyQuizCompleted = dailyQuiz
+    ? progress.recentResults.some((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    : false;
   const streakMessage =
     streak === 0 ? '🚀 Start your learning streak today!'
     : streak === 1 ? '🔥 1 day streak! Come back tomorrow to keep it going!'
@@ -81,11 +88,20 @@ export default function HomeScreen() {
         {dailyQuiz ? (
           <Pressable onPress={() => router.push(`/quiz/${dailyQuiz.id}`)} style={[styles.dailyQuizCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <View style={styles.dailyQuizCopy}>
-              <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+              <View style={styles.dailyQuizHeaderRow}>
+                <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+                <View style={[styles.dailyQuizStatus, { backgroundColor: dailyQuizCompleted ? colors.success + '18' : colors.warning + '18' }]}>
+                  <Text style={[styles.dailyQuizStatusText, { color: dailyQuizCompleted ? colors.success : colors.warning }]}>
+                    {dailyQuizCompleted ? 'Completed' : 'Ready'}
+                  </Text>
+                </View>
+              </View>
               <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
-              <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{dailyQuiz.description}</Text>
+              <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>
+                {dailyQuizCompleted ? 'Today\'s daily quiz is complete. Open it again to review or improve your score.' : dailyQuiz.description}
+              </Text>
             </View>
-            <Feather name="arrow-right-circle" size={22} color={colors.primary} />
+            <Feather name={dailyQuizCompleted ? 'check-circle' : 'arrow-right-circle'} size={22} color={dailyQuizCompleted ? colors.success : colors.primary} />
           </Pressable>
         ) : null}
 
@@ -228,7 +244,10 @@ const styles = StyleSheet.create({
   heroStreakMessage: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -2 },
   dailyQuizCard: { borderWidth: 1, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   dailyQuizCopy: { flex: 1, gap: 4 },
+  dailyQuizHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
+  dailyQuizStatusText: { fontFamily: F.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   dailyQuizTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24 },
   dailyQuizSubtitle: { fontFamily: F.regular, fontSize: 13, lineHeight: 18 },
   actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
