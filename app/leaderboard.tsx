@@ -5,8 +5,12 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useLeaderboard, type Period } from '@/hooks/useLeaderboard';
+import { useProgressStore } from '@/stores/progressStore';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { F } from '@/constants/Typography';
 import type { LeaderboardEntry } from '@/types';
+import { quizzes } from '@/data/quizzes';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
 
 const PERIODS: { key: Period; label: string }[] = [
   { key: 'daily',   label: 'Today' },
@@ -15,6 +19,10 @@ const PERIODS: { key: Period; label: string }[] = [
 ];
 
 const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
+
+function isSameLocalDay(isoDate: string, reference = new Date()) {
+  return new Date(isoDate).toDateString() === reference.toDateString();
+}
 
 // ─── Top-3 podium card ────────────────────────────────────────────────────────
 function PodiumCard({ entry, colors }: { entry: LeaderboardEntry; colors: ReturnType<typeof useThemeColors> }) {
@@ -82,12 +90,18 @@ function RankRow({ entry, colors }: { entry: LeaderboardEntry; colors: ReturnTyp
 export default function LeaderboardScreen() {
   const colors   = useThemeColors();
   const [period, setPeriod] = useState<Period>('alltime');
+  const recentResults = useProgressStore((s) => s.progress.recentResults);
+  const systemFeatures = useSystemFeatureStore((s) => s.config);
 
   const { data, isLoading } = useLeaderboard(period);
   const entries = data?.entries ?? [];
   const display = entries.slice(0, 12);
   const top3    = display.slice(0, 3);
   const rest    = display.slice(3);
+  const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
+  const dailyQuizResult = dailyQuiz
+    ? recentResults.find((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    : undefined;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
@@ -125,6 +139,20 @@ export default function LeaderboardScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {dailyQuiz ? (
+            <View style={[styles.dailyQuizBanner, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View>
+                <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+                <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
+              </View>
+              <View style={[styles.dailyQuizPill, { backgroundColor: dailyQuizResult ? colors.success + '18' : colors.warning + '18' }]}>
+                <Text style={[styles.dailyQuizPillText, { color: dailyQuizResult ? colors.success : colors.warning }]}>
+                  {dailyQuizResult ? `${Math.round((dailyQuizResult.score / Math.max(1, dailyQuizResult.totalQuestions)) * 100)}%` : 'Open today'}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           {/* Podium — top 3 */}
           <View style={styles.podium}>
             {/* 2nd place left, 1st center, 3rd right */}
@@ -189,6 +217,21 @@ const styles = StyleSheet.create<Record<string, ViewStyle & TextStyle>>({
 
   scroll:       { paddingBottom: 48 },
   loadingWrap:  { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  dailyQuizBanner: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizTitle: { fontFamily: F.semiBold, fontSize: 15, marginTop: 4 },
+  dailyQuizPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  dailyQuizPillText: { fontFamily: F.bold, fontSize: 11 },
 
   // Podium
   podium: {
