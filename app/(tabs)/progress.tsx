@@ -5,20 +5,32 @@ import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useTypography } from '@/hooks/useTypography';
 import { useProgressStore } from '@/stores/progressStore';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
+import { quizzes } from '@/data/quizzes';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
 
 const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+function isSameLocalDay(isoDate: string, reference = new Date()) {
+  return new Date(isoDate).toDateString() === reference.toDateString();
+}
 
 export default function ProgressScreen() {
   const colors = useThemeColors();
   const t = useTypography();
   const progress = useProgressStore((s) => s.progress);
+  const systemFeatures = useSystemFeatureStore((s) => s.config);
   const activeDay = Math.min(6, Math.max(0, new Date().getDay() === 0 ? 6 : new Date().getDay() - 1));
   const streakLength = Math.max(0, Math.min(7, progress.currentStreak));
   const streakMessage = progress.currentStreak > 0
     ? 'Keep showing up today to protect your streak.'
     : 'Open the app daily to build your first streak.';
+  const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
+  const dailyQuizResult = dailyQuiz
+    ? progress.recentResults.find((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    : undefined;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
@@ -79,6 +91,24 @@ export default function ProgressScreen() {
         </View>
 
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          {dailyQuiz ? (
+            <View style={[styles.dailyQuizCard, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+              <View style={styles.dailyQuizRow}>
+                <View>
+                  <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+                  <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
+                </View>
+                <View style={[styles.dailyQuizStatus, { backgroundColor: dailyQuizResult ? colors.success + '18' : colors.warning + '18' }]}>
+                  <Text style={[styles.dailyQuizStatusText, { color: dailyQuizResult ? colors.success : colors.warning }]}>
+                    {dailyQuizResult ? `${Math.round((dailyQuizResult.score / Math.max(1, dailyQuizResult.totalQuestions)) * 100)}%` : 'Pending'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary, fontSize: t.caption }]}>
+                {dailyQuizResult ? 'Completed today. Reopen the daily quiz from Home to improve your result.' : 'Today\'s daily quiz is still available from Home.'}
+              </Text>
+            </View>
+          ) : null}
           <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>{EXPERIENCE_COPY.progress.xpTitle}</Text>
           <View style={styles.streakNumbers}>
             <View>
@@ -122,6 +152,13 @@ const styles = StyleSheet.create({
   panel: { borderWidth: 1, borderRadius: 16, padding: 12, gap: 12 },
   panelTitle: { fontFamily: F.bold, fontSize: 17 },
   panelHint: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -4 },
+  dailyQuizCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 8 },
+  dailyQuizRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizTitle: { fontFamily: F.semiBold, fontSize: 15, marginTop: 4 },
+  dailyQuizSubtitle: { fontFamily: F.regular, lineHeight: 18 },
+  dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  dailyQuizStatusText: { fontFamily: F.bold, fontSize: 11 },
   streakNumbers: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   bigValue: { fontFamily: F.bold, fontSize: 20 },
   subLabel: { fontFamily: F.regular, fontSize: 12, marginTop: 3 },
