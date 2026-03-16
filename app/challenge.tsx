@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -10,7 +10,7 @@ import { CHALLENGE_SCORES, CPU_NAMES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import { getResultPercent } from '@/utils/quizResults';
-import type { Quiz } from '@/types';
+import type { Quiz, QuizResult } from '@/types';
 
 type Difficulty = 'all' | 'beginner' | 'intermediate' | 'advanced';
 
@@ -104,7 +104,14 @@ function ChallengeCard({
 
         {/* CTA */}
         <Pressable
-          onPress={() => router.push(`/quiz/${quiz.id}`)}
+          onPress={() => {
+            if (bestPct !== null) {
+              // Pass previousBest so the quiz results screen can show comparison
+              router.push(`/quiz/${quiz.id}?previousBest=${bestPct}`);
+            } else {
+              router.push(`/quiz/${quiz.id}`);
+            }
+          }}
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.challengeBtn,
@@ -125,11 +132,13 @@ function ChallengeCard({
 export default function ChallengeScreen() {
   const colors = useThemeColors();
   const [difficulty, setDifficulty] = useState<Difficulty>('all');
+  // recentResults comes from progressStore which syncs from Supabase quiz_results
+  // when the user is authenticated, and falls back to local store otherwise.
   const recentResults = useProgressStore((s) => s.progress.recentResults);
 
-  // Build best score per quiz
+  // Build best score per quiz from all available results
   const bestScores: Record<string, number> = {};
-  recentResults.forEach((r) => {
+  (recentResults as QuizResult[]).forEach((r) => {
     const pct = getResultPercent(r);
     if (bestScores[r.quizId] === undefined || pct > bestScores[r.quizId]) {
       bestScores[r.quizId] = pct;

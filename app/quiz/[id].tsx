@@ -69,6 +69,8 @@ export default function QuizScreen() {
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [timeLeft, setTimeLeft]               = useState(QUESTION_TIME);
   const [pointScore, setPointScore]           = useState(0);
+  // Self Challenge: prior best score recorded before this attempt is saved
+  const priorBestPctRef = useRef<number | null>(null);
   const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAt    = useRef<number>(Date.now());
   // Flashcard swipe — ref tracks latest index to avoid stale closure in PanResponder
@@ -124,6 +126,7 @@ export default function QuizScreen() {
   const goToQuestion            = useQuizStore((s) => s.goToQuestion);
   const reset                   = useQuizStore((s) => s.reset);
   const addResult               = useProgressStore((s) => s.addResult);
+  const recentResults           = useProgressStore((s) => s.progress.recentResults);
   const pendingCoins            = useProgressStore((s) => s.pendingCoins);
   const clearPendingCoins       = useProgressStore((s) => s.clearPendingCoins);
   const clearPendingBadges      = useProgressStore((s) => s.clearPendingBadges);
@@ -323,6 +326,16 @@ export default function QuizScreen() {
     const handleStart = () => {
       const ok = checkRateLimit();
       if (!ok.ok) { setShowDailyLimit(true); return; }
+      // Capture prior best before this attempt is saved (for Self Challenge banner)
+      if (id) {
+        const prior = recentResults.find((r) => r.quizId === id);
+        if (prior) {
+          const maxPts = Math.max(1, prior.totalQuestions * Math.max(1, quiz.correctScore ?? 1));
+          priorBestPctRef.current = Math.max(0, Math.round((prior.score / maxPts) * 100));
+        } else {
+          priorBestPctRef.current = null;
+        }
+      }
       reset(); setShowFeedback(false); setFeedbackDismissed(false); setPendingAnswerId(undefined);
       setFiftyFiftyUsed(false); setHiddenOptions([]); setSkipsLeft(3);
       setPointScore(0);
@@ -519,6 +532,30 @@ export default function QuizScreen() {
               </View>
             </View>
           )}
+
+          {/* Self Challenge comparison */}
+          {priorBestPctRef.current !== null && (() => {
+            const prior    = priorBestPctRef.current as number;
+            const improved = pct > prior;
+            const tied     = pct === prior;
+            const bannerColor = improved ? colors.success : tied ? colors.warning : colors.error;
+            return (
+              <View style={[s.banner, { backgroundColor: bannerColor + '18', borderColor: bannerColor + '44' }]}>
+                <View style={[s.bannerIcon, { backgroundColor: bannerColor + '28' }]}>
+                  <Feather name={improved ? 'trending-up' : tied ? 'minus' : 'trending-down'} size={18} color={bannerColor} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.bannerTitle, { color: bannerColor }]}>
+                    {improved ? 'New Personal Best! 🏆' : tied ? 'Matched Your Best' : 'Self Challenge'}
+                  </Text>
+                  <Text style={[s.bannerSub, { color: colors.textSecondary }]}>
+                    {`Your best: ${prior}%  →  This attempt: ${pct}%`}
+                    {improved ? `  (+${pct - prior}%)` : tied ? '' : `  (${pct - prior}%)`}
+                  </Text>
+                </View>
+              </View>
+            );
+          })()}
 
           {/* Challenge beaten */}
           {pct >= (CHALLENGE_SCORES[quiz.id] ?? 70) && (

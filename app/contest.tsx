@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useProgressStore } from '@/stores/progressStore';
-import { getContests } from '@/data/contests';
+import { AppConfig } from '@/config/appConfig';
 import { F } from '@/constants/Typography';
 import type { Contest, ContestStatus } from '@/types';
 
@@ -189,8 +189,21 @@ export default function ContestScreen() {
   const colors = useThemeColors();
   const [tab, setTab] = useState<Tab>('live');
   const coins = useProgressStore((s) => s.progress.coins ?? 0);
+  const [allContests, setAllContests] = useState<Contest[]>([]);
+  const [loadingContests, setLoadingContests] = useState(true);
 
-  const list = getContests(tab);
+  useEffect(() => {
+    const baseUrl = AppConfig.web.baseUrl || 'https://lms-amber-two.vercel.app';
+    fetch(`${baseUrl}/api/contests`)
+      .then((r) => r.json())
+      .then((d: { ok: boolean; contests?: Contest[] }) => {
+        if (d.ok && Array.isArray(d.contests)) setAllContests(d.contests);
+      })
+      .catch(() => { /* show empty state on error */ })
+      .finally(() => setLoadingContests(false));
+  }, []);
+
+  const list: Contest[] = allContests.filter((c) => c.status === tab);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
@@ -210,7 +223,7 @@ export default function ContestScreen() {
       {/* Tabs */}
       <View style={[styles.tabs, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
         {TABS.map((t) => {
-          const count = getContests(t.key).length;
+          const count = allContests.filter((c) => c.status === t.key).length;
           return (
             <Pressable
               key={t.key}
@@ -233,9 +246,11 @@ export default function ContestScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {list.length === 0
-          ? <EmptyState tab={tab} colors={colors} />
-          : list.map((c) => <ContestCard key={c.id} contest={c} coins={coins} colors={colors} />)
+        {loadingContests
+          ? <ActivityIndicator style={{ marginTop: 48 }} color={colors.primary} />
+          : list.length === 0
+            ? <EmptyState tab={tab} colors={colors} />
+            : list.map((c) => <ContestCard key={c.id} contest={c} coins={coins} colors={colors} />)
         }
       </ScrollView>
     </SafeAreaView>
