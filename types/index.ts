@@ -11,6 +11,16 @@ export interface User {
 
 export type CertLevel = 'foundational' | 'associate' | 'professional' | 'specialty';
 
+export type QuizMode =
+  | 'quiz_zone'
+  | 'true_false'
+  | 'exam'
+  | 'fun_and_learn'
+  | 'guess_the_word'
+  | 'audio'
+  | 'maths_quiz'
+  | 'multi_match';
+
 export interface Quiz {
   id: string;
   title: string;
@@ -28,6 +38,10 @@ export interface Quiz {
   fixedQuestionCount?: number;
   correctScore?: number;
   wrongScore?: number;
+  /** Quiz mode — determines UI rendering and timer behavior */
+  mode?: QuizMode;
+  /** Exam mode: if false, correct answers are NOT shown in results */
+  examReviewAllowed?: boolean;
 }
 
 export interface Question {
