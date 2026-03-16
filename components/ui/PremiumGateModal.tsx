@@ -1,17 +1,14 @@
-import { Modal, View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import { Modal, View, Text, Pressable, StyleSheet, Linking } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
-import { PLANS } from '@/services/razorpayService';
 import type { Quiz } from '@/types';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { COMPANY_TONES } from '@/config/themePresets';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
-
-type Tab = 'course' | 'pro';
+import { AppConfig } from '@/config/appConfig';
 
 interface PremiumGateModalProps {
   visible: boolean;
@@ -20,28 +17,22 @@ interface PremiumGateModalProps {
   onUpgrade?: (type: 'subscription' | 'course') => Promise<void>;
 }
 
-export function PremiumGateModal({ visible, quiz, onClose, onUpgrade }: PremiumGateModalProps) {
+export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalProps) {
   const colors = useThemeColors();
   const platformConfig = usePlatformConfigStore((s) => s.config);
-  const [tab, setTab] = useState<Tab>('pro');
-  const [loading, setLoading] = useState(false);
   const playableQuestionCount = getPlayableQuestionCount(quiz);
 
-  const handleAction = async (type: 'subscription' | 'course') => {
-    if (!onUpgrade) return onClose();
-    setLoading(true);
-    try {
-      await onUpgrade(type);
-    } finally {
-      setLoading(false);
-    }
+  const webUrl = (AppConfig.web.baseUrl ?? '').replace(/\/$/, '') || 'https://lms-amber-two.vercel.app';
+
+  const openWebStore = () => {
+    void Linking.openURL(`${webUrl}/dashboard/store`);
   };
 
   const courseFeatures = [
     `${playableQuestionCount} questions in ${quiz.title}`,
     'Instant feedback with detailed explanations',
     'Unlimited retries and saved results',
-    'Premium practice experience on mobile',
+    'Premium practice experience on all devices',
   ];
 
   return (
@@ -64,33 +55,28 @@ export function PremiumGateModal({ visible, quiz, onClose, onUpgrade }: PremiumG
             ))}
           </View>
 
-          <View style={styles.planRow}>
-            <Pressable onPress={() => setTab('course')} style={[styles.planCard, { backgroundColor: colors.surface, borderColor: tab === 'course' ? colors.gradientAccent : colors.surfaceBorder }]}>
-              <Text style={[styles.planName, { color: colors.text }]}>Monthly</Text>
-              <Text style={[styles.planPrice, { color: colors.text }]}>₹ {quiz.price ?? 249}.00</Text>
-              <Text style={[styles.planMeta, { color: colors.textSecondary }]}>Billed once</Text>
-              <Pressable onPress={() => handleAction('course')} style={[styles.planButton, { borderColor: colors.gradientAccent }]}>
-                {loading && tab === 'course' ? <ActivityIndicator size="small" color={colors.text} /> : <Text style={[styles.planButtonText, { color: colors.text }]}>Unlock Quiz</Text>}
-              </Pressable>
+          {/* Web payment card */}
+          <LinearGradient
+            colors={[colors.surfaceElevated, colors.surface]}
+            style={[styles.webCard, { borderColor: colors.primary }]}
+          >
+            <View style={styles.webCardIcon}>
+              <Feather name="globe" size={28} color={colors.primary} />
+            </View>
+            <Text style={[styles.webCardTitle, { color: colors.text }]}>Subscribe or unlock on the web</Text>
+            <Text style={[styles.webCardBody, { color: colors.textSecondary }]}>
+              Payments are processed securely on our website via Razorpay or Stripe.{'\n'}
+              Log in at <Text style={{ color: colors.primary }}>katalyst.app</Text> and subscribe from your account.
+            </Text>
+            <Pressable onPress={openWebStore} style={[styles.webBtn, { backgroundColor: colors.primary }]}>
+              <Feather name="external-link" size={16} color="#fff" />
+              <Text style={styles.webBtnText}>Open Web App to Subscribe</Text>
             </Pressable>
+          </LinearGradient>
 
-            <LinearGradient colors={[colors.surfaceElevated, colors.surface]} style={[styles.planCard, { borderColor: tab === 'pro' ? colors.primary : colors.surfaceBorder }]}>
-              {platformConfig.widgets.showDiscountBanner && (
-                <View style={[styles.saveBadge, { backgroundColor: platformConfig.colors.premiumAccent }]}>
-                  <Text style={styles.saveBadgeText}>Save 50%</Text>
-                </View>
-              )}
-              <Text style={[styles.planName, { color: colors.text }]}>Yearly</Text>
-              <Text style={[styles.strikePrice, { color: colors.textSecondary }]}>₹10,999.00</Text>
-              <Text style={[styles.planPrice, { color: colors.text }]}>₹ {PLANS.annual.price}.00</Text>
-              <Text style={[styles.planMeta, { color: colors.textSecondary }]}>₹533.33 / month billed yearly</Text>
-              <Pressable onPress={() => { setTab('pro'); handleAction('subscription'); }} style={[styles.planButtonSolid, { backgroundColor: colors.primary }]}>
-                {loading && tab === 'pro' ? <ActivityIndicator size="small" color="#04111F" /> : <Text style={styles.planButtonSolidText}>Subscribe</Text>}
-              </Pressable>
-            </LinearGradient>
-          </View>
-
-          <Text style={[styles.renewText, { color: colors.textSecondary }]}>Subscriptions automatically renew. Cancel anytime.</Text>
+          <Text style={[styles.noteText, { color: colors.textSecondary }]}>
+            Already subscribed? Pull down to refresh or sign out and back in to sync your access.
+          </Text>
 
           <View style={styles.ratingWrap}>
             <Feather name="star" size={34} color="#F8E84A" />
@@ -127,19 +113,13 @@ const styles = StyleSheet.create({
   featureList: { gap: 14, marginTop: 24 },
   featureRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   featureText: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 26, flex: 1 },
-  planRow: { flexDirection: 'row', gap: 14, marginTop: 24 },
-  planCard: { flex: 1, borderRadius: 24, borderWidth: 1, padding: 18, gap: 10, overflow: 'hidden' },
-  saveBadge: { position: 'absolute', right: 12, top: 12, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
-  saveBadgeText: { color: '#fff', fontFamily: F.bold, fontSize: 12 },
-  planName: { fontFamily: F.medium, fontSize: 18 },
-  strikePrice: { fontFamily: F.medium, fontSize: 14, textDecorationLine: 'line-through' },
-  planPrice: { fontFamily: F.bold, fontSize: 24, lineHeight: 30 },
-  planMeta: { fontFamily: F.regular, fontSize: 13, lineHeight: 20 },
-  planButton: { minHeight: 50, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  planButtonText: { fontFamily: F.bold, fontSize: 16 },
-  planButtonSolid: { minHeight: 50, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  planButtonSolidText: { color: '#04111F', fontFamily: F.bold, fontSize: 16 },
-  renewText: { fontFamily: F.regular, fontSize: 14, lineHeight: 22, marginTop: 16 },
+  webCard: { borderRadius: 20, borderWidth: 1.5, padding: 22, marginTop: 24, gap: 12, alignItems: 'center' },
+  webCardIcon: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(115,103,240,0.12)' },
+  webCardTitle: { fontFamily: F.bold, fontSize: 20, textAlign: 'center' },
+  webCardBody: { fontFamily: F.regular, fontSize: 14, lineHeight: 22, textAlign: 'center' },
+  webBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 18, marginTop: 4 },
+  webBtnText: { color: '#fff', fontFamily: F.bold, fontSize: 16 },
+  noteText: { fontFamily: F.regular, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 12 },
   ratingWrap: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 30 },
   ratingValue: { fontFamily: F.bold, fontSize: 40 },
   ratingMeta: { fontFamily: F.medium, fontSize: 20, textAlign: 'center', marginTop: 4 },

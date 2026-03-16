@@ -13,7 +13,7 @@
  *  - Spacing: 16px horizontal, 18px section gap
  */
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet, PanResponder, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet, PanResponder, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -36,7 +36,6 @@ import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { useRateLimitStore } from '@/stores/rateLimitStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
-import { openCheckout, openCourseUnlock } from '@/services/razorpayService';
 import { quizzes, quizQuestions } from '@/data/quizzes';
 import { CHALLENGE_SCORES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
@@ -135,8 +134,6 @@ export default function QuizScreen() {
   const isBookmarked            = useBookmarkStore((s) => s.isBookmarked);
   const user                    = useAuthStore((s) => s.user);
   const systemFeatures          = useSystemFeatureStore((s) => s.config);
-  const upgradeToPremium        = useAuthStore((s) => s.upgradeToPremium);
-  const unlockCourse            = useAuthStore((s) => s.unlockCourse);
   const checkRateLimit          = useRateLimitStore((s) => s.checkAndConsume);
 
   const currentQuestion        = questions[currentQuestionIndex];
@@ -346,19 +343,7 @@ export default function QuizScreen() {
       <View style={s.flex}>
         <DailyLimitModal visible={showDailyLimit} onClose={() => setShowDailyLimit(false)}
           onUpgrade={() => { setShowDailyLimit(false); setShowPremiumGate(true); }} />
-        <PremiumGateModal visible={showPremiumGate} quiz={quiz} onClose={() => setShowPremiumGate(false)}
-          onUpgrade={async (type: 'subscription' | 'course') => {
-            const go = () => { setShowPremiumGate(false); reset(); setShowFeedback(false); setFiftyFiftyUsed(false); setHiddenOptions([]); setSkipsLeft(3); resetTimer(); startedAt.current = Date.now(); setPhase('quiz'); };
-            if (type === 'course') {
-              const r = await openCourseUnlock(quiz.id, quiz.price ?? 149);
-              if (r.success) { await unlockCourse(quiz.id); go(); }
-              else Alert.alert('Payment Failed', r.error ?? 'Please try again.');
-            } else {
-              const r = await openCheckout('annual');
-              if (r.success) { await upgradeToPremium(); go(); }
-              else Alert.alert('Payment Failed', r.error ?? 'Please try again.');
-            }
-          }} />
+        <PremiumGateModal visible={showPremiumGate} quiz={quiz} onClose={() => setShowPremiumGate(false)} />
 
         {/* Full-screen vivid gradient */}
         <LinearGradient

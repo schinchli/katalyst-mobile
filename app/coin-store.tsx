@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -26,15 +26,9 @@ export default function CoinStoreScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleBuy = (pack: CoinPack) => {
-    // WARNING: Do NOT use Razorpay or any web checkout for digital goods on iOS/Android.
-    // Digital content purchases require native IAP via StoreKit (iOS) / Play Billing (Android).
-    // See DESIRED_FEATURES_BACKLOG.md for IAP integration plan.
-    Alert.alert(
-      'Purchase available through the app',
-      'In-App Purchase integration is coming in the next update. Stay tuned!',
-      [{ text: 'OK' }],
-    );
+  const handleBuy = (_pack: CoinPack) => {
+    const base = AppConfig.web.baseUrl.replace(/\/$/, '') || 'https://lms-amber-two.vercel.app';
+    void Linking.openURL(`${base}/dashboard/store`);
   };
 
   return (
