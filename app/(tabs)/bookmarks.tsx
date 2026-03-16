@@ -144,6 +144,8 @@ export default function BookmarksScreen() {
     .map((id) => QUESTION_INDEX[id])
     .filter(Boolean) as QuestionEntry[];
 
+  const hasBookmarks = entries.length > 0;
+
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
@@ -162,6 +164,27 @@ export default function BookmarksScreen() {
             </View>
           )}
         </View>
+
+        {/* Start Review button */}
+        {hasBookmarks ? (
+          <Pressable
+            onPress={() => router.push('/quiz/bookmarks-review' as never)}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.reviewBtn,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1, marginBottom: 14 },
+            ]}
+          >
+            <Feather name="play" size={16} color="#fff" />
+            <Text style={styles.reviewBtnText}>Start Review ({entries.length})</Text>
+          </Pressable>
+        ) : (
+          <View style={[styles.reviewBtnDisabled, { backgroundColor: colors.surfaceBorder, marginBottom: 14 }]}>
+            <Text style={[styles.reviewBtnText, { color: colors.textSecondary }]}>
+              Bookmark questions during a quiz to review them
+            </Text>
+          </View>
+        )}
 
         {entries.length === 0 ? (
           <EmptyState colors={colors} />
@@ -286,6 +309,29 @@ const styles = StyleSheet.create({
   removeBtnText: {
     fontFamily: F.semiBold,
     fontSize: 11,
+  },
+
+  // ── Start Review button ────────────────────────────────────────────────────
+  reviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 46,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+  },
+  reviewBtnDisabled: {
+    minHeight: 46,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewBtnText: {
+    fontFamily: F.bold,
+    fontSize: 14,
+    color: '#fff',
   },
 
   // ── Empty state ────────────────────────────────────────────────────────────

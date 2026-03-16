@@ -13,7 +13,7 @@
  *  - Spacing: 16px horizontal, 18px section gap
  */
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet, PanResponder } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet, PanResponder, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -91,6 +91,16 @@ export default function QuizScreen() {
   const [fiftyFiftyUsed, setFiftyFiftyUsed]   = useState(false);
   const [hiddenOptions, setHiddenOptions]     = useState<string[]>([]);
   const [skipsLeft, setSkipsLeft]             = useState(3);
+  // Mode-specific states
+  const [funLearnRevealed, setFunLearnRevealed] = useState(false);
+  const [wordInputValue, setWordInputValue]     = useState('');
+  const [wordFeedbackCorrect, setWordFeedbackCorrect] = useState<boolean | null>(null);
+  const [showHint, setShowHint]                 = useState(false);
+  const [numericInputValue, setNumericInputValue] = useState('');
+  const [numericFeedbackCorrect, setNumericFeedbackCorrect] = useState<boolean | null>(null);
+  const [matchSelectedLeft, setMatchSelectedLeft] = useState<string | null>(null);
+  const [matchCorrect, setMatchCorrect]           = useState<Set<string>>(new Set());
+  const [matchWrong, setMatchWrong]               = useState<string | null>(null);
 
   const quiz               = quizzes.find((q) => q.id === id);
   const rawQuestions       = quizQuestions[id ?? ''] ?? [];
@@ -132,6 +142,11 @@ export default function QuizScreen() {
   const isTrueFalseQuiz        = questionPool.length > 0 && questionPool.every((question) => question.options.length === 2);
   const quizMode               = quiz?.mode ?? (isTrueFalseQuiz ? 'true_false' : 'quiz_zone');
   const isExamMode             = quizMode === 'exam';
+  const isFunAndLearnMode      = quizMode === 'fun_and_learn';
+  const isGuessTheWordMode     = quizMode === 'guess_the_word';
+  const isMathsQuizMode        = quizMode === 'maths_quiz';
+  const isMultiMatchMode       = quizMode === 'multi_match';
+  const isAudioMode            = quizMode === 'audio';
   const answeredCount          = Object.keys(selectedAnswers).length;
   const isLastQuestion         = currentQuestionIndex === questions.length - 1;
   const hasAnsweredCurrent     = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
@@ -188,7 +203,13 @@ export default function QuizScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, showFeedback, timeLeft, isLastQuestion]);
 
-  useEffect(() => { resetTimer(); setHiddenOptions([]); setPendingAnswerId(undefined); }, [currentQuestionIndex]); // eslint-disable-line
+  useEffect(() => {
+    resetTimer(); setHiddenOptions([]); setPendingAnswerId(undefined);
+    setFunLearnRevealed(false);
+    setWordInputValue(''); setWordFeedbackCorrect(null); setShowHint(false);
+    setNumericInputValue(''); setNumericFeedbackCorrect(null);
+    setMatchSelectedLeft(null); setMatchCorrect(new Set()); setMatchWrong(null);
+  }, [currentQuestionIndex]); // eslint-disable-line
 
   useEffect(() => {
     if (phase !== 'results') { setBadgeReady(false); return; }
@@ -212,6 +233,51 @@ export default function QuizScreen() {
     setFeedbackDismissed(false); setPendingAnswerId(undefined);
     setShowFeedback(Boolean(prev && selectedAnswers[prev.id])); previousQuestion();
   };
+  // ── Mode-specific handlers ─────────────────────────────────────────────────
+  const handleWordSubmit = () => {
+    if (!currentQuestion || !wordInputValue.trim() || showFeedback) return;
+    stopTimer();
+    const correct = wordInputValue.trim().toLowerCase() === (currentQuestion.wordAnswer ?? '').toLowerCase();
+    setWordFeedbackCorrect(correct);
+    selectAnswer(currentQuestion.id, correct ? currentQuestion.correctOptionId : '__wrong__');
+    setShowFeedback(true); setFeedbackDismissed(false);
+  };
+
+  const handleNumericSubmit = () => {
+    if (!currentQuestion || numericInputValue.trim() === '' || showFeedback) return;
+    stopTimer();
+    const entered = parseFloat(numericInputValue);
+    const target  = currentQuestion.numericAnswer ?? 0;
+    const correct = Math.abs(entered - target) <= 0.01;
+    setNumericFeedbackCorrect(correct);
+    selectAnswer(currentQuestion.id, correct ? currentQuestion.correctOptionId : '__wrong__');
+    setShowFeedback(true); setFeedbackDismissed(false);
+  };
+
+  const handleMatchLeft = (pairId: string) => {
+    if (showFeedback) return;
+    setMatchSelectedLeft(pairId);
+  };
+
+  const handleMatchRight = (pairId: string) => {
+    if (!matchSelectedLeft || showFeedback) return;
+    if (matchSelectedLeft === pairId) {
+      const next = new Set(matchCorrect);
+      next.add(pairId);
+      setMatchCorrect(next);
+      setMatchSelectedLeft(null);
+      if (currentQuestion?.matchPairs && next.size === currentQuestion.matchPairs.length) {
+        stopTimer();
+        selectAnswer(currentQuestion.id, currentQuestion.correctOptionId);
+        setShowFeedback(true); setFeedbackDismissed(false);
+      }
+    } else {
+      setMatchWrong(pairId);
+      setMatchSelectedLeft(null);
+      setTimeout(() => setMatchWrong(null), 700);
+    }
+  };
+
   const exitAndReset = (goLeaderboard = false) => {
     stopTimer(); reset(); clearPendingCoins(); clearPendingBadges();
     setShowFeedback(false); setFeedbackDismissed(false); setPendingAnswerId(undefined);
@@ -316,6 +382,31 @@ export default function QuizScreen() {
             {isTrueFalseQuiz ? (
               <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
                 <Text style={s.introDailyBadgeText}>True / False</Text>
+              </View>
+            ) : null}
+            {isFunAndLearnMode ? (
+              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+                <Text style={s.introDailyBadgeText}>📖 Fun and Learn</Text>
+              </View>
+            ) : null}
+            {isGuessTheWordMode ? (
+              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+                <Text style={s.introDailyBadgeText}>✏️ Guess the Word</Text>
+              </View>
+            ) : null}
+            {isMathsQuizMode ? (
+              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+                <Text style={s.introDailyBadgeText}>🔢 Maths Quiz</Text>
+              </View>
+            ) : null}
+            {isMultiMatchMode ? (
+              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+                <Text style={s.introDailyBadgeText}>🔗 Multi Match</Text>
+              </View>
+            ) : null}
+            {isAudioMode ? (
+              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+                <Text style={s.introDailyBadgeText}>🎧 Audio Quiz</Text>
               </View>
             ) : null}
             <Text style={s.introCourseLabel}>Course</Text>
@@ -622,24 +713,198 @@ export default function QuizScreen() {
       </View>
 
       {/* ── Question + options — compact top-aligned layout ── */}
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         style={s.flex}
         contentContainerStyle={s.quizScroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {currentQuestion && (
-          <QuestionView
-            question={currentQuestion}
-            selectedOptionId={selectedCurrentAnswer}
-            onSelectOption={handleSelectAnswer}
-            showResult={phase === 'review' ? (hasAnsweredCurrent || pendingAnswerId !== undefined) : (showFeedback && hasAnsweredCurrent)}
-            resultTone={isCurrentCorrect ? 'correct' : 'incorrect'}
-            hiddenOptionIds={hiddenOptions}
-            onReport={!isReview ? () => setShowReport(true) : undefined}
-          />
-        )}
+        {currentQuestion && (() => {
+          const isInputMode = isGuessTheWordMode || isMathsQuizMode || isMultiMatchMode;
+          const allMatchesDone = isMultiMatchMode && currentQuestion.matchPairs
+            ? matchCorrect.size === currentQuestion.matchPairs.length
+            : false;
+
+          return (
+            <>
+              {/* Audio Quiz: show fallback note (expo-audio not installed) */}
+              {isAudioMode && currentQuestion.audioUrl && (
+                <View style={[modeStyles.audioNote, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '44' }]}>
+                  <Feather name="headphones" size={16} color={colors.primary} />
+                  <Text style={[modeStyles.audioNoteText, { color: colors.primary }]}>
+                    Audio: {currentQuestion.audioFallbackText ?? currentQuestion.text}
+                  </Text>
+                </View>
+              )}
+
+              {/* Fun and Learn: learning card before options */}
+              {isFunAndLearnMode && !funLearnRevealed && currentQuestion.explanation && (
+                <View style={[modeStyles.learnCard, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '44' }]}>
+                  <Text style={[modeStyles.learnLabel, { color: colors.primary }]}>📖 Learn first:</Text>
+                  <Text style={[modeStyles.learnText, { color: colors.text }]}>{currentQuestion.explanation}</Text>
+                  <Pressable
+                    onPress={() => setFunLearnRevealed(true)}
+                    style={({ pressed }) => [modeStyles.gotItBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
+                  >
+                    <Text style={modeStyles.gotItBtnText}>Got it →</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {/* Standard QuestionView for MCQ / true-false / fun_and_learn after reveal / audio / exam */}
+              {!isInputMode && (!isFunAndLearnMode || funLearnRevealed) && (
+                <QuestionView
+                  question={currentQuestion}
+                  selectedOptionId={selectedCurrentAnswer}
+                  onSelectOption={handleSelectAnswer}
+                  showResult={phase === 'review' ? (hasAnsweredCurrent || pendingAnswerId !== undefined) : (showFeedback && hasAnsweredCurrent)}
+                  resultTone={isCurrentCorrect ? 'correct' : 'incorrect'}
+                  hiddenOptionIds={hiddenOptions}
+                  onReport={!isReview ? () => setShowReport(true) : undefined}
+                />
+              )}
+
+              {/* Guess the Word */}
+              {isGuessTheWordMode && (
+                <View>
+                  <Text style={[modeStyles.questionText, { color: colors.text }]}>{currentQuestion.text}</Text>
+                  {currentQuestion.hint && (
+                    showHint ? (
+                      <View style={[modeStyles.hintBox, { backgroundColor: colors.warning + '14', borderColor: colors.warning + '44' }]}>
+                        <Text style={[modeStyles.hintText, { color: colors.warning }]}>💡 {currentQuestion.hint}</Text>
+                      </View>
+                    ) : (
+                      <Pressable onPress={() => setShowHint(true)} style={[modeStyles.hintBtn, { borderColor: colors.surfaceBorder }]}>
+                        <Text style={[modeStyles.hintBtnText, { color: colors.textSecondary }]}>Show Hint 💡</Text>
+                      </Pressable>
+                    )
+                  )}
+                  {wordFeedbackCorrect === null ? (
+                    <View style={modeStyles.inputRow}>
+                      <TextInput
+                        value={wordInputValue}
+                        onChangeText={setWordInputValue}
+                        onSubmitEditing={handleWordSubmit}
+                        returnKeyType="done"
+                        placeholder="Type your answer…"
+                        placeholderTextColor={colors.textSecondary}
+                        style={[modeStyles.textInput, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, color: colors.text }]}
+                      />
+                      <Pressable
+                        onPress={handleWordSubmit}
+                        disabled={!wordInputValue.trim()}
+                        style={({ pressed }) => [modeStyles.submitBtn, { backgroundColor: wordInputValue.trim() ? colors.primary : colors.surfaceBorder, opacity: pressed ? 0.88 : 1 }]}
+                      >
+                        <Text style={[modeStyles.submitBtnText, { color: wordInputValue.trim() ? '#fff' : colors.textSecondary }]}>Submit</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <View style={[modeStyles.feedbackBox, { backgroundColor: wordFeedbackCorrect ? colors.success + '18' : colors.error + '14', borderColor: wordFeedbackCorrect ? colors.success + '44' : colors.error + '44' }]}>
+                      <Text style={[modeStyles.feedbackText, { color: wordFeedbackCorrect ? colors.success : colors.error }]}>
+                        {wordFeedbackCorrect ? '✓ Correct!' : `✗ Incorrect. Answer: "${currentQuestion.wordAnswer}"`}
+                      </Text>
+                      {currentQuestion.explanation ? <Text style={[modeStyles.explanationText, { color: colors.textSecondary }]}>{currentQuestion.explanation}</Text> : null}
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Maths Quiz */}
+              {isMathsQuizMode && (
+                <View>
+                  <Text style={[modeStyles.mathQuestion, { color: colors.text }]}>{currentQuestion.text}</Text>
+                  {numericFeedbackCorrect === null ? (
+                    <View style={modeStyles.inputRow}>
+                      <TextInput
+                        value={numericInputValue}
+                        onChangeText={setNumericInputValue}
+                        onSubmitEditing={handleNumericSubmit}
+                        returnKeyType="done"
+                        keyboardType="numeric"
+                        placeholder="Numeric answer…"
+                        placeholderTextColor={colors.textSecondary}
+                        style={[modeStyles.textInput, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, color: colors.text, fontSize: 18 }]}
+                      />
+                      <Pressable
+                        onPress={handleNumericSubmit}
+                        disabled={numericInputValue.trim() === ''}
+                        style={({ pressed }) => [modeStyles.submitBtn, { backgroundColor: numericInputValue.trim() ? colors.primary : colors.surfaceBorder, opacity: pressed ? 0.88 : 1 }]}
+                      >
+                        <Text style={[modeStyles.submitBtnText, { color: numericInputValue.trim() ? '#fff' : colors.textSecondary }]}>Submit</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <View style={[modeStyles.feedbackBox, { backgroundColor: numericFeedbackCorrect ? colors.success + '18' : colors.error + '14', borderColor: numericFeedbackCorrect ? colors.success + '44' : colors.error + '44' }]}>
+                      <Text style={[modeStyles.feedbackText, { color: numericFeedbackCorrect ? colors.success : colors.error }]}>
+                        {numericFeedbackCorrect ? '✓ Correct!' : `✗ Incorrect. Answer: ${currentQuestion.numericAnswer}`}
+                      </Text>
+                      {currentQuestion.explanation ? <Text style={[modeStyles.explanationText, { color: colors.textSecondary }]}>{currentQuestion.explanation}</Text> : null}
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Multi Match */}
+              {isMultiMatchMode && currentQuestion.matchPairs && currentQuestion.matchPairs.length > 0 && (
+                <View>
+                  <Text style={[modeStyles.questionText, { color: colors.text }]}>{currentQuestion.text}</Text>
+                  <View style={modeStyles.matchGrid}>
+                    <View style={modeStyles.matchCol}>
+                      <Text style={[modeStyles.matchColLabel, { color: colors.textSecondary }]}>Match from</Text>
+                      {currentQuestion.matchPairs.map((pair) => {
+                        const isMatched   = matchCorrect.has(pair.id);
+                        const isSelected  = matchSelectedLeft === pair.id;
+                        return (
+                          <Pressable
+                            key={pair.id}
+                            onPress={() => !isMatched && handleMatchLeft(pair.id)}
+                            disabled={isMatched || allMatchesDone}
+                            style={[modeStyles.matchBtn, {
+                              backgroundColor: isMatched ? colors.success + '18' : isSelected ? colors.primaryLight : colors.surface,
+                              borderColor: isMatched ? colors.success : isSelected ? colors.primary : colors.surfaceBorder,
+                            }]}
+                          >
+                            <Text style={[modeStyles.matchBtnText, { color: isMatched ? colors.success : isSelected ? colors.primary : colors.text }]}>{pair.left}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                    <View style={modeStyles.matchCol}>
+                      <Text style={[modeStyles.matchColLabel, { color: colors.textSecondary }]}>Match to</Text>
+                      {[...currentQuestion.matchPairs].sort(() => Math.random() - 0.5).map((pair) => {
+                        const isMatched = matchCorrect.has(pair.id);
+                        const isWrong   = matchWrong === pair.id;
+                        return (
+                          <Pressable
+                            key={pair.id}
+                            onPress={() => !isMatched && handleMatchRight(pair.id)}
+                            disabled={isMatched || allMatchesDone || !matchSelectedLeft}
+                            style={[modeStyles.matchBtn, {
+                              backgroundColor: isMatched ? colors.success + '18' : isWrong ? colors.error + '14' : colors.surface,
+                              borderColor: isMatched ? colors.success : isWrong ? colors.error : colors.surfaceBorder,
+                              opacity: !matchSelectedLeft && !isMatched ? 0.6 : 1,
+                            }]}
+                          >
+                            <Text style={[modeStyles.matchBtnText, { color: isMatched ? colors.success : isWrong ? colors.error : colors.text }]}>{pair.right}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                  {allMatchesDone && (
+                    <View style={[modeStyles.feedbackBox, { backgroundColor: colors.success + '18', borderColor: colors.success + '44' }]}>
+                      <Text style={[modeStyles.feedbackText, { color: colors.success }]}>✓ All pairs matched!</Text>
+                      {currentQuestion.explanation ? <Text style={[modeStyles.explanationText, { color: colors.textSecondary }]}>{currentQuestion.explanation}</Text> : null}
+                    </View>
+                  )}
+                </View>
+              )}
+            </>
+          );
+        })()}
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* ── Bottom action bar — bordered nav buttons matching flashcard style ── */}
       <View style={[s.quizBottom, { paddingBottom: bottomSpacer }]}>
@@ -667,6 +932,18 @@ export default function QuizScreen() {
               </Text>
               <Feather name={isLastQuestion ? 'check' : 'chevrons-right'} size={18} color={colors.primary} />
             </Pressable>
+          ) : (isGuessTheWordMode && wordFeedbackCorrect !== null) || (isMathsQuizMode && numericFeedbackCorrect !== null) || (isMultiMatchMode && currentQuestion && currentQuestion.matchPairs && matchCorrect.size === currentQuestion.matchPairs.length) ? (
+            // Input mode submitted → show Next
+            <Pressable
+              onPress={handleNext}
+              hitSlop={8}
+              style={[s.navBtn, { borderColor: colors.primary }]}
+            >
+              <Text style={[s.navBtnText, { color: colors.primary }]}>
+                {isLastQuestion ? 'Results' : 'Next'}
+              </Text>
+              <Feather name={isLastQuestion ? 'award' : 'chevrons-right'} size={18} color={colors.primary} />
+            </Pressable>
           ) : showFeedback && hasAnsweredCurrent ? (
             <Pressable
               onPress={handleNext}
@@ -678,6 +955,15 @@ export default function QuizScreen() {
               </Text>
               <Feather name={isLastQuestion ? 'award' : 'chevrons-right'} size={18} color={colors.primary} />
             </Pressable>
+          ) : isFunAndLearnMode && !funLearnRevealed ? (
+            <View style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: 0.4 }]}>
+              <Text style={[s.navBtnText, { color: colors.textSecondary }]}>Read above</Text>
+            </View>
+          ) : (isGuessTheWordMode || isMathsQuizMode || isMultiMatchMode) ? (
+            // Input modes: hide Check — they have inline submit
+            <View style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: 0.4 }]}>
+              <Text style={[s.navBtnText, { color: colors.textSecondary }]}>Answer above</Text>
+            </View>
           ) : (
             <Pressable
               onPress={handleCheckAnswer}
@@ -760,6 +1046,44 @@ export default function QuizScreen() {
     </SafeAreaView>
   );
 }
+
+// ── Mode-specific styles (colors injected inline at render time) ─────────────
+const modeStyles = StyleSheet.create({
+  audioNote: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 16,
+  },
+  audioNoteText: { fontFamily: F.medium, fontSize: 13, flex: 1, lineHeight: 18 },
+
+  learnCard: { padding: 16, borderRadius: 12, borderWidth: 1.5, marginBottom: 16, gap: 10 },
+  learnLabel: { fontFamily: F.bold, fontSize: 12, letterSpacing: 0.5 },
+  learnText: { fontFamily: F.regular, fontSize: 14, lineHeight: 22, fontStyle: 'italic' },
+  gotItBtn: { alignSelf: 'flex-start', paddingHorizontal: 20, paddingVertical: 9, borderRadius: 8 },
+  gotItBtnText: { fontFamily: F.bold, fontSize: 13, color: '#fff' },
+
+  questionText: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 24, marginBottom: 16 },
+  mathQuestion: { fontFamily: F.semiBold, fontSize: 22, lineHeight: 30, marginBottom: 16 },
+
+  hintBox: { padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 12 },
+  hintText: { fontFamily: F.medium, fontSize: 13 },
+  hintBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', marginBottom: 12 },
+  hintBtnText: { fontFamily: F.medium, fontSize: 13 },
+
+  inputRow: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 12 },
+  textInput: { flex: 1, height: 48, borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 14, fontSize: 15, fontFamily: F.regular },
+  submitBtn: { height: 48, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  submitBtnText: { fontFamily: F.bold, fontSize: 14 },
+
+  feedbackBox: { padding: 14, borderRadius: 10, borderWidth: 1, gap: 6, marginTop: 8 },
+  feedbackText: { fontFamily: F.semiBold, fontSize: 14 },
+  explanationText: { fontFamily: F.regular, fontSize: 13, lineHeight: 19 },
+
+  matchGrid: { flexDirection: 'row', gap: 10 },
+  matchCol: { flex: 1, gap: 8 },
+  matchColLabel: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  matchBtn: { borderWidth: 1.5, borderRadius: 10, padding: 12, minHeight: 44 },
+  matchBtnText: { fontFamily: F.medium, fontSize: 13, lineHeight: 18 },
+});
 
 // ── Styles — zero hardcoded colors, all from colors.* at render time ────────
 const s = StyleSheet.create({
