@@ -130,6 +130,8 @@ export default function QuizScreen() {
   const dailyQuiz              = resolveDailyQuiz(systemFeatures, quizzes.filter((item) => item.enabled !== false));
   const isDailyQuiz            = dailyQuiz?.id === quiz?.id;
   const isTrueFalseQuiz        = questionPool.length > 0 && questionPool.every((question) => question.options.length === 2);
+  const quizMode               = quiz?.mode ?? (isTrueFalseQuiz ? 'true_false' : 'quiz_zone');
+  const isExamMode             = quizMode === 'exam';
   const answeredCount          = Object.keys(selectedAnswers).length;
   const isLastQuestion         = currentQuestionIndex === questions.length - 1;
   const hasAnsweredCurrent     = currentQuestion && selectedAnswers[currentQuestion.id] !== undefined;
@@ -171,11 +173,13 @@ export default function QuizScreen() {
   }, [stopTimer, calculateScore, calculatePointScore, addResult, id, questions.length, selectedAnswers]);
 
   useEffect(() => {
+    // Exam mode: no per-question countdown — answers are submitted all at once
+    if (isExamMode) { stopTimer(); return; }
     if (phase !== 'quiz' || showFeedback || !currentQuestion) { stopTimer(); return; }
     timerRef.current = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
     return stopTimer;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, showFeedback, currentQuestionIndex]);
+  }, [phase, showFeedback, currentQuestionIndex, isExamMode]);
 
   useEffect(() => {
     if (phase !== 'quiz' || showFeedback || timeLeft > 0) return;
@@ -323,6 +327,11 @@ export default function QuizScreen() {
             </View>
             {isDailyQuiz ? (
               <Text style={s.introDailyHint}>Today&apos;s featured quiz. Complete it to update your daily progress across the app.</Text>
+            ) : null}
+            {quiz.mode === 'exam' && quiz.examReviewAllowed === false ? (
+              <Text style={[s.introDailyHint, { backgroundColor: 'rgba(255,76,81,0.12)', color: 'rgba(255,255,255,0.85)' }]}>
+                This is an exam — answers will not be shown after submission.
+              </Text>
             ) : null}
           </View>
 
