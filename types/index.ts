@@ -148,6 +148,44 @@ export interface Badge {
   earnedAt: string;
 }
 
+export type CoinReasonCode =
+  | 'quiz_complete'
+  | 'perfect_score'
+  | 'daily_quiz'
+  | 'streak_bonus'
+  | 'referral_reward'
+  | 'referral_signup'
+  | 'coin_purchase'
+  | 'contest_prize'
+  | 'admin_grant'
+  | 'spend_contest_entry'
+  | 'spend_course_unlock';
+
+export interface CoinTransaction {
+  id: string;
+  userId: string;
+  amount: number;          // positive = earn, negative = spend
+  reason: CoinReasonCode;
+  referenceId?: string;    // quizId, contestId, etc.
+  createdAt: string;
+}
+
+export interface CoinPack {
+  id: string;
+  label: string;
+  coins: number;
+  priceInr: number;
+  priceUsd: number;
+  popular?: boolean;
+  enabled: boolean;
+}
+
+export interface ReferralInfo {
+  code: string;
+  referredCount: number;
+  coinsEarned: number;
+}
+
 export type QuizCategory =
   | 'genai'
   | 'compute'
@@ -184,3 +222,28 @@ export type QuizCategory =
   | 'pas-c01'
   | 'mls-c01'
   | (string & {});
+
+// ── Battle modes (P5-3) ──────────────────────────────────────────────────────
+export type BattleStatus = 'waiting' | 'in_progress' | 'finished' | 'abandoned';
+
+export interface BattleParticipant {
+  userId: string;
+  name: string;
+  score: number;
+  answers: Record<string, string>;
+  finishedAt?: string;
+}
+
+export interface BattleSession {
+  id: string;
+  type: 'one_vs_one' | 'group' | 'random';
+  status: BattleStatus;
+  quizId: string;
+  hostUserId: string;
+  participants: BattleParticipant[];
+  questionIds: string[];
+  currentQuestionIdx: number;
+  startedAt?: string;
+  finishedAt?: string;
+  inviteCode?: string;
+}

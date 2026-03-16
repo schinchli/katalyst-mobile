@@ -1,3 +1,8 @@
+// WARNING: This service must NOT be used for digital goods on iOS/Android.
+// Digital content purchases require native IAP via StoreKit / Play Billing.
+// This service is web-only.
+// See DESIRED_FEATURES_BACKLOG.md for IAP integration plan (RevenueCat / StoreKit / Play Billing).
+
 /**
  * Razorpay Payment Service
  * ────────────────────────

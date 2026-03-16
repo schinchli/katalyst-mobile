@@ -1,11 +1,61 @@
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
+import { useAuthStore } from '@/stores/authStore';
+import { supabase } from '@/config/supabase';
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
-// Expo Go: no ads (no native SDK). Dev Client/Release: render a lightweight house banner placeholder.
+const WEB_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://lms-amber-two.vercel.app';
+
+/**
+ * AdBanner.native — mobile ad banner placeholder.
+ *
+ * Gating:
+ *  - Never shown in Expo Go (no native SDK available)
+ *  - Checks systemFeatures.adsEnabled + systemFeatures.bannerAdsEnabled from /api/system-features
+ *  - Checks user's adsRemoved flag from /api/ads (per-user entitlement)
+ *
+ * TODO: Replace house banner with AdMob/Google Mobile Ads SDK before App Store submission.
+ */
 export function AdBanner(_props: { style?: object }) {
+  const user       = useAuthStore((s) => s.user);
+  // adsRemoved from store is the fastest path — set during initAuth from user_profiles.ads_removed
+  const adsRemovedStore = useAuthStore((s) => s.adsRemoved);
+  const [adsEnabled, setAdsEnabled]   = useState(true);
+  const [adsRemovedApi, setAdsRemovedApi] = useState(false);
+
+  useEffect(() => {
+    // Check global kill-switch from system-features
+    fetch(`${WEB_BASE_URL}/api/system-features`)
+      .then((r) => r.json())
+      .then((body: { config?: { adsEnabled?: boolean; bannerAdsEnabled?: boolean } }) => {
+        if (body.config?.adsEnabled === false || body.config?.bannerAdsEnabled === false) {
+          setAdsEnabled(false);
+        }
+      })
+      .catch(() => { /* best-effort */ });
+
+    // Check per-user remove-ads entitlement via API (fallback for when store is stale)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.access_token) return;
+      fetch(`${WEB_BASE_URL}/api/ads`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+        .then((r) => r.json())
+        .then((body: { ok: boolean; adsRemoved?: boolean }) => {
+          if (body.ok && body.adsRemoved) setAdsRemovedApi(true);
+        })
+        .catch(() => { /* best-effort */ });
+    }).catch(() => { /* best-effort */ });
+  }, []);
+
+  // If adsRemoved is true (from store or API), render nothing
   if (isExpoGo) return null;
+  if (!adsEnabled) return null;
+  if (adsRemovedStore || adsRemovedApi) return null;
+  if ((user as { subscription?: string } | null)?.subscription === 'premium') return null;
+
   return (
     <View style={s.banner}>
       <Text style={s.title}>Katalyst</Text>

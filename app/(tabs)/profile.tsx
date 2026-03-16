@@ -1,4 +1,5 @@
-import { Alert, View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import React from 'react';
+import { Alert, Share, View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -11,6 +12,9 @@ import { useThemeStore, ACCENT_PRESETS, type AccentPreset, type FontSizePreset }
 import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { AppConfig } from '@/config/appConfig';
+import { supabase } from '@/config/supabase';
+import type { ReferralInfo } from '@/types';
 
 const PRESETS: AccentPreset[] = ['indigo', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'emerald'];
 
@@ -35,6 +39,69 @@ export default function ProfileScreen() {
   const initials = user?.name?.charAt(0)?.toUpperCase() ?? 'K';
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const isAdmin = (user?.role ?? '').toLowerCase() === 'admin';
+  const [referral, setReferral] = React.useState<ReferralInfo | null>(null);
+  // Account deletion state
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = React.useState('');
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState('');
+
+  React.useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const base = AppConfig.web.baseUrl.replace(/\/$/, '');
+      try {
+        const res = await fetch(`${base}/api/referral`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const body = await res.json() as { ok: boolean; code?: string; referredCount?: number; coinsEarned?: number };
+        if (body.ok && body.code) {
+          setReferral({ code: body.code, referredCount: body.referredCount ?? 0, coinsEarned: body.coinsEarned ?? 0 });
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }, []);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setDeleteError('Session expired. Please sign in again.');
+        setDeleteLoading(false);
+        return;
+      }
+      const base = AppConfig.web.baseUrl.replace(/\/$/, '');
+      const res = await fetch(`${base}/api/account/delete`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const body = await res.json() as { ok: boolean; error?: string };
+      if (!body.ok) {
+        setDeleteError(body.error ?? 'Deletion failed. Please try again.');
+        setDeleteLoading(false);
+        return;
+      }
+      // Sign out and navigate to login
+      await signOut();
+    } catch {
+      setDeleteError('An unexpected error occurred. Please try again.');
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleShareReferral = async () => {
+    if (!referral) return;
+    const base = AppConfig.web.baseUrl.replace(/\/$/, '');
+    const link = `${base}/signup?ref=${referral.code}`;
+    await Share.share({
+      message: `Join me on Katalyst for AWS & GenAI cert prep! Use my referral code ${referral.code}: ${link}`,
+      url: link,
+    }).catch(() => {});
+  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
@@ -64,15 +131,65 @@ export default function ProfileScreen() {
           </Pressable>
         ) : null}
 
+        {referral ? (
+          <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Refer a Friend</Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
+              Earn coins when friends sign up with your code.
+            </Text>
+            <View style={styles.referralCodeRow}>
+              <Text style={[styles.referralCode, { color: colors.primary, borderColor: colors.surfaceBorder }]}>
+                {referral.code}
+              </Text>
+              <Pressable onPress={handleShareReferral} style={[styles.shareReferralBtn, { backgroundColor: colors.primary }]}>
+                <Feather name="share-2" size={14} color="#fff" />
+                <Text style={styles.shareReferralText}>Share</Text>
+              </Pressable>
+            </View>
+            <View style={styles.referralStats}>
+              <View>
+                <Text style={[styles.metricValue, { color: colors.text }]}>{referral.referredCount}</Text>
+                <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Friends referred</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={[styles.metricValue, { color: '#ffd84d' }]}>{referral.coinsEarned} ⚡</Text>
+                <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Coins earned</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
+
+        {/* ── IAP / Subscription notice (P6-4) ────────────────────────────── */}
+        {/* TODO: Replace with Apple StoreKit / Google Play Billing before App Store submission */}
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Premium Subscription</Text>
+          <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
+            Premium subscriptions are managed through the App Store / Google Play.
+            Tap &quot;Restore Purchases&quot; if you&apos;ve already subscribed.
+          </Text>
+          <Pressable
+            onPress={() => Alert.alert(
+              'Restore Purchases',
+              'Coming soon — contact support@katalyst.app to restore your subscription.',
+              [{ text: 'OK', style: 'default' }],
+            )}
+            style={[styles.restoreBtn, { borderColor: colors.primary }]}
+          >
+            <Feather name="refresh-cw" size={14} color={colors.primary} />
+            <Text style={[styles.restoreBtnText, { color: colors.primary }]}>Restore Purchases</Text>
+          </Pressable>
+        </View>
+
         <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
-            { icon: 'bell',      label: 'Notifications', badge: '1', route: null },
-            { icon: 'award',     label: 'Leaderboard',               route: '/leaderboard' as const },
-            { icon: 'book-open', label: 'My library',                route: '/(tabs)/bookmarks' as const },
-            { icon: 'shield',    label: 'Privacy Policy',            route: '/privacy' as const },
-            { icon: 'file-text', label: 'Terms & Conditions',        route: '/terms' as const },
-            { icon: 'info',      label: 'About Us',                  route: '/about' as const },
-            { icon: 'help-circle', label: 'How To Play',             route: '/instructions' as const },
+            { icon: 'bell',       label: 'Notifications',   badge: '1', route: null },
+            { icon: 'award',      label: 'Leaderboard',                  route: '/leaderboard' as const },
+            { icon: 'zap',        label: 'Coin History',                 route: '/coin-history' as const },
+            { icon: 'book-open',  label: 'My library',                   route: '/(tabs)/bookmarks' as const },
+            { icon: 'shield',     label: 'Privacy Policy',               route: '/privacy' as const },
+            { icon: 'file-text',  label: 'Terms & Conditions',           route: '/terms' as const },
+            { icon: 'info',       label: 'About Us',                     route: '/about' as const },
+            { icon: 'help-circle',label: 'How To Play',                  route: '/instructions' as const },
           ].map((item, index) => (
             <View key={item.label}>
               <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.listRow}>
@@ -81,7 +198,7 @@ export default function ProfileScreen() {
                 {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={styles.rowBadgeText}>{item.badge}</Text></View> : null}
                 <Feather name="chevron-right" size={18} color={colors.textSecondary} />
               </Pressable>
-              {index < 6 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
+              {index < 7 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
           ))}
         </View>
@@ -169,6 +286,55 @@ export default function ProfileScreen() {
           <Feather name="log-out" size={16} color={colors.error} />
           <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
         </Pressable>
+
+        {/* ── Danger Zone ────────────────────────────────────────────── */}
+        <View style={[styles.dangerZone, { borderColor: 'rgba(239,68,68,0.3)', backgroundColor: colors.surface }]}>
+          <Text style={[styles.dangerTitle, { color: '#EF4444' }]}>Danger Zone</Text>
+          <Text style={[styles.dangerDesc, { color: colors.textSecondary }]}>
+            Deleting your account is permanent. All progress, quiz history, and profile data will be erased.
+          </Text>
+          {!showDeleteConfirm ? (
+            <Pressable
+              onPress={() => { setShowDeleteConfirm(true); setDeleteConfirmText(''); setDeleteError(''); }}
+              style={[styles.deleteBtn, { borderColor: '#EF4444' }]}
+            >
+              <Feather name="trash-2" size={15} color="#EF4444" />
+              <Text style={[styles.deleteBtnText, { color: '#EF4444' }]}>Delete Account</Text>
+            </Pressable>
+          ) : (
+            <View style={{ gap: 10 }}>
+              <Text style={{ fontFamily: F.regular, fontSize: 13, color: '#EF4444', lineHeight: 18 }}>
+                Type DELETE to confirm permanent account deletion.
+              </Text>
+              <TextInput
+                value={deleteConfirmText}
+                onChangeText={setDeleteConfirmText}
+                placeholder="Type DELETE"
+                placeholderTextColor={colors.textSecondary}
+                style={[styles.deleteInput, { borderColor: deleteConfirmText === 'DELETE' ? '#EF4444' : colors.surfaceBorder, color: colors.text, backgroundColor: colors.backgroundAlt }]}
+                autoCapitalize="characters"
+              />
+              {deleteError ? <Text style={{ fontFamily: F.regular, fontSize: 12, color: '#EF4444' }}>{deleteError}</Text> : null}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Pressable
+                  onPress={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
+                  style={[styles.deleteConfirmBtn, { backgroundColor: deleteConfirmText === 'DELETE' ? '#EF4444' : colors.surfaceBorder }]}
+                >
+                  <Text style={[styles.deleteConfirmText, { opacity: deleteConfirmText === 'DELETE' ? 1 : 0.5 }]}>
+                    {deleteLoading ? 'Deleting…' : 'Confirm Delete'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); setDeleteError(''); }}
+                  style={[styles.cancelBtn, { borderColor: colors.surfaceBorder }]}
+                >
+                  <Text style={[styles.cancelBtnText, { color: colors.text }]}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -206,6 +372,16 @@ const styles = StyleSheet.create({
   swatchBubble: { width: 26, height: 26, borderRadius: 13 },
   swatchLabel: { fontFamily: F.medium, fontSize: 10, textAlign: 'center' },
   signOutButton: { borderWidth: 1.5, borderRadius: 12, minHeight: 42, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  dangerZone: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
+  dangerTitle: { fontFamily: F.bold, fontSize: 15 },
+  dangerDesc: { fontFamily: F.regular, fontSize: 13, lineHeight: 18 },
+  deleteBtn: { borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
+  deleteBtnText: { fontFamily: F.bold, fontSize: 13 },
+  deleteInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: F.regular, fontSize: 14 },
+  deleteConfirmBtn: { flex: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  deleteConfirmText: { fontFamily: F.bold, fontSize: 13, color: '#FFFFFF' },
+  cancelBtn: { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  cancelBtnText: { fontFamily: F.bold, fontSize: 13 },
   adminButton: { borderWidth: 1.5, borderRadius: 12, minHeight: 42, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   adminButtonText: { fontFamily: F.bold, fontSize: 13 },
   signOutText: { fontFamily: F.bold, fontSize: 13 },
@@ -216,6 +392,15 @@ const styles = StyleSheet.create({
   prefSub:      { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
   toggle:       { width: 36, height: 22, borderRadius: 11, justifyContent: 'center' },
   toggleThumb:  { width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff' },
+  // IAP / Restore
+  restoreBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignSelf: 'flex-start', marginTop: 8 },
+  restoreBtnText:  { fontFamily: 'PublicSans-Bold', fontSize: 13 },
+  // Referral
+  referralCodeRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  referralCode:      { fontFamily: 'PublicSans-Bold', fontSize: 20, letterSpacing: 4, borderWidth: 1, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 6 },
+  shareReferralBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  shareReferralText: { color: '#fff', fontFamily: 'PublicSans-Bold', fontSize: 13 },
+  referralStats:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   // Font size
   fontSizeRow:       { flexDirection: 'row', gap: 8 },
   fontSizeBtn:       { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, gap: 3 },

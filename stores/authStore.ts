@@ -27,6 +27,8 @@ interface AuthState {
   isLoading: boolean;
   step: AuthStep;
   pendingEmail: string;
+  /** True if this user has purchased the "remove ads" entitlement */
+  adsRemoved: boolean;
 
   initAuth: () => Promise<void>;
   signInUser: (email: string, password: string) => Promise<void>;
@@ -61,10 +63,12 @@ async function buildUserFromSession(): Promise<User | null> {
 
   const sbUser = session.user;
 
-  // Fetch profile name from user_profiles
+  // Fetch profile name + ads_removed from user_profiles
+  // DB migration required:
+  // ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS ads_removed boolean DEFAULT false;
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('name, role')
+    .select('name, role, ads_removed')
     .eq('id', sbUser.id)
     .single();
 
@@ -112,6 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
   step: 'idle',
   pendingEmail: '',
+  adsRemoved: false,
 
   initAuth: async () => {
     set({ isLoading: true });
@@ -119,7 +124,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const user = await buildUserFromSession();
-        if (user) set({ user, isAuthenticated: true, step: 'authenticated', isLoading: false });
+        if (user) {
+          const { data: pRow } = await supabase.from('user_profiles').select('ads_removed').eq('id', session.user.id).maybeSingle();
+          const adsRemoved = (pRow as { ads_removed?: boolean } | null)?.ads_removed ?? false;
+          set({ user, isAuthenticated: true, step: 'authenticated', isLoading: false, adsRemoved });
+        }
       } else {
         const guest = await SecureStore.getItemAsync('auth_guest').catch(() => null);
         if (guest === 'true') {
