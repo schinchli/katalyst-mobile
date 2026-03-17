@@ -60,7 +60,7 @@ export default function AdminSettingsScreen() {
       .then(({ data }) => {
         setReports(Array.isArray(data?.value) ? (data.value as QuestionReport[]) : []);
       })
-      .finally(() => setReportsLoading(false));
+      .then(() => setReportsLoading(false), () => setReportsLoading(false));
   }, [isAdmin]);
 
   const handleSaveQuizCatalog = async () => {

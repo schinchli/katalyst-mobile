@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Share, View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { Alert, Share, View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
