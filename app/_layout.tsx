@@ -88,12 +88,19 @@ function AuthGuard() {
 function ThemedApp() {
   const darkMode      = useThemeStore((s) => s.darkMode);
   const systemFeatures = useSystemFeatureStore((s) => s.config);
+  const authIsLoading  = useAuthStore((s) => s.isLoading);
   const dk            = Colors.dark;
   const lk            = Colors.light;
 
   const navTheme = darkMode
     ? { ...DarkTheme,    colors: { ...DarkTheme.colors,    background: dk.background, card: dk.surface,  text: dk.text,  border: dk.surfaceBorder } }
     : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: lk.background, card: lk.surface, text: lk.text, border: lk.surfaceBorder } };
+
+  // Don't mount the navigator until auth state is known — prevents Fabric from
+  // mounting (tabs) views only to immediately tear them down when AuthGuard
+  // fires router.replace('/(auth)/login'), which causes the "addViewAt: failed
+  // to insert view — child already has a parent" crash on New Architecture.
+  if (authIsLoading) return null;
 
   // ── Maintenance gate ────────────────────────────────────────────────────────
   if (systemFeatures.maintenanceMode) {

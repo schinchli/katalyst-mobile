@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
@@ -49,7 +49,11 @@ export default function LearnScreen() {
         showsVerticalScrollIndicator={false}
       >
         {visibleItems.map((item) => (
-          <View key={item.id} style={[styles.articleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Pressable
+            key={item.id}
+            onPress={() => Linking.openURL(`https://youtu.be/${item.youtubeId}`)}
+            style={({ pressed }) => [styles.articleCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.85 : 1 }]}
+          >
             <View style={[styles.articleTag, { backgroundColor: item.tagColor + '22', borderColor: item.tagColor + '55', borderWidth: 1 }]}>
               <Text style={[styles.articleTagText, { color: item.tagColor }]}>{item.tag.toUpperCase()}</Text>
             </View>
@@ -57,15 +61,22 @@ export default function LearnScreen() {
             <Text style={[styles.articleDescription, { color: colors.textSecondary, fontSize: t.body }]}>{item.description}</Text>
             <Text style={[styles.articleMeta, { color: colors.textSecondary, fontSize: t.caption }]}>Katalyst Team • January 2026</Text>
             <View style={[styles.chapterList, { borderTopColor: colors.surfaceBorder, borderTopWidth: 1, paddingTop: 14 }]}>
-              {item.chapters?.slice(0, 3).map((chapter) => (
-                <View key={`${item.id}-${chapter.time}`} style={styles.chapterRow}>
-                  <Feather name="play-circle" size={14} color={colors.primary} />
-                  <Text style={[styles.chapterText, { color: colors.text, fontSize: t.caption }]}>{chapter.label}</Text>
-                  <Text style={[styles.chapterTime, { color: colors.textSecondary, fontSize: t.micro }]}>{chapter.time}</Text>
-                </View>
-              ))}
+              {item.chapters?.slice(0, 3).map((chapter) => {
+                const seconds = chapter.time.split(':').reduce((acc, t) => acc * 60 + parseInt(t, 10), 0);
+                return (
+                  <Pressable
+                    key={`${item.id}-${chapter.time}`}
+                    onPress={(e) => { e.stopPropagation?.(); Linking.openURL(`https://youtu.be/${item.youtubeId}?t=${seconds}`); }}
+                    style={styles.chapterRow}
+                  >
+                    <Feather name="play-circle" size={14} color={colors.primary} />
+                    <Text style={[styles.chapterText, { color: colors.text, fontSize: t.caption }]}>{chapter.label}</Text>
+                    <Text style={[styles.chapterTime, { color: colors.textSecondary, fontSize: t.micro }]}>{chapter.time}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </SafeAreaView>
