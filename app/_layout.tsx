@@ -21,8 +21,7 @@ import { MaintenanceScreen } from '@/components/MaintenanceScreen';
 import { ForceUpdateScreen } from '@/components/ForceUpdateScreen';
 import 'react-native-reanimated';
 
-// TODO: Add expo-tracking-transparency before App Store submission for ATT compliance
-// import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 /** Parses a semver string into [major, minor, patch] numeric tuple. */
 function parseSemver(version: string): [number, number, number] {
@@ -176,14 +175,11 @@ export default function RootLayout() {
           if (userId) await syncUserThemeFromSupabase(userId).catch(() => {});
 
           // ── ATT (iOS only) ────────────────────────────────────────────────
-          // TODO: Add expo-tracking-transparency before App Store submission for ATT compliance.
-          // Once installed, uncomment the following:
-          //
-          // if (Platform.OS === 'ios') {
-          //   const { status } = await requestTrackingPermissionsAsync();
-          //   // status is 'authorized' | 'denied' | 'restricted' | 'unavailable'
-          //   // Pass status to your analytics/ads SDK before initialising it
-          // }
+          if (Platform.OS === 'ios') {
+            const { status } = await requestTrackingPermissionsAsync();
+            // status is 'authorized' | 'denied' | 'restricted' | 'unavailable'
+            // Pass status to your analytics/ads SDK before initialising it
+          }
         })
         .finally(() => SplashScreen.hideAsync());
     }

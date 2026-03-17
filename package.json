@@ -55,6 +55,7 @@
     "expo-secure-store": "^15.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "expo-tracking-transparency": "~2.9.1",
     "expo-web-browser": "~15.0.10",
     "nativewind": "^4.2.1",
     "react": "19.1.0",
