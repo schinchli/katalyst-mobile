@@ -59,7 +59,7 @@
         "appleTeamId": "TODO: XXXXXXXXXX"
       },
       "android": {
-        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "serviceAccountKeyPath": "./credentials/google-play-service-account.json",
         "track": "internal"
       }
     }
