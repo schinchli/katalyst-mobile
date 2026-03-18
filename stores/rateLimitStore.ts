@@ -34,10 +34,6 @@ export const useRateLimitStore = create<RateLimitState>()(
       maxPerHour: 10,
 
       checkAndConsume: () => {
-        // TODO(go-live): remove this bypass and uncomment the limit block below
-        return { ok: true };
-
-        /* --- enable for production ---
         const state = get();
         const nowDay = todayKey();
         const nowHour = hourKey();
@@ -52,7 +48,6 @@ export const useRateLimitStore = create<RateLimitState>()(
 
         set({ dayKey: nowDay, hourKey: nowHour, dayCount: dayCount + 1, hourCount: hourCount + 1 });
         return { ok: true };
-        --- end production block --- */
       },
 
       reset: () => set({

@@ -32,6 +32,14 @@ export default function SignupScreen() {
       setError('Password must be at least 8 characters');
       return;
     }
+    if (!/[A-Z]/.test(password)) {
+      setError('Password must contain at least one uppercase letter');
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError('Password must contain at least one number');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -65,7 +73,7 @@ export default function SignupScreen() {
           <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
             <Input label="Full Name" placeholder="John Doe" value={name} onChangeText={setName} autoComplete="name" />
             <Input label="Email" placeholder="you@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
-            <Input label="Password" placeholder="Minimum 8 characters" value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" />
+            <Input label="Password" placeholder="Min 8 chars, 1 uppercase, 1 number" value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" />
 
             {error ? (
               <View style={[styles.errorWrap, { backgroundColor: colors.error + '20', borderColor: colors.error + '40' }]}>
@@ -74,7 +82,7 @@ export default function SignupScreen() {
               </View>
             ) : null}
 
-            <Text style={[styles.hintText, { color: colors.textSecondary }]}>Min 8 characters. Use a secure password.</Text>
+            <Text style={[styles.hintText, { color: colors.textSecondary }]}>Min 8 characters · 1 uppercase · 1 number</Text>
             <Button title="Get Started" onPress={handleSignup} loading={loading} size="lg" />
 
             <View style={styles.footerRow}>

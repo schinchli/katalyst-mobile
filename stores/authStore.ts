@@ -157,22 +157,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInUser: async (email, password) => {
-    // Offline/dev fallback: demo credentials
-    if (email.toLowerCase() === 'a@a.in' && password === 'test') {
-      const demoUser: User = {
-        id: 'demo-a',
-        email,
-        name: 'Demo User',
-        role: 'admin',
-        subscription: 'premium',
-        unlockedCourses: [],
-        createdAt: new Date().toISOString(),
-      };
-      set({ user: demoUser, isAuthenticated: true, step: 'authenticated' });
-      await SecureStore.setItemAsync('auth_guest', 'false').catch(() => {});
-      return;
-    }
-
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     if (data.user) {

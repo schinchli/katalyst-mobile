@@ -96,8 +96,10 @@ async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    const body = await res.text();
-    console.warn(`[apiService] ${options.method ?? 'GET'} ${path} → ${res.status}`, body);
+    if (__DEV__) {
+      const body = await res.text();
+      console.warn(`[apiService] ${options.method ?? 'GET'} ${path} → ${res.status}`, body);
+    }
     return null;
   }
 
