@@ -28,6 +28,7 @@ yarn-error.*
 ios/
 
 # Android
+android/
 android/build/
 android/app/build/
 android/.gradle/
