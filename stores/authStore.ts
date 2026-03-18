@@ -227,18 +227,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   upgradeToPremium: async (plan?: string) => {
     const current = get().user;
     if (!current) return;
+    const previousSubscription = current.subscription;
+    // Optimistic update
     set({ user: { ...current, subscription: 'premium' } });
     await SecureStore.setItemAsync('auth_subscription', 'premium').catch(() => {});
-    // Write to subscriptions table (and profiles via trigger)
-    await saveSubscription(current.id, 'premium', plan).catch(() => {});
-    // Record purchase audit
-    if (plan) {
-      await recordPurchase(current.id, {
-        purchaseType: 'subscription',
-        plan,
-        amount: plan === 'annual' ? 999 : 149,
-        date: new Date().toISOString(),
-      }).catch(() => {});
+    try {
+      // Write to subscriptions table (critical — rollback on failure)
+      await saveSubscription(current.id, 'premium', plan);
+      // Record purchase audit (non-critical — swallow errors)
+      if (plan) {
+        await recordPurchase(current.id, {
+          purchaseType: 'subscription',
+          plan,
+          amount: plan === 'annual' ? 999 : 149,
+          date: new Date().toISOString(),
+        }).catch(() => {});
+      }
+    } catch {
+      // DB write failed — rollback optimistic state
+      set({ user: { ...get().user!, subscription: previousSubscription } });
+      await SecureStore.deleteItemAsync('auth_subscription').catch(() => {});
+      throw new Error('Failed to activate subscription. Please try again.');
     }
   },
 
