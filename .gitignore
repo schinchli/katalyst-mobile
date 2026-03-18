@@ -32,6 +32,9 @@ android/build/
 android/app/build/
 android/.gradle/
 android/local.properties
+credentials/*
+!credentials/.gitkeep
+google-play-service-account.json
 
 # macOS
 .DS_Store

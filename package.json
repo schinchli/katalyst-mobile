@@ -9,6 +9,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "doctor": "npx expo-doctor",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
