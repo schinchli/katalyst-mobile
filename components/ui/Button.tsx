@@ -26,20 +26,21 @@ export function Button({
   style,
 }: ButtonProps) {
   const colors = useThemeColors();
+  const solidTextColor = colors.surface;
 
   const containerStyle = (() => {
     switch (variant) {
       case 'secondary': return { backgroundColor: colors.primaryLight };
       case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primaryText };
-      case 'success':   return { backgroundColor: '#28C76F', shadowColor: '#28C76F', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 4 };
+      case 'success':   return { backgroundColor: colors.success, shadowColor: colors.success, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 4 };
       default:          return {
-        shadowColor: '#5E50EE', shadowOffset: { width: 0, height: 3 },
+        shadowColor: colors.gradientFrom, shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.4, shadowRadius: 6, elevation: 4,
       };
     }
   })();
 
-  const textColor = (variant === 'primary' || variant === 'success') ? '#FFFFFF' : colors.primaryText;
+  const textColor = (variant === 'primary' || variant === 'success') ? solidTextColor : colors.primaryText;
 
   return (
     <Pressable
@@ -62,7 +63,7 @@ export function Button({
           style={[StyleSheet.absoluteFillObject, { borderRadius: 12 }]}
         />
       ) : null}
-      {loading && <ActivityIndicator color={variant === 'primary' || variant === 'success' ? '#FFFFFF' : colors.primaryText} size="small" />}
+      {loading && <ActivityIndicator color={variant === 'primary' || variant === 'success' ? solidTextColor : colors.primaryText} size="small" />}
       <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]} numberOfLines={1}>{title}</Text>
     </Pressable>
   );

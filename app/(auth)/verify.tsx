@@ -22,6 +22,14 @@ export default function VerifyScreen() {
   const [resending, setResending] = useState(false);
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState('');
+  const heroShadowColor = colors.gradientFrom;
+  const heroPanelColor = colors.primary;
+  const heroIconBg = colors.surface + '33';
+  const heroText = colors.surface;
+  const heroSubtext = colors.surface + 'CC';
+  const formShadowColor = colors.surfaceBorder;
+  const errorBackground = colors.error + '20';
+  const successBackground = colors.success + '20';
 
   const handleVerify = async () => {
     if (code.length !== 6) {
@@ -61,19 +69,19 @@ export default function VerifyScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
           {/* ── Header ──────────────────────────────────── */}
-          <View style={styles.logoCard}>
-            <View style={styles.iconWrap}>
-              <Feather name="mail" size={38} color="#FFFFFF" />
+          <View style={[styles.logoCard, { backgroundColor: heroPanelColor, shadowColor: heroShadowColor }]}>
+            <View style={[styles.iconWrap, { backgroundColor: heroIconBg }]}>
+              <Feather name="mail" size={38} color={heroText} />
             </View>
-            <Text style={styles.logoTitle}>Check Your Email</Text>
-            <Text style={styles.logoSubtitle}>
+            <Text style={[styles.logoTitle, { color: heroText }]}>Check Your Email</Text>
+            <Text style={[styles.logoSubtitle, { color: heroSubtext }]}>
               We sent a 6-digit verification code to{'\n'}
-              <Text style={styles.emailHighlight}>{email}</Text>
+              <Text style={[styles.emailHighlight, { color: heroText }]}>{email}</Text>
             </Text>
           </View>
 
           {/* ── Form ────────────────────────────────────── */}
-          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, shadowColor: formShadowColor }]}>
             <Text style={[styles.formHeading, { color: colors.text }]}>Enter Verification Code</Text>
             <Text style={[styles.formSubheading, { color: colors.textSecondary }]}>
               The code expires in 10 minutes
@@ -89,16 +97,16 @@ export default function VerifyScreen() {
             />
 
             {error ? (
-              <View style={styles.errorWrap}>
-                <Feather name="alert-circle" size={14} color="#EA5455" />
-                <Text style={styles.errorText}>{error}</Text>
+              <View style={[styles.errorWrap, { backgroundColor: errorBackground }]}>
+                <Feather name="alert-circle" size={14} color={colors.error} />
+                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
               </View>
             ) : null}
 
             {success ? (
-              <View style={styles.successWrap}>
-                <Feather name="check-circle" size={14} color="#28C76F" />
-                <Text style={styles.successText}>{success}</Text>
+              <View style={[styles.successWrap, { backgroundColor: successBackground }]}>
+                <Feather name="check-circle" size={14} color={colors.success} />
+                <Text style={[styles.successText, { color: colors.success }]}>{success}</Text>
               </View>
             ) : null}
 
@@ -147,13 +155,11 @@ const styles = StyleSheet.create({
 
   /* ── Header card ── */
   logoCard: {
-    backgroundColor: '#7367F0',
     borderRadius: 20,
     paddingVertical: 32,
     paddingHorizontal: 24,
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#7367F0',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -163,21 +169,19 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
-  logoTitle:     { fontFamily: F.bold, fontSize: 24, color: '#FFFFFF', letterSpacing: 0.3 },
-  logoSubtitle:  { fontFamily: F.regular, fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 6, textAlign: 'center', lineHeight: 20 },
-  emailHighlight: { fontFamily: F.semiBold, color: '#FFFFFF' },
+  logoTitle:     { fontFamily: F.bold, fontSize: 24, letterSpacing: 0.3 },
+  logoSubtitle:  { fontFamily: F.regular, fontSize: 13, marginTop: 6, textAlign: 'center', lineHeight: 20 },
+  emailHighlight: { fontFamily: F.semiBold },
 
   /* ── Form card ── */
   formCard: {
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    shadowColor: '#4B465C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -190,23 +194,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginTop: 12,
-    backgroundColor: '#EA545520',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  errorText: { fontFamily: F.regular, fontSize: 13, color: '#EA5455', flex: 1 },
+  errorText: { fontFamily: F.regular, fontSize: 13, flex: 1 },
   successWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginTop: 12,
-    backgroundColor: '#28C76F20',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  successText: { fontFamily: F.regular, fontSize: 13, color: '#28C76F', flex: 1 },
+  successText: { fontFamily: F.regular, fontSize: 13, flex: 1 },
   verifyBtn:   { marginTop: 20 },
   resendRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 4, marginTop: 16 },
   resendPrompt: { fontFamily: F.regular,  fontSize: 14 },

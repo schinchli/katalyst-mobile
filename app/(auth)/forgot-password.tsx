@@ -20,6 +20,13 @@ export default function ForgotPasswordScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
+  const heroShadowColor = colors.gradientFrom;
+  const heroPanelColor = colors.primary;
+  const heroIconBg = colors.surface + '33';
+  const heroText = colors.surface;
+  const heroSubtext = colors.surface + 'CC';
+  const formShadowColor = colors.surfaceBorder;
+  const errorBackground = colors.error + '20';
 
   const handleRequest = async () => {
     if (!email) { setError('Please enter your email'); return; }
@@ -56,14 +63,14 @@ export default function ForgotPasswordScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
           {/* ── Header ── */}
-          <View style={styles.logoCard}>
-            <View style={styles.iconWrap}>
-              <Feather name={stage === 'request' ? 'lock' : 'key'} size={38} color="#FFFFFF" />
+          <View style={[styles.logoCard, { backgroundColor: heroPanelColor, shadowColor: heroShadowColor }]}>
+            <View style={[styles.iconWrap, { backgroundColor: heroIconBg }]}>
+              <Feather name={stage === 'request' ? 'lock' : 'key'} size={38} color={heroText} />
             </View>
-            <Text style={styles.logoTitle}>
+            <Text style={[styles.logoTitle, { color: heroText }]}>
               {stage === 'request' ? 'Forgot Password?' : 'Reset Password'}
             </Text>
-            <Text style={styles.logoSubtitle}>
+            <Text style={[styles.logoSubtitle, { color: heroSubtext }]}>
               {stage === 'request'
                 ? 'Enter your email and we\'ll send a reset code'
                 : `Enter the code sent to ${email}`}
@@ -71,7 +78,7 @@ export default function ForgotPasswordScreen() {
           </View>
 
           {/* ── Form ── */}
-          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, shadowColor: formShadowColor }]}>
 
             {stage === 'request' ? (
               <>
@@ -88,7 +95,7 @@ export default function ForgotPasswordScreen() {
                   autoCapitalize="none"
                   autoComplete="email"
                 />
-                {error ? <ErrorBox msg={error} /> : null}
+                {error ? <ErrorBox msg={error} backgroundColor={errorBackground} color={colors.error} /> : null}
                 <Button title="Send Reset Code" onPress={handleRequest} loading={loading} size="lg" style={styles.btn} />
               </>
             ) : (
@@ -114,7 +121,7 @@ export default function ForgotPasswordScreen() {
                     autoComplete="new-password"
                   />
                 </View>
-                {error ? <ErrorBox msg={error} /> : null}
+                {error ? <ErrorBox msg={error} backgroundColor={errorBackground} color={colors.error} /> : null}
                 <Button title="Reset Password" onPress={handleReset} loading={loading} size="lg" style={styles.btn} />
               </>
             )}
@@ -134,11 +141,11 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-function ErrorBox({ msg }: { msg: string }) {
+function ErrorBox({ msg, backgroundColor, color }: { msg: string; backgroundColor: string; color: string }) {
   return (
-    <View style={styles.errorWrap}>
-      <Feather name="alert-circle" size={14} color="#EA5455" />
-      <Text style={styles.errorText}>{msg}</Text>
+    <View style={[styles.errorWrap, { backgroundColor }]}>
+      <Feather name="alert-circle" size={14} color={color} />
+      <Text style={[styles.errorText, { color }]}>{msg}</Text>
     </View>
   );
 }
@@ -148,13 +155,11 @@ const styles = StyleSheet.create({
   flex:  { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, paddingVertical: 32, justifyContent: 'center' },
   logoCard: {
-    backgroundColor: '#7367F0',
     borderRadius: 20,
     paddingVertical: 32,
     paddingHorizontal: 24,
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#7367F0',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -162,14 +167,13 @@ const styles = StyleSheet.create({
   },
   iconWrap: {
     width: 72, height: 72, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center', justifyContent: 'center', marginBottom: 14,
   },
-  logoTitle:     { fontFamily: F.bold, fontSize: 24, color: '#FFFFFF', letterSpacing: 0.3 },
-  logoSubtitle:  { fontFamily: F.regular, fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 6, textAlign: 'center', lineHeight: 20 },
+  logoTitle:     { fontFamily: F.bold, fontSize: 24, letterSpacing: 0.3 },
+  logoSubtitle:  { fontFamily: F.regular, fontSize: 13, marginTop: 6, textAlign: 'center', lineHeight: 20 },
   formCard: {
     borderRadius: 20, padding: 24, borderWidth: 1,
-    shadowColor: '#4B465C', shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
   formHeading:    { fontFamily: F.bold,    fontSize: 20, marginBottom: 2 },
@@ -178,9 +182,9 @@ const styles = StyleSheet.create({
   btn:    { marginTop: 20 },
   errorWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12,
-    backgroundColor: '#EA545520', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
   },
-  errorText: { fontFamily: F.regular, fontSize: 13, color: '#EA5455', flex: 1 },
+  errorText: { fontFamily: F.regular, fontSize: 13, flex: 1 },
   backRow:   { marginTop: 16, alignItems: 'center' },
   backLink:  { fontFamily: F.medium, fontSize: 14 },
 });

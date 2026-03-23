@@ -102,6 +102,14 @@ export default function QuizScreen() {
   const [matchSelectedLeft, setMatchSelectedLeft] = useState<string | null>(null);
   const [matchCorrect, setMatchCorrect]           = useState<Set<string>>(new Set());
   const [matchWrong, setMatchWrong]               = useState<string | null>(null);
+  const introChrome = colors.text + 'E6';
+  const introChromeMuted = colors.text + 'CC';
+  const introSurfaceSoft = colors.surface + '2E';
+  const introSurfaceGhost = colors.surface + '1F';
+  const introSurfaceBorder = colors.surface + '47';
+  const introContrast = colors.surface;
+  const introWarningBg = colors.error + '24';
+  const introWarningText = colors.text + 'D9';
 
   const quiz               = quizzes.find((q) => q.id === id);
   const rawQuestions       = quizQuestions[id ?? ''] ?? [];
@@ -357,68 +365,68 @@ export default function QuizScreen() {
           {/* Back arrow — top left, no bar */}
           <View style={s.introHdr}>
             <Pressable onPress={() => router.back()} style={s.introBackBtn} hitSlop={8}>
-              <Feather name="arrow-left" size={24} color="rgba(255,255,255,0.9)" />
+              <Feather name="arrow-left" size={24} color={introChrome} />
             </Pressable>
           </View>
 
           {/* Top branding label */}
           <View style={s.introTopBrand}>
-            <Feather name="zap" size={24} color="rgba(255,255,255,0.8)" />
-            <Text style={s.introTopBrandText}>Practice Quiz</Text>
+            <Feather name="zap" size={24} color={introChromeMuted} />
+            <Text style={[s.introTopBrandText, { color: introChromeMuted }]}>Practice Quiz</Text>
           </View>
 
           {/* ── Center block: icon + course info ── */}
           <View style={s.introCenterBlock}>
-            <View style={s.introCourseCircle}>
-              <Feather name={(quiz.icon ?? 'cpu') as any} size={44} color="#fff" />
+            <View style={[s.introCourseCircle, { backgroundColor: introSurfaceSoft }]}>
+              <Feather name={(quiz.icon ?? 'cpu') as any} size={44} color={introContrast} />
             </View>
             {isDailyQuiz ? (
-              <View style={s.introDailyBadge}>
-                <Text style={s.introDailyBadgeText}>{systemFeatures.dailyQuizLabel}</Text>
+              <View style={[s.introDailyBadge, { backgroundColor: colors.primaryLight + 'CC' }]}>
+                <Text style={[s.introDailyBadgeText, { color: colors.primaryText }]}>{systemFeatures.dailyQuizLabel}</Text>
               </View>
             ) : null}
             {isTrueFalseQuiz ? (
-              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-                <Text style={s.introDailyBadgeText}>True / False</Text>
+              <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>True / False</Text>
               </View>
             ) : null}
             {isFunAndLearnMode ? (
-              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-                <Text style={s.introDailyBadgeText}>📖 Fun and Learn</Text>
+              <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>📖 Fun and Learn</Text>
               </View>
             ) : null}
             {isGuessTheWordMode ? (
-              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-                <Text style={s.introDailyBadgeText}>✏️ Guess the Word</Text>
+              <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>✏️ Guess the Word</Text>
               </View>
             ) : null}
             {isMathsQuizMode ? (
-              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-                <Text style={s.introDailyBadgeText}>🔢 Maths Quiz</Text>
+              <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>🔢 Maths Quiz</Text>
               </View>
             ) : null}
             {isMultiMatchMode ? (
-              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-                <Text style={s.introDailyBadgeText}>🔗 Multi Match</Text>
+              <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>🔗 Multi Match</Text>
               </View>
             ) : null}
             {isAudioMode ? (
-              <View style={[s.introDailyBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-                <Text style={s.introDailyBadgeText}>🎧 Audio Quiz</Text>
+              <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>🎧 Audio Quiz</Text>
               </View>
             ) : null}
-            <Text style={s.introCourseLabel}>Course</Text>
-            <Text style={s.introCourseTitle} numberOfLines={3}>{quiz.title}</Text>
-            <View style={s.introMetaChip}>
-              <Text style={s.introMetaChipText}>
+            <Text style={[s.introCourseLabel, { color: introChromeMuted }]}>Course</Text>
+            <Text style={[s.introCourseTitle, { color: introContrast }]} numberOfLines={3}>{quiz.title}</Text>
+            <View style={[s.introMetaChip, { backgroundColor: introSurfaceSoft }]}>
+              <Text style={[s.introMetaChipText, { color: introChrome }]}>
                 {questions.length} Questions · {quiz.duration} min{isTrueFalseQuiz ? ' · 2-option mode' : ''}
               </Text>
             </View>
             {isDailyQuiz ? (
-              <Text style={s.introDailyHint}>Today&apos;s featured quiz. Complete it to update your daily progress across the app.</Text>
+              <Text style={[s.introDailyHint, { color: introChrome }]}>Today&apos;s featured quiz. Complete it to update your daily progress across the app.</Text>
             ) : null}
             {quiz.mode === 'exam' && quiz.examReviewAllowed === false ? (
-              <Text style={[s.introDailyHint, { backgroundColor: 'rgba(255,76,81,0.12)', color: 'rgba(255,255,255,0.85)' }]}>
+              <Text style={[s.introDailyHint, { backgroundColor: introWarningBg, color: introWarningText }]}>
                 This is an exam — answers will not be shown after submission.
               </Text>
             ) : null}
@@ -427,20 +435,20 @@ export default function QuizScreen() {
           {/* ── Bottom CTA buttons ── */}
           <View style={[s.introFooter, { paddingBottom: bottomSpacer + 8 }]}>
             {isPremiumLocked ? (
-              <Pressable onPress={() => setShowPremiumGate(true)} style={s.introMainBtn}>
-                <Feather name="lock" size={16} color="#fff" />
-                <Text style={s.introMainBtnText}>Unlock — Rs {quiz.price ?? 149}</Text>
+              <Pressable onPress={() => setShowPremiumGate(true)} style={[s.introMainBtn, { backgroundColor: introSurfaceSoft }]}>
+                <Feather name="lock" size={16} color={introContrast} />
+                <Text style={[s.introMainBtnText, { color: introContrast }]}>Unlock — Rs {quiz.price ?? 149}</Text>
               </Pressable>
             ) : (
-              <Pressable onPress={handleStart} style={s.introMainBtn}>
-                <Text style={s.introMainBtnText}>Start Practice</Text>
+              <Pressable onPress={handleStart} style={[s.introMainBtn, { backgroundColor: introSurfaceSoft }]}>
+                <Text style={[s.introMainBtnText, { color: introContrast }]}>Start Practice</Text>
               </Pressable>
             )}
             <Pressable
               onPress={() => { setFlashIndex(0); setFlashFlipped(false); setPhase('flashcard'); }}
-              style={s.introGhostBtn}
+              style={[s.introGhostBtn, { backgroundColor: introSurfaceGhost, borderColor: introSurfaceBorder }]}
             >
-              <Text style={s.introGhostBtnText}>Review Flashcards</Text>
+              <Text style={[s.introGhostBtnText, { color: introChrome }]}>Review Flashcards</Text>
             </Pressable>
           </View>
 
@@ -1169,21 +1177,21 @@ const s = StyleSheet.create({
   introHdr:           { paddingHorizontal: 12, paddingTop: 4 },
   introBackBtn:       { padding: 6 },
   introTopBrand:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 6 },
-  introTopBrandText:  { fontFamily: F.bold, fontSize: 14, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.5 },
+  introTopBrandText:  { fontFamily: F.bold, fontSize: 14, letterSpacing: 0.5 },
   introCenterBlock:   { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 28 },
-  introCourseCircle:  { width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.28)' },
-  introDailyBadge:    { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(255,216,77,0.18)' },
-  introDailyBadgeText:{ fontFamily: F.bold, fontSize: 11, color: 'rgba(255,244,194,0.95)', textTransform: 'uppercase', letterSpacing: 0.8 },
-  introCourseLabel:   { fontFamily: F.medium, fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
-  introCourseTitle:   { fontFamily: F.bold, fontSize: 26, color: '#fff', textAlign: 'center', lineHeight: 36, letterSpacing: -0.3 },
-  introMetaChip:      { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.22)', marginTop: 2 },
-  introMetaChipText:  { fontFamily: F.semiBold, fontSize: 14, color: 'rgba(255,255,255,0.9)' },
-  introDailyHint:     { fontFamily: F.medium, fontSize: 13, lineHeight: 19, color: 'rgba(255,255,255,0.82)', textAlign: 'center', maxWidth: 280 },
+  introCourseCircle:  { width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center' },
+  introDailyBadge:    { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+  introDailyBadgeText:{ fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  introCourseLabel:   { fontFamily: F.medium, fontSize: 14, marginTop: 4 },
+  introCourseTitle:   { fontFamily: F.bold, fontSize: 26, textAlign: 'center', lineHeight: 36, letterSpacing: -0.3 },
+  introMetaChip:      { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 24, marginTop: 2 },
+  introMetaChipText:  { fontFamily: F.semiBold, fontSize: 14 },
+  introDailyHint:     { fontFamily: F.medium, fontSize: 13, lineHeight: 19, textAlign: 'center', maxWidth: 280, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 },
   introFooter:        { paddingHorizontal: 20, gap: 12 },
-  introMainBtn:       { height: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, backgroundColor: 'rgba(0,0,0,0.32)' },
-  introMainBtnText:   { fontFamily: F.bold, fontSize: 17, color: '#fff', letterSpacing: 0.1 },
-  introGhostBtn:      { height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.28)' },
-  introGhostBtnText:  { fontFamily: F.semiBold, fontSize: 16, color: 'rgba(255,255,255,0.88)' },
+  introMainBtn:       { height: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  introMainBtnText:   { fontFamily: F.bold, fontSize: 17, letterSpacing: 0.1 },
+  introGhostBtn:      { height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  introGhostBtnText:  { fontFamily: F.semiBold, fontSize: 16 },
 
   // ── Quiz / Review header ──
   quizHeader: {
