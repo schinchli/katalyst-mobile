@@ -5,7 +5,6 @@ import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import type { Quiz } from '@/types';
 import { EXPERIENCE_COPY } from '@/config/experience';
-import { COMPANY_TONES } from '@/config/themePresets';
 import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import { AppConfig } from '@/config/appConfig';
@@ -21,6 +20,12 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
   const colors = useThemeColors();
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const playableQuestionCount = getPlayableQuestionCount(quiz);
+  const companyTones = [
+    colors.primaryLight,
+    colors.surfaceElevated,
+    colors.gradientAccent + '24',
+    colors.success + '16',
+  ];
 
   const webUrl = (AppConfig.web.baseUrl ?? '').replace(/\/$/, '') || 'https://lms-amber-two.vercel.app';
 
@@ -37,7 +42,7 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
 
   return (
     <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" statusBarTranslucent>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.background + 'D9' }]}>
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <Pressable onPress={onClose} style={styles.closeButton}>
             <Feather name="x" size={22} color={colors.text} />
@@ -60,7 +65,7 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
             colors={[colors.surfaceElevated, colors.surface]}
             style={[styles.webCard, { borderColor: colors.primary }]}
           >
-            <View style={styles.webCardIcon}>
+            <View style={[styles.webCardIcon, { backgroundColor: colors.primaryLight }]}>
               <Feather name="globe" size={28} color={colors.primary} />
             </View>
             <Text style={[styles.webCardTitle, { color: colors.text }]}>Subscribe or unlock on the web</Text>
@@ -69,8 +74,8 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
               Log in at <Text style={{ color: colors.primary }}>katalyst.app</Text> and subscribe from your account.
             </Text>
             <Pressable onPress={openWebStore} style={[styles.webBtn, { backgroundColor: colors.primary }]}>
-              <Feather name="external-link" size={16} color="#fff" />
-              <Text style={styles.webBtnText}>Open Web App to Subscribe</Text>
+              <Feather name="external-link" size={16} color={colors.surface} />
+              <Text style={[styles.webBtnText, { color: colors.surface }]}>Open Web App to Subscribe</Text>
             </Pressable>
           </LinearGradient>
 
@@ -79,22 +84,22 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
           </Text>
 
           <View style={styles.ratingWrap}>
-            <Feather name="star" size={34} color="#F8E84A" />
+            <Feather name="star" size={34} color={colors.warning} />
             <Text style={[styles.ratingValue, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.rating}</Text>
           </View>
           <Text style={[styles.ratingMeta, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.reviews}</Text>
 
           <View style={[styles.testimonialCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[styles.testimonialStars, { color: '#F8E84A' }]}>5.0 ★★★★★</Text>
+            <Text style={[styles.testimonialStars, { color: colors.warning }]}>5.0 ★★★★★</Text>
             <Text style={[styles.testimonialTitle, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.title}</Text>
             <Text style={[styles.testimonialBody, { color: colors.textSecondary }]}>{EXPERIENCE_COPY.premium.testimonial.body}</Text>
           </View>
 
           <Text style={[styles.companyTitle, { color: colors.text }]}>{EXPERIENCE_COPY.premium.companiesTitle}</Text>
           <View style={styles.companyGrid}>
-            {COMPANY_TONES.map((company) => (
-              <View key={company.name} style={[styles.companyCard, { backgroundColor: company.tone }]}>
-                <Text style={styles.companyText}>{company.name}</Text>
+            {EXPERIENCE_COPY.premium.companies.map((company, index) => (
+              <View key={company} style={[styles.companyCard, { backgroundColor: companyTones[index % companyTones.length], borderColor: colors.surfaceBorder }]}>
+                <Text style={[styles.companyText, { color: colors.text }]}>{company}</Text>
               </View>
             ))}
           </View>
@@ -105,7 +110,7 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(3,8,20,0.75)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 34, maxHeight: '94%' },
   closeButton: { alignSelf: 'flex-end', padding: 4 },
   headline: { fontFamily: F.bold, fontSize: 34, lineHeight: 40, letterSpacing: -1.1 },
@@ -114,11 +119,11 @@ const styles = StyleSheet.create({
   featureRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   featureText: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 26, flex: 1 },
   webCard: { borderRadius: 20, borderWidth: 1.5, padding: 22, marginTop: 24, gap: 12, alignItems: 'center' },
-  webCardIcon: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(115,103,240,0.12)' },
+  webCardIcon: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   webCardTitle: { fontFamily: F.bold, fontSize: 20, textAlign: 'center' },
   webCardBody: { fontFamily: F.regular, fontSize: 14, lineHeight: 22, textAlign: 'center' },
   webBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 18, marginTop: 4 },
-  webBtnText: { color: '#fff', fontFamily: F.bold, fontSize: 16 },
+  webBtnText: { fontFamily: F.bold, fontSize: 16 },
   noteText: { fontFamily: F.regular, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 12 },
   ratingWrap: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 30 },
   ratingValue: { fontFamily: F.bold, fontSize: 40 },
@@ -129,6 +134,6 @@ const styles = StyleSheet.create({
   testimonialBody: { fontFamily: F.regular, fontSize: 15, lineHeight: 24 },
   companyTitle: { fontFamily: F.bold, fontSize: 18, textAlign: 'center', marginTop: 24, marginBottom: 14 },
   companyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  companyCard: { width: '48%', borderRadius: 18, minHeight: 74, alignItems: 'center', justifyContent: 'center' },
-  companyText: { color: '#fff', fontFamily: F.bold, fontSize: 18, textAlign: 'center' },
+  companyCard: { width: '48%', borderRadius: 18, minHeight: 74, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  companyText: { fontFamily: F.bold, fontSize: 18, textAlign: 'center' },
 });

@@ -75,9 +75,10 @@ export default function CoinHistoryScreen() {
 
   const renderItem = ({ item: tx }: ListRenderItemInfo<CoinTransaction>) => {
     const isEarn = tx.amount >= 0;
+    const tone = isEarn ? colors.success : colors.error;
     return (
       <View style={[styles.row, { borderBottomColor: colors.surfaceBorder }]}>
-        <View style={[styles.rowIcon, { backgroundColor: isEarn ? 'rgba(40,199,111,0.12)' : 'rgba(234,84,85,0.12)' }]}>
+        <View style={[styles.rowIcon, { backgroundColor: tone + '12' }]}>
           <Text style={styles.rowIconText}>{isEarn ? '⚡' : '💸'}</Text>
         </View>
         <View style={styles.rowContent}>
@@ -88,7 +89,7 @@ export default function CoinHistoryScreen() {
             {formatDate(tx.createdAt)}
           </Text>
         </View>
-        <Text style={[styles.rowAmount, { color: isEarn ? '#28C76F' : '#EA5455', fontSize: t.body }]}>
+        <Text style={[styles.rowAmount, { color: tone, fontSize: t.body }]}>
           {isEarn ? '+' : ''}{tx.amount.toLocaleString()} ⚡
         </Text>
       </View>
@@ -105,7 +106,7 @@ export default function CoinHistoryScreen() {
         <Text style={[styles.headerTitle, { color: colors.text, fontSize: t.screenTitle }]}>Coin History</Text>
         <View style={styles.headerBalance}>
           <Text style={[styles.balanceLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Balance</Text>
-          <Text style={[styles.balanceValue, { color: '#ffd84d', fontSize: t.cardTitle }]}>
+          <Text style={[styles.balanceValue, { color: colors.warning, fontSize: t.cardTitle }]}>
             {state.balance.toLocaleString()} ⚡
           </Text>
         </View>

@@ -52,7 +52,7 @@ export default function ProgressScreen() {
                 <Text style={[styles.menuTitle, { color: colors.text, fontSize: t.cardTitle }]}>{item.title}</Text>
                 {item.badge ? (
                   <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.badgeText}>{item.badge}</Text>
+                    <Text style={[styles.badgeText, { color: colors.surface }]}>{item.badge}</Text>
                   </View>
                 ) : null}
                 <Feather name="chevron-right" size={18} color={colors.textSecondary} />
@@ -113,8 +113,8 @@ export default function ProgressScreen() {
                 style={[styles.dailyQuizCta, { backgroundColor: colors.primary }]}
                 accessibilityRole="button"
               >
-                <Text style={styles.dailyQuizCtaText}>{dailyQuizResult ? 'Review Daily Quiz' : 'Open Daily Quiz'}</Text>
-                <Feather name="arrow-right" size={14} color="#FFFFFF" />
+                <Text style={[styles.dailyQuizCtaText, { color: colors.surface }]}>{dailyQuizResult ? 'Review Daily Quiz' : 'Open Daily Quiz'}</Text>
+                <Feather name="arrow-right" size={14} color={colors.surface} />
               </Pressable>
             </View>
           ) : null}
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   menuIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   menuTitle: { fontFamily: F.semiBold, fontSize: 15, flex: 1 },
   badge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 12 },
+  badgeText: { fontFamily: F.bold, fontSize: 12 },
   divider: { height: 1, marginHorizontal: 14 },
   panel: { borderWidth: 1, borderRadius: 16, padding: 12, gap: 12 },
   panelTitle: { fontFamily: F.bold, fontSize: 17 },
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  dailyQuizCtaText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 12 },
+  dailyQuizCtaText: { fontFamily: F.bold, fontSize: 12 },
   attemptList: { gap: 10 },
   attemptCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 6 },
   attemptHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },

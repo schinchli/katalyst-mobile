@@ -14,12 +14,6 @@ import type { Quiz, QuizResult } from '@/types';
 
 type Difficulty = 'all' | 'beginner' | 'intermediate' | 'advanced';
 
-const DIFF_COLOR: Record<string, string> = {
-  beginner:     '#28C76F',
-  intermediate: '#FF9F43',
-  advanced:     '#EA5455',
-};
-
 const DIFF_FILTERS: { key: Difficulty; label: string }[] = [
   { key: 'all',          label: 'All' },
   { key: 'beginner',     label: 'Beginner' },
@@ -39,7 +33,11 @@ function ChallengeCard({
 }) {
   const target    = CHALLENGE_SCORES[quiz.id] ?? 70;
   const cpuName   = CPU_NAMES[quiz.id] ?? 'BotAI';
-  const diffColor = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
+  const diffColor =
+    quiz.difficulty === 'beginner' ? colors.success
+    : quiz.difficulty === 'intermediate' ? colors.warning
+    : quiz.difficulty === 'advanced' ? colors.error
+    : colors.primary;
   const beaten    = bestPct !== null && bestPct >= target;
   const playableQuestionCount = getPlayableQuestionCount(quiz);
 
@@ -68,9 +66,9 @@ function ChallengeCard({
             </View>
           </View>
           {beaten && (
-            <View style={[styles.beatenBadge, { backgroundColor: '#28C76F18' }]}>
-              <Feather name="check-circle" size={14} color="#28C76F" />
-              <Text style={[styles.beatenText, { color: '#28C76F' }]}>Beaten</Text>
+            <View style={[styles.beatenBadge, { backgroundColor: colors.success + '18' }]}>
+              <Feather name="check-circle" size={14} color={colors.success} />
+              <Text style={[styles.beatenText, { color: colors.success }]}>Beaten</Text>
             </View>
           )}
         </View>
@@ -79,11 +77,11 @@ function ChallengeCard({
         <View style={[styles.vsRow, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
           {/* CPU */}
           <View style={styles.vsPlayer}>
-            <View style={[styles.vsAvatar, { backgroundColor: '#EA545518' }]}>
-              <Feather name="cpu" size={16} color="#EA5455" />
+            <View style={[styles.vsAvatar, { backgroundColor: colors.error + '18' }]}>
+              <Feather name="cpu" size={16} color={colors.error} />
             </View>
             <Text style={[styles.vsName, { color: colors.textSecondary }]}>{cpuName}</Text>
-            <Text style={[styles.vsScore, { color: '#EA5455' }]}>{target}%</Text>
+            <Text style={[styles.vsScore, { color: colors.error }]}>{target}%</Text>
           </View>
 
           <View style={styles.vsCenter}>
@@ -96,7 +94,7 @@ function ChallengeCard({
               <Feather name="user" size={16} color={colors.primary} />
             </View>
             <Text style={[styles.vsName, { color: colors.textSecondary }]}>You</Text>
-            <Text style={[styles.vsScore, { color: beaten ? '#28C76F' : colors.primary }]}>
+            <Text style={[styles.vsScore, { color: beaten ? colors.success : colors.primary }]}>
               {bestPct !== null ? `${bestPct}%` : '?'}
             </Text>
           </View>
@@ -118,8 +116,8 @@ function ChallengeCard({
             { backgroundColor: beaten ? colors.primaryLight : diffColor, opacity: pressed ? 0.88 : 1 },
           ]}
         >
-          <Feather name={beaten ? 'refresh-cw' : 'zap'} size={15} color={beaten ? colors.primary : '#fff'} />
-          <Text style={[styles.challengeBtnText, { color: beaten ? colors.primary : '#fff' }]}>
+          <Feather name={beaten ? 'refresh-cw' : 'zap'} size={15} color={beaten ? colors.primary : colors.surface} />
+          <Text style={[styles.challengeBtnText, { color: beaten ? colors.primary : colors.surface }]}>
             {beaten ? 'Beat Your Score' : 'Accept Challenge'}
           </Text>
         </Pressable>
@@ -163,9 +161,9 @@ export default function ChallengeScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>Challenge Arena</Text>
           <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Beat the CPU to earn bonus coins</Text>
         </View>
-        <View style={[styles.scoreBadge, { backgroundColor: '#28C76F18' }]}>
-          <Feather name="check-circle" size={14} color="#28C76F" />
-          <Text style={[styles.scoreBadgeText, { color: '#28C76F' }]}>{beaten.length}/{filtered.length}</Text>
+        <View style={[styles.scoreBadge, { backgroundColor: colors.success + '18' }]}>
+          <Feather name="check-circle" size={14} color={colors.success} />
+          <Text style={[styles.scoreBadgeText, { color: colors.success }]}>{beaten.length}/{filtered.length}</Text>
         </View>
       </View>
 
@@ -181,7 +179,7 @@ export default function ChallengeScreen() {
               difficulty === f.key && { backgroundColor: colors.primary },
             ]}
           >
-            <Text style={[styles.filterText, { color: difficulty === f.key ? '#fff' : colors.textSecondary }]}>
+            <Text style={[styles.filterText, { color: difficulty === f.key ? colors.surface : colors.textSecondary }]}>
               {f.label}
             </Text>
           </Pressable>

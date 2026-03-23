@@ -12,7 +12,6 @@ interface ModeCard {
   title: string;
   description: string;
   icon: string;
-  color: string;
   maxPlayers: string;
   featherIcon: string;
 }
@@ -23,7 +22,6 @@ const MODE_CARDS: ModeCard[] = [
     title: '1v1 Random Battle',
     description: 'Get matched with a random opponent instantly.',
     icon: '⚡',
-    color: '#FF9F43',
     maxPlayers: '2 players',
     featherIcon: 'zap',
   },
@@ -32,7 +30,6 @@ const MODE_CARDS: ModeCard[] = [
     title: '1v1 Challenge',
     description: 'Challenge a friend with a private invite code.',
     icon: '⚔️',
-    color: '#EA5455',
     maxPlayers: '2 players',
     featherIcon: 'user',
   },
@@ -41,7 +38,6 @@ const MODE_CARDS: ModeCard[] = [
     title: 'Group Battle',
     description: 'Compete with up to 8 players at once.',
     icon: '🏟️',
-    color: '#7367F0',
     maxPlayers: '2–8 players',
     featherIcon: 'users',
   },
@@ -49,6 +45,11 @@ const MODE_CARDS: ModeCard[] = [
 
 export default function BattleScreen() {
   const colors = useThemeColors();
+  const toneMap: Record<BattleType, string> = {
+    random: colors.warning,
+    one_vs_one: colors.error,
+    group: colors.primary,
+  };
 
   const handleStart = (type: BattleType) => {
     router.push({ pathname: '/battle-lobby', params: { type } });
@@ -74,16 +75,16 @@ export default function BattleScreen() {
 
         {MODE_CARDS.map((card) => (
           <View key={card.type} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <View style={[styles.cardStrip, { backgroundColor: card.color }]} />
+            <View style={[styles.cardStrip, { backgroundColor: toneMap[card.type] }]} />
             <View style={styles.cardBody}>
               <View style={styles.cardHeader}>
-                <View style={[styles.iconWrap, { backgroundColor: card.color + '18' }]}>
-                  <Feather name={card.featherIcon as 'zap' | 'user' | 'users'} size={22} color={card.color} />
+                <View style={[styles.iconWrap, { backgroundColor: toneMap[card.type] + '18' }]}>
+                  <Feather name={card.featherIcon as 'zap' | 'user' | 'users'} size={22} color={toneMap[card.type]} />
                 </View>
                 <View style={styles.cardInfo}>
                   <Text style={[styles.cardTitle, { color: colors.text }]}>{card.title}</Text>
                   <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{card.description}</Text>
-                  <Text style={[styles.cardMeta, { color: card.color }]}>{card.maxPlayers}</Text>
+                  <Text style={[styles.cardMeta, { color: toneMap[card.type] }]}>{card.maxPlayers}</Text>
                 </View>
               </View>
 
@@ -92,11 +93,11 @@ export default function BattleScreen() {
                 accessibilityRole="button"
                 style={({ pressed }) => [
                   styles.startBtn,
-                  { backgroundColor: card.color, opacity: pressed ? 0.88 : 1 },
+                  { backgroundColor: toneMap[card.type], opacity: pressed ? 0.88 : 1 },
                 ]}
               >
-                <Feather name="play" size={15} color="#fff" />
-                <Text style={styles.startBtnText}>Start</Text>
+                <Feather name="play" size={15} color={colors.surface} />
+                <Text style={[styles.startBtnText, { color: colors.surface }]}>Start</Text>
               </Pressable>
             </View>
           </View>
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
   },
-  startBtnText: { fontFamily: F.semiBold, fontSize: 14, color: '#fff' },
+  startBtnText: { fontFamily: F.semiBold, fontSize: 14 },
 
   infoBanner: {
     flexDirection: 'row',

@@ -62,7 +62,7 @@ export default function BattleLobbyScreen() {
   const isRandom = battleType === 'random';
   const isGroup = battleType === 'group';
   const canStart = opponentFound || timedOut || isGroup;
-  const statusColor = opponentFound ? colors.success : '#FF9F43';
+  const statusColor = opponentFound ? colors.success : timedOut ? colors.warning : isGroup ? colors.primary : colors.warning;
   const statusText = opponentFound
     ? 'Opponent joined! Ready to battle.'
     : timedOut
@@ -141,7 +141,7 @@ export default function BattleLobbyScreen() {
                   },
                 ]}
               >
-                <Text style={[styles.joinBtnText, { color: joinCode.length === 6 ? '#fff' : colors.textSecondary }]}>
+                <Text style={[styles.joinBtnText, { color: joinCode.length === 6 ? colors.surface : colors.textSecondary }]}>
                   Join
                 </Text>
               </Pressable>
@@ -156,8 +156,8 @@ export default function BattleLobbyScreen() {
             accessibilityRole="button"
             style={({ pressed }) => [styles.startBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
           >
-            <Feather name="play" size={16} color="#fff" />
-            <Text style={styles.startBtnText}>
+            <Feather name="play" size={16} color={colors.surface} />
+            <Text style={[styles.startBtnText, { color: colors.surface }]}>
               {timedOut && !opponentFound ? 'Play Solo Instead' : 'Start Battle!'}
             </Text>
           </Pressable>
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 14,
   },
-  startBtnText: { fontFamily: F.bold, fontSize: 16, color: '#fff' },
+  startBtnText: { fontFamily: F.bold, fontSize: 16 },
 
   infoBanner: {
     flexDirection: 'row',

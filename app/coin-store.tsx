@@ -62,12 +62,12 @@ export default function CoinStoreScreen() {
             {packs.map((pack) => (
               <View key={pack.id} style={[styles.packCard, { backgroundColor: colors.surface, borderColor: pack.popular ? colors.primary : colors.surfaceBorder }]}>
                 {pack.popular ? (
-                  <View style={[styles.popularBadge, { backgroundColor: '#FF9F43' }]}>
-                    <Text style={styles.popularText}>Popular</Text>
+                  <View style={[styles.popularBadge, { backgroundColor: colors.warning }]}>
+                    <Text style={[styles.popularText, { color: colors.surface }]}>Popular</Text>
                   </View>
                 ) : null}
                 <Text style={styles.packEmoji}>⚡</Text>
-                <Text style={[styles.packCoins, { color: '#ffd84d', fontSize: t.screenTitle }]}>
+                <Text style={[styles.packCoins, { color: colors.warning, fontSize: t.screenTitle }]}>
                   {pack.coins.toLocaleString()}
                 </Text>
                 <Text style={[styles.packCoinsLabel, { color: colors.textSecondary, fontSize: t.caption }]}>coins</Text>
@@ -79,7 +79,7 @@ export default function CoinStoreScreen() {
                   onPress={() => handleBuy(pack)}
                   style={[styles.buyBtn, { backgroundColor: colors.primary }]}
                 >
-                  <Text style={[styles.buyBtnText, { fontSize: t.body }]}>Buy now</Text>
+                  <Text style={[styles.buyBtnText, { color: colors.surface, fontSize: t.body }]}>Buy now</Text>
                 </Pressable>
               </View>
             ))}
@@ -111,12 +111,12 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   popularBadge: { position: 'absolute', top: -10, right: 10, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
-  popularText:  { color: '#fff', fontFamily: F.bold, fontSize: 10 },
+  popularText:  { fontFamily: F.bold, fontSize: 10 },
   packEmoji:    { fontSize: 28 },
   packCoins:    { fontFamily: F.bold },
   packCoinsLabel: { fontFamily: F.regular },
   packLabel:    { fontFamily: F.semiBold, textAlign: 'center' },
   packPrice:    { fontFamily: F.regular, textAlign: 'center' },
   buyBtn:       { marginTop: 6, width: '100%', paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
-  buyBtnText:   { color: '#fff', fontFamily: F.bold },
+  buyBtnText:   { fontFamily: F.bold },
 });

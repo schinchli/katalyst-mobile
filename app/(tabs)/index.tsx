@@ -16,19 +16,34 @@ import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 import { AWS_SERVICE_ICONS, AWS_SERVICE_ACCENT, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 
-// ── Service-specific course card visuals — brand-accurate gradients ───────────
-const CATEGORY_VISUAL: Record<string, { from: string; to: string; label: string }> = {
-  'clf-c02':           { from: '#FF9900', to: '#E8650A', label: 'CLF-C02' },
-  bedrock:             { from: '#7C3AED', to: '#4338CA', label: 'Bedrock' },
-  genai:               { from: '#0EA5E9', to: '#0369A1', label: 'GenAI'   },
-  security:            { from: '#EF4444', to: '#B91C1C', label: 'Security' },
-  mlops:               { from: '#10B981', to: '#047857', label: 'MLOps'   },
-  compute:             { from: '#F59E0B', to: '#B45309', label: 'Compute' },
-  networking:          { from: '#3B82F6', to: '#1D4ED8', label: 'Network' },
-  databases:           { from: '#8B5CF6', to: '#6D28D9', label: 'Database' },
-  'cost-optimization': { from: '#34D399', to: '#059669', label: 'Cost'    },
-};
-
+function getCategoryVisual(category: string, colors: ReturnType<typeof useThemeColors>) {
+  const labels: Record<string, string> = {
+    'clf-c02': 'CLF-C02',
+    bedrock: 'Bedrock',
+    genai: 'GenAI',
+    security: 'Security',
+    mlops: 'MLOps',
+    compute: 'Compute',
+    networking: 'Network',
+    databases: 'Database',
+    'cost-optimization': 'Cost',
+  };
+  const tones: Array<[string, string]> = [
+    [colors.gradientFrom, colors.gradientTo],
+    [colors.primary, colors.gradientAccent],
+    [colors.warning, colors.primary],
+    [colors.success, colors.gradientTo],
+    [colors.error, colors.gradientAccent],
+    [colors.gradientAccent, colors.primary],
+  ];
+  const score = [...category].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const [from, to] = tones[score % tones.length];
+  return {
+    from,
+    to,
+    label: labels[category] ?? category.toUpperCase().slice(0, 5),
+  };
+}
 
 function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap; value: string; colors: ReturnType<typeof useThemeColors> }) {
   return (
@@ -69,9 +84,9 @@ export default function HomeScreen() {
     : streak >= 3 ? `🔥 ${streak} day streak! You're on fire!`
     : `🔥 ${streak} day streak! Keep it going!`;
   const actionCards = [
-    { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/flashcards' as const, tone: '#8B5CF6' },
-    { icon: 'activity', title: 'Practice', subtitle: 'Explore every quiz and start a session', route: '/(tabs)/quizzes' as const, tone: '#F59E0B' },
-    { icon: 'globe', title: 'Resources', subtitle: 'Cheat sheets, guides, and updates', route: '/(tabs)/learn' as const, tone: '#60A5FA' },
+    { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/flashcards' as const, tone: colors.gradientAccent },
+    { icon: 'activity', title: 'Practice', subtitle: 'Explore every quiz and start a session', route: '/(tabs)/quizzes' as const, tone: colors.warning },
+    { icon: 'globe', title: 'Resources', subtitle: 'Cheat sheets, guides, and updates', route: '/(tabs)/learn' as const, tone: colors.primary },
     { icon: 'star', title: 'Premium', subtitle: 'Unlock all content and projects', route: '/(tabs)/profile' as const, tone: colors.primary },
   ];
 
@@ -140,16 +155,16 @@ export default function HomeScreen() {
               {popularCourses.map((quiz, index) => (
                 <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
                   {(() => {
-                    const cv = CATEGORY_VISUAL[quiz.category] ?? { from: '#4B5EFA', to: '#0EA5E9', label: quiz.category.toUpperCase().slice(0, 5) };
+                    const cv = getCategoryVisual(quiz.category, colors);
                     const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                     return (
                       <LinearGradient colors={[cv.from, cv.to]} style={styles.courseVisual}>
                         {catIcon ? (
                           <Image source={catIcon} style={styles.courseVisualIcon} />
                         ) : (
-                          <Feather name="book" size={30} color="rgba(255,255,255,0.85)" />
+                          <Feather name="book" size={30} color={colors.surface} />
                         )}
-                        <Text style={styles.courseVisualLabel}>{cv.label}</Text>
+                        <Text style={[styles.courseVisualLabel, { color: colors.surface }]}>{cv.label}</Text>
                       </LinearGradient>
                     );
                   })()}
@@ -263,7 +278,7 @@ const styles = StyleSheet.create({
   courseCard: { width: 148, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   courseVisual: { height: 96, alignItems: 'center', justifyContent: 'center', gap: 4 },
   courseVisualIcon: { width: 30, height: 30 },
-  courseVisualLabel: { fontFamily: F.bold, fontSize: 10, color: 'rgba(255,255,255,0.92)', letterSpacing: 0.8, textTransform: 'uppercase' },
+  courseVisualLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase' },
   courseBody: { padding: 10, gap: 8 },
   courseProgressTrack: { height: 8, borderRadius: 999, overflow: 'hidden' },
   courseProgressFill: { height: '100%', borderRadius: 999 },
