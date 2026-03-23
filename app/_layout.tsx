@@ -21,8 +21,6 @@ import { MaintenanceScreen } from '@/components/MaintenanceScreen';
 import { ForceUpdateScreen } from '@/components/ForceUpdateScreen';
 import 'react-native-reanimated';
 
-import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
-
 /** Parses a semver string into [major, minor, patch] numeric tuple. */
 function parseSemver(version: string): [number, number, number] {
   const parts = version.replace(/[^0-9.]/g, '').split('.').map(Number);
@@ -191,12 +189,6 @@ export default function RootLayout() {
             }
 
             await Promise.allSettled(syncTasks);
-
-            // ATT should not slow down Expo Go / dev startup and is only relevant
-            // for iOS production-style runs where tracking-backed SDKs are active.
-            if (Platform.OS === 'ios' && !__DEV__) {
-              await requestTrackingPermissionsAsync().catch(() => {});
-            }
           })();
         })
         .catch(() => {
