@@ -22,7 +22,7 @@ export function DailyLimitModal({ visible, onClose, onUpgrade }: DailyLimitModal
 
   return (
     <Modal visible={visible} transparent animationType="slide" presentationStyle="overFullScreen" statusBarTranslucent>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.background + 'CC' }]}>
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
 
           {/* Close */}
@@ -63,8 +63,8 @@ export function DailyLimitModal({ visible, onClose, onUpgrade }: DailyLimitModal
               end={{ x: 1, y: 0 }}
               style={styles.cta}
             >
-              <Text style={styles.ctaText}>Unlock Unlimited Practice</Text>
-              <Feather name="arrow-right" size={18} color="#04111F" />
+              <Text style={[styles.ctaText, { color: colors.primaryText }]}>Unlock Unlimited Practice</Text>
+              <Feather name="arrow-right" size={18} color={colors.primaryText} />
             </LinearGradient>
           </Pressable>
 
@@ -82,7 +82,7 @@ export function DailyLimitModal({ visible, onClose, onUpgrade }: DailyLimitModal
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(3,8,20,0.8)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 36 },
   closeBtn: { alignSelf: 'flex-end', padding: 4, marginBottom: 8 },
   emoji: { fontSize: 48, textAlign: 'center', marginBottom: 14 },
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   perkText: { fontFamily: F.semiBold, fontSize: 15, flex: 1, lineHeight: 22 },
   ctaWrap: { borderRadius: 20, overflow: 'hidden' },
   cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 18, paddingHorizontal: 24 },
-  ctaText: { fontFamily: F.bold, fontSize: 17, color: '#04111F' },
+  ctaText: { fontFamily: F.bold, fontSize: 17 },
   dismissBtn: { alignItems: 'center', marginTop: 18 },
   dismissText: { fontFamily: F.medium, fontSize: 14 },
 });

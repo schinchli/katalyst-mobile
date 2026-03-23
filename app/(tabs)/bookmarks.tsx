@@ -124,8 +124,8 @@ function EmptyState({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
           { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
         ]}
       >
-        <Feather name="book-open" size={16} color="#fff" />
-        <Text style={styles.emptyBtnText}>Browse Quizzes</Text>
+        <Feather name="book-open" size={16} color={colors.surface} />
+        <Text style={[styles.emptyBtnText, { color: colors.surface }]}>Browse Quizzes</Text>
       </Pressable>
     </View>
   );
@@ -175,8 +175,8 @@ export default function BookmarksScreen() {
               { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1, marginBottom: 14 },
             ]}
           >
-            <Feather name="play" size={16} color="#fff" />
-            <Text style={styles.reviewBtnText}>Start Review ({entries.length})</Text>
+            <Feather name="play" size={16} color={colors.surface} />
+            <Text style={[styles.reviewBtnText, { color: colors.surface }]}>Start Review ({entries.length})</Text>
           </Pressable>
         ) : (
           <View style={[styles.reviewBtnDisabled, { backgroundColor: colors.surfaceBorder, marginBottom: 14 }]}>
@@ -328,11 +328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  reviewBtnText: {
-    fontFamily: F.bold,
-    fontSize: 14,
-    color: '#fff',
-  },
+  reviewBtnText: { fontFamily: F.bold, fontSize: 14 },
 
   // ── Empty state ────────────────────────────────────────────────────────────
   emptyWrap: {
@@ -370,9 +366,5 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
   },
-  emptyBtnText: {
-    fontFamily: F.semiBold,
-    color: '#fff',
-    fontSize: 13,
-  },
+  emptyBtnText: { fontFamily: F.semiBold, fontSize: 13 },
 });

@@ -76,7 +76,7 @@ export default function BookmarksReviewScreen() {
             onPress={() => router.push('/(tabs)/quizzes' as never)}
             style={({ pressed }) => [s.btn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1, marginTop: 20 }]}
           >
-            <Text style={s.btnText}>Browse Quizzes</Text>
+            <Text style={[s.btnText, { color: colors.surface }]}>Browse Quizzes</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -120,7 +120,7 @@ export default function BookmarksReviewScreen() {
               onPress={() => router.back()}
               style={({ pressed }) => [s.btn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
             >
-              <Text style={s.btnText}>Done</Text>
+              <Text style={[s.btnText, { color: colors.surface }]}>Done</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -219,20 +219,20 @@ export default function BookmarksReviewScreen() {
       {/* Bottom bar */}
       <View style={[s.bottom, { backgroundColor: colors.surface, borderTopColor: colors.surfaceBorder }]}>
         {showFeedback ? (
-          <Pressable
-            onPress={handleNext}
-            style={({ pressed }) => [s.btn, { backgroundColor: colors.primary, flex: 1, opacity: pressed ? 0.88 : 1 }]}
-          >
-            <Text style={s.btnText}>{isLast ? 'See Results' : 'Next →'}</Text>
-          </Pressable>
+            <Pressable
+              onPress={handleNext}
+              style={({ pressed }) => [s.btn, { backgroundColor: colors.primary, flex: 1, opacity: pressed ? 0.88 : 1 }]}
+            >
+            <Text style={[s.btnText, { color: colors.surface }]}>{isLast ? 'See Results' : 'Next →'}</Text>
+            </Pressable>
         ) : (
-          <Pressable
-            onPress={handleCheck}
-            disabled={!selectedAnswer}
-            style={({ pressed }) => [s.btn, { flex: 1, backgroundColor: selectedAnswer ? colors.primary : colors.surfaceBorder, opacity: pressed ? 0.88 : 1 }]}
-          >
-            <Text style={[s.btnText, { color: selectedAnswer ? '#fff' : colors.textSecondary }]}>Check Answer</Text>
-          </Pressable>
+            <Pressable
+              onPress={handleCheck}
+              disabled={!selectedAnswer}
+              style={({ pressed }) => [s.btn, { flex: 1, backgroundColor: selectedAnswer ? colors.primary : colors.surfaceBorder, opacity: pressed ? 0.88 : 1 }]}
+            >
+            <Text style={[s.btnText, { color: selectedAnswer ? colors.surface : colors.textSecondary }]}>Check Answer</Text>
+            </Pressable>
         )}
       </View>
     </SafeAreaView>
@@ -289,7 +289,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  btnText: { fontFamily: F.bold, fontSize: 15, color: '#fff' },
+  btnText: { fontFamily: F.bold, fontSize: 15 },
 
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
   emptyTitle: { fontFamily: F.bold, fontSize: 18, textAlign: 'center' },

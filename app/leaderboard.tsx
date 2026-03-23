@@ -18,15 +18,14 @@ const PERIODS: { key: Period; label: string }[] = [
   { key: 'alltime', label: 'All Time' },
 ];
 
-const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
-
 function isSameLocalDay(isoDate: string, reference = new Date()) {
   return new Date(isoDate).toDateString() === reference.toDateString();
 }
 
 // ─── Top-3 podium card ────────────────────────────────────────────────────────
 function PodiumCard({ entry, colors }: { entry: LeaderboardEntry; colors: ReturnType<typeof useThemeColors> }) {
-  const medalColor = MEDAL_COLORS[entry.rank - 1];
+  const medalPalette = [colors.warning, colors.textMuted, colors.error];
+  const medalColor = medalPalette[entry.rank - 1] ?? colors.warning;
   const heights    = [110, 90, 80];
   const h          = heights[entry.rank - 1] ?? 80;
 
@@ -59,7 +58,7 @@ function RankRow({ entry, colors }: { entry: LeaderboardEntry; colors: ReturnTyp
         #{entry.rank}
       </Text>
       <View style={[styles.rankAvatar, { backgroundColor: isHighlighted ? colors.primary : colors.primaryLight }]}>
-        <Text style={[styles.rankAvatarText, { color: isHighlighted ? '#fff' : colors.primary }]}>
+        <Text style={[styles.rankAvatarText, { color: isHighlighted ? colors.surface : colors.primary }]}>
           {entry.avatarInitial}
         </Text>
       </View>
@@ -156,7 +155,7 @@ export default function LeaderboardScreen() {
                   style={[styles.dailyQuizCta, { backgroundColor: colors.primary }]}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.dailyQuizCtaText}>{dailyQuizResult ? 'Review' : 'Play'}</Text>
+                  <Text style={[styles.dailyQuizCtaText, { color: colors.surface }]}>{dailyQuizResult ? 'Review' : 'Play'}</Text>
                 </Pressable>
               </View>
             </View>
@@ -243,7 +242,7 @@ const styles = StyleSheet.create<Record<string, ViewStyle & TextStyle>>({
   dailyQuizPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   dailyQuizPillText: { fontFamily: F.bold, fontSize: 11 },
   dailyQuizCta: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
-  dailyQuizCtaText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 11 },
+  dailyQuizCtaText: { fontFamily: F.bold, fontSize: 11 },
 
   // Podium
   podium: {

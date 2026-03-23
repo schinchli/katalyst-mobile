@@ -255,7 +255,7 @@ export default function FlashcardsScreen() {
                   borderColor:     active ? colors.primary : colors.surfaceBorder,
                 }]}
               >
-                <Text style={[s.filterChipText, { color: active ? '#FFFFFF' : colors.text }]}>
+                <Text style={[s.filterChipText, { color: active ? colors.surface : colors.text }]}>
                   {item.label}
                 </Text>
               </Pressable>

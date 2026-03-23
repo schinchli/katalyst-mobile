@@ -39,8 +39,8 @@ export function ForceUpdateScreen({ minimumVersion, appStoreUrl, playStoreUrl }:
           onPress={handleUpdate}
           style={[styles.button, { backgroundColor: colors.primary }]}
         >
-          <Feather name="arrow-up-circle" size={16} color="#FFFFFF" />
-          <Text style={[styles.buttonText, { fontSize: t.body }]}>Update Now</Text>
+          <Feather name="arrow-up-circle" size={16} color={colors.surface} />
+          <Text style={[styles.buttonText, { color: colors.surface, fontSize: t.body }]}>Update Now</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -54,5 +54,5 @@ const styles = StyleSheet.create({
   title: { fontFamily: F.bold, textAlign: 'center' },
   message: { fontFamily: F.regular, textAlign: 'center', lineHeight: 24 },
   button: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
-  buttonText: { fontFamily: F.bold, color: '#FFFFFF' },
+  buttonText: { fontFamily: F.bold },
 });

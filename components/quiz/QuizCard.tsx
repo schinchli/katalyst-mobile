@@ -5,12 +5,6 @@ import { F } from '@/constants/Typography';
 import type { Quiz } from '@/types';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 
-const DIFF_COLOR: Record<string, string> = {
-  beginner:     '#28C76F',
-  intermediate: '#FF9F43',
-  advanced:     '#EA5455',
-};
-
 interface QuizCardProps {
   quiz: Quiz;
   onPress: () => void;
@@ -18,7 +12,11 @@ interface QuizCardProps {
 
 export function QuizCard({ quiz, onPress }: QuizCardProps) {
   const colors  = useThemeColors();
-  const accent  = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
+  const accent =
+    quiz.difficulty === 'beginner' ? colors.success
+    : quiz.difficulty === 'intermediate' ? colors.warning
+    : quiz.difficulty === 'advanced' ? colors.error
+    : colors.primary;
   const badgeBg = accent + '18';
   const iconBg  = accent + '22';
   const playableQuestionCount = getPlayableQuestionCount(quiz);

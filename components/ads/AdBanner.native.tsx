@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/config/supabase';
+import { useThemeColors } from '@/hooks/useThemeColor';
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -19,6 +20,7 @@ const WEB_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://lms-amber-two.v
  * TODO: Replace house banner with AdMob/Google Mobile Ads SDK before App Store submission.
  */
 export function AdBanner(_props: { style?: object }) {
+  const colors = useThemeColors();
   const user       = useAuthStore((s) => s.user);
   // adsRemoved from store is the fastest path — set during initAuth from user_profiles.ads_removed
   const adsRemovedStore = useAuthStore((s) => s.adsRemoved);
@@ -57,9 +59,9 @@ export function AdBanner(_props: { style?: object }) {
   if ((user as { subscription?: string } | null)?.subscription === 'premium') return null;
 
   return (
-    <View style={s.banner}>
-      <Text style={s.title}>Katalyst</Text>
-      <Text style={s.subtitle}>Upgrade to Pro · Unlock all quizzes</Text>
+    <View style={[s.banner, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
+      <Text style={[s.title, { color: colors.surface }]}>Katalyst</Text>
+      <Text style={[s.subtitle, { color: colors.primaryLight }]}>Upgrade to Pro · Unlock all quizzes</Text>
     </View>
   );
 }
@@ -68,17 +70,15 @@ const s = StyleSheet.create({
   banner: {
     height: 64,
     borderRadius: 14,
-    backgroundColor: '#0EA5E9',
     marginHorizontal: 16,
     marginVertical: 12,
     paddingHorizontal: 16,
     justifyContent: 'center',
-    shadowColor: '#0EA5E9',
     shadowOpacity: 0.28,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  title: { color: '#fff', fontWeight: '700', fontSize: 15, letterSpacing: 0.2 },
-  subtitle: { color: '#E0F2FE', fontSize: 12, marginTop: 3 },
+  title: { fontWeight: '700', fontSize: 15, letterSpacing: 0.2 },
+  subtitle: { fontSize: 12, marginTop: 3 },
 });

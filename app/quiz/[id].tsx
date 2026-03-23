@@ -43,9 +43,6 @@ import { supabase } from '@/config/supabase';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 
 const QUESTION_TIME = 30;
-const MEDAL_GOLD    = '#FFD700';
-const MEDAL_SILVER  = '#C0C0C0';
-const MEDAL_BRONZE  = '#CD7F32';
 
 type Phase = 'intro' | 'quiz' | 'review' | 'results' | 'flashcard';
 
@@ -777,7 +774,7 @@ export default function QuizScreen() {
                     onPress={() => setFunLearnRevealed(true)}
                     style={({ pressed }) => [modeStyles.gotItBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
                   >
-                    <Text style={modeStyles.gotItBtnText}>Got it →</Text>
+                    <Text style={[modeStyles.gotItBtnText, { color: colors.surface }]}>Got it →</Text>
                   </Pressable>
                 </View>
               )}
@@ -826,7 +823,7 @@ export default function QuizScreen() {
                         disabled={!wordInputValue.trim()}
                         style={({ pressed }) => [modeStyles.submitBtn, { backgroundColor: wordInputValue.trim() ? colors.primary : colors.surfaceBorder, opacity: pressed ? 0.88 : 1 }]}
                       >
-                        <Text style={[modeStyles.submitBtnText, { color: wordInputValue.trim() ? '#fff' : colors.textSecondary }]}>Submit</Text>
+                        <Text style={[modeStyles.submitBtnText, { color: wordInputValue.trim() ? colors.surface : colors.textSecondary }]}>Submit</Text>
                       </Pressable>
                     </View>
                   ) : (
@@ -861,7 +858,7 @@ export default function QuizScreen() {
                         disabled={numericInputValue.trim() === ''}
                         style={({ pressed }) => [modeStyles.submitBtn, { backgroundColor: numericInputValue.trim() ? colors.primary : colors.surfaceBorder, opacity: pressed ? 0.88 : 1 }]}
                       >
-                        <Text style={[modeStyles.submitBtnText, { color: numericInputValue.trim() ? '#fff' : colors.textSecondary }]}>Submit</Text>
+                        <Text style={[modeStyles.submitBtnText, { color: numericInputValue.trim() ? colors.surface : colors.textSecondary }]}>Submit</Text>
                       </Pressable>
                     </View>
                   ) : (
@@ -1010,7 +1007,7 @@ export default function QuizScreen() {
 
       {/* ── Report modal ── */}
       <Modal visible={showReport} transparent animationType="slide" onRequestClose={() => setShowReport(false)}>
-        <Pressable style={[s.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]} onPress={() => setShowReport(false)}>
+        <Pressable style={[s.modalOverlay, { backgroundColor: colors.background + '99' }]} onPress={() => setShowReport(false)}>
           {/* View (not Pressable) so nested Pressables get full layout width */}
           <View style={[s.reportSheet, { backgroundColor: colors.surface }]}>
             {reportSubmitted ? (
@@ -1022,7 +1019,7 @@ export default function QuizScreen() {
                 <Text style={[s.reportThanksSub, { color: colors.textSecondary }]}>Report submitted.</Text>
                 <Pressable onPress={() => { setShowReport(false); setReportSubmitted(false); }}
                   style={[s.reportCloseBtn, { backgroundColor: colors.primary }]}>
-                  <Text style={s.reportCloseBtnText}>Close</Text>
+                  <Text style={[s.reportCloseBtnText, { color: colors.surface }]}>Close</Text>
                 </Pressable>
               </View>
             ) : (
@@ -1089,7 +1086,7 @@ const modeStyles = StyleSheet.create({
   learnLabel: { fontFamily: F.bold, fontSize: 12, letterSpacing: 0.5 },
   learnText: { fontFamily: F.regular, fontSize: 14, lineHeight: 22, fontStyle: 'italic' },
   gotItBtn: { alignSelf: 'flex-start', paddingHorizontal: 20, paddingVertical: 9, borderRadius: 8 },
-  gotItBtnText: { fontFamily: F.bold, fontSize: 13, color: '#fff' },
+  gotItBtnText: { fontFamily: F.bold, fontSize: 13 },
 
   questionText: { fontFamily: F.semiBold, fontSize: 16, lineHeight: 24, marginBottom: 16 },
   mathQuestion: { fontFamily: F.semiBold, fontSize: 22, lineHeight: 30, marginBottom: 16 },
@@ -1232,5 +1229,5 @@ const s = StyleSheet.create({
   reportThanksTitle:  { fontFamily: F.bold,    fontSize: 20 },
   reportThanksSub:    { fontFamily: F.regular, fontSize: 14, textAlign: 'center' },
   reportCloseBtn:     { marginTop: 8, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
-  reportCloseBtnText: { fontFamily: F.semiBold, color: '#fff', fontSize: 15 },
+  reportCloseBtnText: { fontFamily: F.semiBold, fontSize: 15 },
 });

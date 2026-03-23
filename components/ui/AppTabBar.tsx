@@ -52,7 +52,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
               end={{ x: 1, y: 1 }}
               style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Feather name="activity" size={20} color="#04111F" />
+              <Feather name="activity" size={20} color={colors.primaryText} />
             </LinearGradient>
             <View>
               <Text style={{ color: colors.text, fontFamily: F.bold, fontSize: 18 }}>{EXPERIENCE_COPY.appName}</Text>

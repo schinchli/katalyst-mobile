@@ -113,7 +113,7 @@ export default function ProfileScreen() {
               <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
             </View>
             <View style={[styles.editBadge, { backgroundColor: colors.primary }]}>
-              <Feather name="edit-2" size={12} color="#FFFFFF" />
+              <Feather name="edit-2" size={12} color={colors.surface} />
             </View>
           </View>
           <Text style={[styles.profileName, { color: colors.text, fontSize: t.screenTitle }]}>{user?.name ?? 'Katalyst learner'}</Text>
@@ -143,8 +143,8 @@ export default function ProfileScreen() {
                 {referral.code}
               </Text>
               <Pressable onPress={handleShareReferral} style={[styles.shareReferralBtn, { backgroundColor: colors.primary }]}>
-                <Feather name="share-2" size={14} color="#fff" />
-                <Text style={styles.shareReferralText}>Share</Text>
+                <Feather name="share-2" size={14} color={colors.surface} />
+                <Text style={[styles.shareReferralText, { color: colors.surface }]}>Share</Text>
               </Pressable>
             </View>
             <View style={styles.referralStats}>
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
                 <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Friends referred</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={[styles.metricValue, { color: '#ffd84d' }]}>{referral.coinsEarned} ⚡</Text>
+                <Text style={[styles.metricValue, { color: colors.warning }]}>{referral.coinsEarned} ⚡</Text>
                 <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Coins earned</Text>
               </View>
             </View>
@@ -196,7 +196,7 @@ export default function ProfileScreen() {
               <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.listRow}>
                 <Feather name={item.icon as any} size={24} color={colors.text} />
                 <Text style={[styles.listLabel, { color: colors.text, fontSize: t.cardTitle }]}>{item.label}</Text>
-                {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={styles.rowBadgeText}>{item.badge}</Text></View> : null}
+                {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={[styles.rowBadgeText, { color: colors.surface }]}>{item.badge}</Text></View> : null}
                 <Feather name="chevron-right" size={18} color={colors.textSecondary} />
               </Pressable>
               {index < 7 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
@@ -262,8 +262,8 @@ export default function ProfileScreen() {
                     borderColor:     active ? colors.primary        : colors.surfaceBorder,
                   }]}
                 >
-                  <Text style={[styles.fontSizeBtnSample, { color: active ? '#fff' : colors.text, fontSize: opt.sample }]}>Aa</Text>
-                  <Text style={[styles.fontSizeBtnLabel,  { color: active ? '#fff' : colors.textSecondary }]}>{opt.label}</Text>
+                  <Text style={[styles.fontSizeBtnSample, { color: active ? colors.surface : colors.text, fontSize: opt.sample }]}>Aa</Text>
+                  <Text style={[styles.fontSizeBtnLabel,  { color: active ? colors.surface : colors.textSecondary }]}>{opt.label}</Text>
                 </Pressable>
               );
             })}
@@ -289,22 +289,22 @@ export default function ProfileScreen() {
         </Pressable>
 
         {/* ── Danger Zone ────────────────────────────────────────────── */}
-        <View style={[styles.dangerZone, { borderColor: 'rgba(239,68,68,0.3)', backgroundColor: colors.surface }]}>
-          <Text style={[styles.dangerTitle, { color: '#EF4444' }]}>Danger Zone</Text>
+        <View style={[styles.dangerZone, { borderColor: colors.error + '4D', backgroundColor: colors.surface }]}>
+          <Text style={[styles.dangerTitle, { color: colors.error }]}>Danger Zone</Text>
           <Text style={[styles.dangerDesc, { color: colors.textSecondary }]}>
             Deleting your account is permanent. All progress, quiz history, and profile data will be erased.
           </Text>
           {!showDeleteConfirm ? (
             <Pressable
               onPress={() => { setShowDeleteConfirm(true); setDeleteConfirmText(''); setDeleteError(''); }}
-              style={[styles.deleteBtn, { borderColor: '#EF4444' }]}
+              style={[styles.deleteBtn, { borderColor: colors.error }]}
             >
-              <Feather name="trash-2" size={15} color="#EF4444" />
-              <Text style={[styles.deleteBtnText, { color: '#EF4444' }]}>Delete Account</Text>
+              <Feather name="trash-2" size={15} color={colors.error} />
+              <Text style={[styles.deleteBtnText, { color: colors.error }]}>Delete Account</Text>
             </Pressable>
           ) : (
             <View style={{ gap: 10 }}>
-              <Text style={{ fontFamily: F.regular, fontSize: 13, color: '#EF4444', lineHeight: 18 }}>
+              <Text style={{ fontFamily: F.regular, fontSize: 13, color: colors.error, lineHeight: 18 }}>
                 Type DELETE to confirm permanent account deletion.
               </Text>
               <TextInput
@@ -312,17 +312,17 @@ export default function ProfileScreen() {
                 onChangeText={setDeleteConfirmText}
                 placeholder="Type DELETE"
                 placeholderTextColor={colors.textSecondary}
-                style={[styles.deleteInput, { borderColor: deleteConfirmText === 'DELETE' ? '#EF4444' : colors.surfaceBorder, color: colors.text, backgroundColor: colors.backgroundAlt }]}
+                style={[styles.deleteInput, { borderColor: deleteConfirmText === 'DELETE' ? colors.error : colors.surfaceBorder, color: colors.text, backgroundColor: colors.backgroundAlt }]}
                 autoCapitalize="characters"
               />
-              {deleteError ? <Text style={{ fontFamily: F.regular, fontSize: 12, color: '#EF4444' }}>{deleteError}</Text> : null}
+              {deleteError ? <Text style={{ fontFamily: F.regular, fontSize: 12, color: colors.error }}>{deleteError}</Text> : null}
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Pressable
                   onPress={handleDeleteAccount}
                   disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
-                  style={[styles.deleteConfirmBtn, { backgroundColor: deleteConfirmText === 'DELETE' ? '#EF4444' : colors.surfaceBorder }]}
+                  style={[styles.deleteConfirmBtn, { backgroundColor: deleteConfirmText === 'DELETE' ? colors.error : colors.surfaceBorder }]}
                 >
-                  <Text style={[styles.deleteConfirmText, { opacity: deleteConfirmText === 'DELETE' ? 1 : 0.5 }]}>
+                  <Text style={[styles.deleteConfirmText, { color: colors.surface, opacity: deleteConfirmText === 'DELETE' ? 1 : 0.5 }]}>
                     {deleteLoading ? 'Deleting…' : 'Confirm Delete'}
                   </Text>
                 </Pressable>
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
   listLabel: { fontFamily: F.semiBold, fontSize: 15, flex: 1 },
   rowBadge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  rowBadgeText: { color: '#FFFFFF', fontFamily: F.bold, fontSize: 12 },
+  rowBadgeText: { fontFamily: F.bold, fontSize: 12 },
   divider: { height: 1, marginHorizontal: 14 },
   panel: { borderWidth: 1, borderRadius: 16, padding: 12, gap: 12 },
   panelTitle: { fontFamily: F.bold, fontSize: 17 },
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   deleteBtnText: { fontFamily: F.bold, fontSize: 13 },
   deleteInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: F.regular, fontSize: 14 },
   deleteConfirmBtn: { flex: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
-  deleteConfirmText: { fontFamily: F.bold, fontSize: 13, color: '#FFFFFF' },
+  deleteConfirmText: { fontFamily: F.bold, fontSize: 13 },
   cancelBtn: { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
   cancelBtnText: { fontFamily: F.bold, fontSize: 13 },
   adminButton: { borderWidth: 1.5, borderRadius: 12, minHeight: 42, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   prefLabel:    { fontFamily: F.semiBold, fontSize: 14 },
   prefSub:      { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
   toggle:       { width: 36, height: 22, borderRadius: 11, justifyContent: 'center' },
-  toggleThumb:  { width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff' },
+  toggleThumb:  { width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFFFFF' },
   // IAP / Restore
   restoreBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignSelf: 'flex-start', marginTop: 8 },
   restoreBtnText:  { fontFamily: 'PublicSans-Bold', fontSize: 13 },
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   referralCodeRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
   referralCode:      { fontFamily: 'PublicSans-Bold', fontSize: 20, letterSpacing: 4, borderWidth: 1, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 6 },
   shareReferralBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  shareReferralText: { color: '#fff', fontFamily: 'PublicSans-Bold', fontSize: 13 },
+  shareReferralText: { fontFamily: 'PublicSans-Bold', fontSize: 13 },
   referralStats:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   // Font size
   fontSizeRow:       { flexDirection: 'row', gap: 8 },

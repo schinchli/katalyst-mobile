@@ -35,7 +35,7 @@ function SingleBadgeModal({ badge, onDismiss }: { badge: Badge; onDismiss: () =>
 
   return (
     // Tap outside the sheet to dismiss
-    <Pressable style={styles.overlay} onPress={onDismiss}>
+    <Pressable style={[styles.overlay, { backgroundColor: colors.background + '99' }]} onPress={onDismiss}>
       {/* Inner Pressable absorbs touches so tapping the card doesn't close */}
       <Pressable style={[styles.sheet, { backgroundColor: colors.surface }]} onPress={() => {}}>
 
@@ -69,7 +69,7 @@ function SingleBadgeModal({ badge, onDismiss }: { badge: Badge; onDismiss: () =>
             { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
           ]}
         >
-          <Text style={styles.dismissText}>Awesome!</Text>
+          <Text style={[styles.dismissText, { color: colors.surface }]}>Awesome!</Text>
         </Pressable>
       </Pressable>
     </Pressable>
@@ -100,7 +100,6 @@ export function BadgeCelebrationModal({ enabled = true }: { enabled?: boolean })
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(47, 43, 61, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
@@ -173,7 +172,6 @@ const styles = StyleSheet.create({
   },
   dismissText: {
     fontFamily: F.semiBold,
-    color: '#fff',
     fontSize: 15,
   },
 });
