@@ -27,8 +27,11 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.awslearn.app",
-      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
-      "versionCode": 6
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "versionCode": 8
     },
     "web": {
       "bundler": "metro",
