@@ -170,25 +170,38 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
-      // Initialize auth before hiding splash so user is never shown a flash of wrong screen
+      // Keep splash blocked only for local auth/bootstrap. Remote config syncs can
+      // happen in the background so Expo Go and native dev startups stay fast.
       initAuth()
-        .then(async () => {
-          await syncPlatformThemeFromSupabase().catch(() => {});
-          await syncPlatformConfigFromSupabase().catch(() => {});
-          await syncManagedQuizContentFromSupabase().catch(() => {});
-          await syncQuizCatalogOverridesFromSupabase().catch(() => {});
-          await syncSystemFeaturesFromSupabase().catch(() => {});
-          const userId = useAuthStore.getState().user?.id;
-          if (userId) await syncUserThemeFromSupabase(userId).catch(() => {});
+        .then(() => {
+          void SplashScreen.hideAsync();
 
-          // ── ATT (iOS only) ────────────────────────────────────────────────
-          if (Platform.OS === 'ios') {
-            const { status } = await requestTrackingPermissionsAsync();
-            // status is 'authorized' | 'denied' | 'restricted' | 'unavailable'
-            // Pass status to your analytics/ads SDK before initialising it
-          }
+          void (async () => {
+            const syncTasks: Array<Promise<unknown>> = [
+              syncPlatformThemeFromSupabase(),
+              syncPlatformConfigFromSupabase(),
+              syncManagedQuizContentFromSupabase(),
+              syncQuizCatalogOverridesFromSupabase(),
+              syncSystemFeaturesFromSupabase(),
+            ];
+
+            const userId = useAuthStore.getState().user?.id;
+            if (userId) {
+              syncTasks.push(syncUserThemeFromSupabase(userId));
+            }
+
+            await Promise.allSettled(syncTasks);
+
+            // ATT should not slow down Expo Go / dev startup and is only relevant
+            // for iOS production-style runs where tracking-backed SDKs are active.
+            if (Platform.OS === 'ios' && !__DEV__) {
+              await requestTrackingPermissionsAsync().catch(() => {});
+            }
+          })();
         })
-        .finally(() => SplashScreen.hideAsync());
+        .catch(() => {
+          void SplashScreen.hideAsync();
+        });
     }
   }, [loaded]);
 
