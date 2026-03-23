@@ -31,7 +31,8 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "com.google.android.gms.permission.AD_ID"
-      ]
+      ],
+      "versionCode": 6
     },
     "web": {
       "bundler": "metro",
@@ -41,7 +42,8 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-tracking-transparency"
+      "expo-tracking-transparency",
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -53,6 +55,12 @@
       },
       "router": {}
     },
-    "owner": "schinchli"
+    "owner": "schinchli",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/db2edb2b-e3f3-4a88-84a9-8435c80db3f8"
+    }
   }
 }
