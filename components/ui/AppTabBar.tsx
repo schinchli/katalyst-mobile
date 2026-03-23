@@ -128,7 +128,7 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         borderTopColor: colors.surfaceBorder,
         paddingTop: 8,
         paddingBottom: 24,
-        shadowColor: '#020617',
+        shadowColor: colors.text,
         shadowOpacity: 0.24,
         shadowRadius: 24,
         shadowOffset: { width: 0, height: -6 },

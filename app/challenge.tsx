@@ -42,7 +42,7 @@ function ChallengeCard({
   const playableQuestionCount = getPlayableQuestionCount(quiz);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, shadowColor: colors.text }]}>
       {/* Accent strip */}
       <View style={[styles.cardStrip, { backgroundColor: diffColor }]} />
 

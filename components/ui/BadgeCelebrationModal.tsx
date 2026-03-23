@@ -37,7 +37,7 @@ function SingleBadgeModal({ badge, onDismiss }: { badge: Badge; onDismiss: () =>
     // Tap outside the sheet to dismiss
     <Pressable style={[styles.overlay, { backgroundColor: colors.background + '99' }]} onPress={onDismiss}>
       {/* Inner Pressable absorbs touches so tapping the card doesn't close */}
-      <Pressable style={[styles.sheet, { backgroundColor: colors.surface }]} onPress={() => {}}>
+      <Pressable style={[styles.sheet, { backgroundColor: colors.surface, shadowColor: colors.text }]} onPress={() => {}}>
 
         {/* X close button */}
         <Pressable onPress={onDismiss} style={styles.closeBtn} hitSlop={12}>
@@ -66,7 +66,7 @@ function SingleBadgeModal({ badge, onDismiss }: { badge: Badge; onDismiss: () =>
           onPress={onDismiss}
           style={({ pressed }) => [
             styles.dismissBtn,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
+            { backgroundColor: colors.primary, shadowColor: colors.primary, opacity: pressed ? 0.88 : 1 },
           ]}
         >
           <Text style={[styles.dismissText, { color: colors.surface }]}>Awesome!</Text>
@@ -110,7 +110,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 32,
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },
@@ -164,7 +163,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#5E50EE',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
     shadowRadius: 6,

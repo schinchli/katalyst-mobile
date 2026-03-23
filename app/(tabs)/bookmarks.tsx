@@ -58,6 +58,7 @@ function BookmarkCard({
         {
           backgroundColor: colors.surface,
           borderColor: colors.surfaceBorder,
+          shadowColor: colors.text,
           opacity: pressed ? 0.92 : 1,
         },
       ]}

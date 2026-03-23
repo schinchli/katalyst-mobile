@@ -236,7 +236,7 @@ export default function ProfileScreen() {
               </View>
             </View>
             <View style={[styles.toggle, { backgroundColor: animationsEnabled ? colors.primary : colors.surfaceBorder }]}>
-              <View style={[styles.toggleThumb, { transform: [{ translateX: animationsEnabled ? 14 : 2 }] }]} />
+              <View style={[styles.toggleThumb, { backgroundColor: colors.surface, transform: [{ translateX: animationsEnabled ? 14 : 2 }] }]} />
             </View>
           </Pressable>
 
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   prefLabel:    { fontFamily: F.semiBold, fontSize: 14 },
   prefSub:      { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
   toggle:       { width: 36, height: 22, borderRadius: 11, justifyContent: 'center' },
-  toggleThumb:  { width: 18, height: 18, borderRadius: 9, backgroundColor: '#FFFFFF' },
+  toggleThumb:  { width: 18, height: 18, borderRadius: 9 },
   // IAP / Restore
   restoreBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignSelf: 'flex-start', marginTop: 8 },
   restoreBtnText:  { fontFamily: 'PublicSans-Bold', fontSize: 13 },

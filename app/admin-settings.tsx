@@ -201,7 +201,7 @@ export default function AdminSettingsScreen() {
               >
                 <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
                 <View style={[styles.toggleTrack, { backgroundColor: enabled ? colors.primary : colors.surfaceBorder }]}>
-                  <View style={[styles.toggleThumb, { transform: [{ translateX: enabled ? 18 : 2 }] }]} />
+                  <View style={[styles.toggleThumb, { backgroundColor: colors.surface, transform: [{ translateX: enabled ? 18 : 2 }] }]} />
                 </View>
               </Pressable>
             );
@@ -289,7 +289,7 @@ export default function AdminSettingsScreen() {
                       <Feather name="eye" size={15} color={colors.textSecondary} />
                       <Text style={[styles.toggleLabel, { color: colors.text, marginLeft: 8 }]}>Visible in app</Text>
                       <View style={[styles.toggleTrack, { backgroundColor: entry.enabled ? colors.primary : colors.surfaceBorder }]}>
-                        <View style={[styles.toggleThumb, { transform: [{ translateX: entry.enabled ? 18 : 2 }] }]} />
+                        <View style={[styles.toggleThumb, { backgroundColor: colors.surface, transform: [{ translateX: entry.enabled ? 18 : 2 }] }]} />
                       </View>
                     </Pressable>
 
@@ -301,7 +301,7 @@ export default function AdminSettingsScreen() {
                       <Feather name="lock" size={15} color={colors.textSecondary} />
                       <Text style={[styles.toggleLabel, { color: colors.text, marginLeft: 8 }]}>Premium (paid)</Text>
                       <View style={[styles.toggleTrack, { backgroundColor: entry.isPremium ? colors.warning : colors.surfaceBorder }]}>
-                        <View style={[styles.toggleThumb, { transform: [{ translateX: entry.isPremium ? 18 : 2 }] }]} />
+                        <View style={[styles.toggleThumb, { backgroundColor: colors.surface, transform: [{ translateX: entry.isPremium ? 18 : 2 }] }]} />
                       </View>
                     </Pressable>
 
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   toggleRow: { minHeight: 54, borderWidth: 1, borderRadius: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   toggleLabel: { fontFamily: F.medium, fontSize: 14, flex: 1, marginRight: 12 },
   toggleTrack: { width: 44, height: 26, borderRadius: 13, justifyContent: 'center' },
-  toggleThumb: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff' },
+  toggleThumb: { width: 22, height: 22, borderRadius: 11 },
   swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   swatchCard: { width: '31%', borderWidth: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center', gap: 8 },
   swatchBubble: { width: 30, height: 30, borderRadius: 15 },

@@ -16,7 +16,7 @@ export function Card({ children, onPress, style, padding = 16, ...props }: CardP
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     padding,
-    shadowColor: '#4B465C',
+    shadowColor: colors.text,
     shadowOpacity: 0.08,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 5 },

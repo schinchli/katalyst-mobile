@@ -74,7 +74,7 @@ export default function BattleScreen() {
         </Text>
 
         {MODE_CARDS.map((card) => (
-          <View key={card.type} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <View key={card.type} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, shadowColor: colors.text }]}>
             <View style={[styles.cardStrip, { backgroundColor: toneMap[card.type] }]} />
             <View style={styles.cardBody}>
               <View style={styles.cardHeader}>

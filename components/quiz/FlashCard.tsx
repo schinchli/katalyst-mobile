@@ -28,7 +28,7 @@ export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: Fla
           {
             backgroundColor: colors.surface,
             borderColor: colors.surfaceBorder,   // never changes on flip
-            shadowColor: '#000',
+            shadowColor: colors.text,
           },
         ]}
       >
