@@ -15,10 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.awslearn.app",
-      "infoPlist": {
-        "NSUserTrackingUsageDescription": "We use tracking to personalise ads and measure app performance."
-      }
+      "bundleIdentifier": "com.awslearn.app"
     },
     "android": {
       "adaptiveIcon": {

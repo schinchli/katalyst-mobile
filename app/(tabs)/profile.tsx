@@ -15,8 +15,9 @@ import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { AppConfig } from '@/config/appConfig';
 import { supabase } from '@/config/supabase';
 import type { ReferralInfo } from '@/types';
+import { THEME_PRESET_ORDER } from '@/stores/themeStore';
 
-const PRESETS: AccentPreset[] = ['indigo', 'aurora', 'ocean', 'midnight', 'forest', 'sunset', 'amber', 'rose', 'emerald'];
+const PRESETS: AccentPreset[] = THEME_PRESET_ORDER;
 
 const FONT_SIZE_OPTIONS: { key: FontSizePreset; label: string; sample: number }[] = [
   { key: 'small',  label: 'Small',  sample: 13 },

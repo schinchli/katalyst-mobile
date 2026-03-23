@@ -7,7 +7,9 @@ export function useThemeColor(colorName: keyof ThemeColors): string {
   const darkMode = useThemeStore((s) => s.darkMode);
   const base     = Colors[darkMode ? 'dark' : 'light'];
   const preset   = ACCENT_PRESETS[accent];
+  const surfaceOverrides = darkMode ? preset.darkOverrides : preset.lightOverrides;
   const overrides: Partial<ThemeColors> = {
+    ...surfaceOverrides,
     primary:         preset.primary,
     primaryLight:    preset.primaryLight,
     primaryText:     darkMode ? preset.primaryTextDark : preset.primaryText,
@@ -25,8 +27,10 @@ export function useThemeColors(): ThemeColors {
   const darkMode = useThemeStore((s) => s.darkMode);
   const base     = Colors[darkMode ? 'dark' : 'light'];
   const preset   = ACCENT_PRESETS[accent];
+  const surfaceOverrides = darkMode ? preset.darkOverrides : preset.lightOverrides;
   return {
     ...base,
+    ...surfaceOverrides,
     primary:         preset.primary,
     primaryLight:    preset.primaryLight,
     primaryText:     darkMode ? preset.primaryTextDark : preset.primaryText,

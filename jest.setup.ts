@@ -83,7 +83,14 @@ jest.mock('@/stores/themeStore', () => {
     amber:   { primary: '#F59E0B', primaryLight: '#FEF3C7', label: 'Amber',        emoji: '🟡' },
     rose:    { primary: '#EF4444', primaryLight: '#FCEAEA', label: 'Rose Quartz',  emoji: '🌸' },
     indigo:  { primary: '#4B5EFA', primaryLight: '#E8EAFF', label: 'Deep Indigo',  emoji: '🔵' },
+    nocturnal: { primary: '#FFC801', primaryLight: '#FFF4BF', label: 'Nocturnal Luxe', emoji: '🌙', darkOverrides: { background: '#0E1F29' }, lightOverrides: { background: '#F1F6F4' } },
+    cerulean: { primary: '#2274A5', primaryLight: '#DCEAF4', label: 'Cerulean Ink', emoji: '🧿', darkOverrides: { background: '#10171E' }, lightOverrides: { background: '#E7DFC6' } },
+    violet: { primary: '#D8E63C', primaryLight: '#F2F8B8', label: 'Duranta Violet', emoji: '🪻', darkOverrides: { background: '#11133A' }, lightOverrides: { background: '#F0EEE9' } },
+    ember: { primary: '#FF6037', primaryLight: '#FFD7CB', label: 'Ember Mist', emoji: '🔥', darkOverrides: { background: '#241715' }, lightOverrides: { background: '#F5F4ED' } },
+    royal: { primary: '#FFA102', primaryLight: '#FFE2B0', label: 'Royal Ember', emoji: '👑', darkOverrides: { background: '#331017' }, lightOverrides: { background: '#F5F9CE' } },
+    spring: { primary: '#DBE64C', primaryLight: '#F3F8B8', label: 'Spring Mirage', emoji: '🌱', darkOverrides: { background: '#061933' }, lightOverrides: { background: '#F6F7ED' } },
   };
+  const THEME_PRESET_ORDER = ['indigo', 'aurora', 'ocean', 'forest', 'sunset', 'midnight', 'sand', 'slate', 'emerald', 'amber', 'rose', 'nocturnal', 'cerulean', 'violet', 'ember', 'royal', 'spring'];
   const FONT_SCALE = { small: 0.875, medium: 1, large: 1.125 };
   const state = {
     accent: 'indigo',
@@ -100,6 +107,7 @@ jest.mock('@/stores/themeStore', () => {
   };
   return {
     ACCENT_PRESETS,
+    THEME_PRESET_ORDER,
     FONT_SCALE,
     useThemeStore: (selector: (s: typeof state) => unknown) =>
       selector ? selector(state) : state,
