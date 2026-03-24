@@ -30,7 +30,10 @@ export default function ProfileScreen() {
   const colors = useThemeColors();
   const t = useTypography();
   const user = useAuthStore((s) => s.user);
+  const step = useAuthStore((s) => s.step);
   const signOut = useAuthStore((s) => s.signOut);
+  const isGuest = step === 'guest';
+  const isLoggedIn = step === 'authenticated';
   const progress = useProgressStore((s) => s.progress);
   const accent             = useThemeStore((s) => s.accent);
   const setAccent          = useThemeStore((s) => s.setAccent);
@@ -38,7 +41,7 @@ export default function ProfileScreen() {
   const setAnimationsEnabled = useThemeStore((s) => s.setAnimationsEnabled);
   const fontSizePreset       = useThemeStore((s) => s.fontSizePreset);
   const setFontSizePreset    = useThemeStore((s) => s.setFontSizePreset);
-  const initials = user?.name?.charAt(0)?.toUpperCase() ?? 'K';
+  const initials = isGuest ? '?' : (user?.name?.charAt(0)?.toUpperCase() ?? 'K');
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const isAdmin = (user?.role ?? '').toLowerCase() === 'admin';
   const [referral, setReferral] = React.useState<ReferralInfo | null>(null);
@@ -117,13 +120,41 @@ export default function ProfileScreen() {
               <Feather name="edit-2" size={12} color={colors.surface} />
             </View>
           </View>
-          <Text style={[styles.profileName, { color: colors.text, fontSize: t.screenTitle }]}>{user?.name ?? 'Katalyst learner'}</Text>
-          <Text style={[styles.profileHandle, { color: colors.textSecondary, fontSize: t.body }]}>@{(user?.email ?? 'schinchli').split('@')[0]}</Text>
+          <Text style={[styles.profileName, { color: colors.text, fontSize: t.screenTitle }]}>
+            {isGuest ? 'Guest' : (user?.name ?? 'Katalyst learner')}
+          </Text>
+          <Text style={[styles.profileHandle, { color: colors.textSecondary, fontSize: t.body }]}>
+            {isGuest ? 'Exploring as guest' : `@${(user?.email ?? '').split('@')[0]}`}
+          </Text>
         </View>
 
-        <Pressable onPress={() => Alert.alert('Share', 'Profile share action can be connected here.')} style={[styles.shareButton, { borderColor: colors.gradientAccent }]}>
-          <Text style={[styles.shareButtonText, { color: colors.text }]}>{EXPERIENCE_COPY.profile.shareCta}</Text>
-        </Pressable>
+        {/* ── Guest login prompt ──────────────────────────────────────── */}
+        {isGuest ? (
+          <View style={[styles.guestBanner, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '44' }]}>
+            <Feather name="user" size={18} color={colors.primary} />
+            <View style={styles.guestBannerText}>
+              <Text style={[styles.guestBannerTitle, { color: colors.text }]}>Save your progress</Text>
+              <Text style={[styles.guestBannerSub, { color: colors.textSecondary }]}>Sign in to track XP, streaks and quiz history across devices.</Text>
+            </View>
+            <Pressable
+              onPress={() => router.push('/(auth)/login' as any)}
+              accessibilityRole="button"
+              accessibilityLabel="Log in to Katalyst"
+              style={[styles.guestLoginBtn, { backgroundColor: colors.primary }]}
+            >
+              <Text style={[styles.guestLoginBtnText, { color: colors.surface }]}>Log In</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => Alert.alert('Share', 'Profile share action can be connected here.')}
+            accessibilityRole="button"
+            accessibilityLabel="Share your profile"
+            style={[styles.shareButton, { borderColor: colors.gradientAccent }]}
+          >
+            <Text style={[styles.shareButtonText, { color: colors.text }]}>{EXPERIENCE_COPY.profile.shareCta}</Text>
+          </Pressable>
+        )}
 
         {/* ── Live stats ────────────────────────────────────────────────── */}
         {(() => {
@@ -235,7 +266,12 @@ export default function ProfileScreen() {
             { icon: 'help-circle',label: 'How To Play',                  route: '/instructions' as const },
           ].map((item, index) => (
             <View key={item.label}>
-              <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.listRow}>
+              <Pressable
+                onPress={() => item.route && router.push(item.route as any)}
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+                style={styles.listRow}
+              >
                 <Feather name={item.icon as any} size={24} color={colors.text} />
                 <Text style={[styles.listLabel, { color: colors.text, fontSize: t.cardTitle }]}>{item.label}</Text>
                 {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={[styles.rowBadgeText, { color: colors.surface }]}>{item.badge}</Text></View> : null}
@@ -266,6 +302,9 @@ export default function ProfileScreen() {
           {/* Animations toggle */}
           <Pressable
             onPress={() => setAnimationsEnabled(!animationsEnabled)}
+            accessibilityRole="switch"
+            accessibilityLabel="Animations"
+            accessibilityState={{ checked: animationsEnabled }}
             style={[styles.prefRow, { borderColor: colors.surfaceBorder }]}
           >
             <View style={styles.prefRowLeft}>
@@ -299,6 +338,9 @@ export default function ProfileScreen() {
                 <Pressable
                   key={opt.key}
                   onPress={() => setFontSizePreset(opt.key)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${opt.label} text size`}
+                  accessibilityState={{ checked: active }}
                   style={[styles.fontSizeBtn, {
                     backgroundColor: active ? colors.primary        : colors.backgroundAlt,
                     borderColor:     active ? colors.primary        : colors.surfaceBorder,
@@ -316,7 +358,14 @@ export default function ProfileScreen() {
               const item = ACCENT_PRESETS[preset];
               const active = accent === preset;
               return (
-                <Pressable key={preset} onPress={() => setAccent(preset)} style={[styles.swatchCard, { borderColor: active ? item.primary : colors.surfaceBorder, backgroundColor: active ? colors.backgroundAlt : 'transparent' }]}>
+                <Pressable
+                  key={preset}
+                  onPress={() => setAccent(preset)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${item.label} theme`}
+                  accessibilityState={{ checked: active }}
+                  style={[styles.swatchCard, { borderColor: active ? item.primary : colors.surfaceBorder, backgroundColor: active ? colors.backgroundAlt : 'transparent' }]}
+                >
                   <LinearGradient colors={[item.gradientFrom, item.gradientTo]} style={styles.swatchBubble} />
                   <Text style={[styles.swatchLabel, { color: colors.text }]}>{item.label}</Text>
                 </Pressable>
@@ -325,12 +374,20 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <Pressable onPress={() => signOut()} style={[styles.signOutButton, { borderColor: colors.error }]}>
-          <Feather name="log-out" size={16} color={colors.error} />
-          <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
-        </Pressable>
+        {isLoggedIn ? (
+          <Pressable
+            onPress={() => signOut()}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out of your account"
+            style={[styles.signOutButton, { borderColor: colors.error }]}
+          >
+            <Feather name="log-out" size={16} color={colors.error} />
+            <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
+          </Pressable>
+        ) : null}
 
         {/* ── Danger Zone ────────────────────────────────────────────── */}
+        {isLoggedIn ? (
         <View style={[styles.dangerZone, { borderColor: colors.error + '4D', backgroundColor: colors.surface }]}>
           <Text style={[styles.dangerTitle, { color: colors.error }]}>Danger Zone</Text>
           <Text style={[styles.dangerDesc, { color: colors.textSecondary }]}>
@@ -378,6 +435,7 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -393,6 +451,12 @@ const styles = StyleSheet.create({
   editBadge: { position: 'absolute', right: 4, top: 4, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   profileName: { fontFamily: F.bold, fontSize: 24, lineHeight: 30 },
   profileHandle: { fontFamily: F.medium, fontSize: 14 },
+  guestBanner: { borderWidth: 1, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  guestBannerText: { flex: 1, gap: 3 },
+  guestBannerTitle: { fontFamily: F.bold, fontSize: 14 },
+  guestBannerSub: { fontFamily: F.regular, fontSize: 12, lineHeight: 17 },
+  guestLoginBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+  guestLoginBtnText: { fontFamily: F.bold, fontSize: 13 },
   shareButton: { minHeight: 42, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   shareButtonText: { fontFamily: F.bold, fontSize: 14 },
   offerCard: { borderWidth: 1, borderRadius: 16, padding: 12, minHeight: 90, justifyContent: 'center', gap: 5, overflow: 'hidden' },
