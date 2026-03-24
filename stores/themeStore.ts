@@ -41,23 +41,12 @@ export interface AccentConfig {
 }
 
 export const THEME_PRESET_ORDER: AccentPreset[] = [
-  'indigo',
-  'aurora',
-  'ocean',
-  'forest',
-  'sunset',
-  'midnight',
-  'sand',
-  'slate',
-  'emerald',
-  'amber',
-  'rose',
-  'nocturnal',
-  'cerulean',
-  'violet',
-  'ember',
-  'royal',
-  'spring',
+  'indigo',    // Deep Indigo — default
+  'aurora',    // Neon Aurora
+  'forest',    // Forest Mint
+  'sunset',    // Sunset Coral
+  'nocturnal', // Nocturnal Luxe
+  'violet',    // Duranta Violet
 ];
 
 export const ACCENT_PRESETS: Record<AccentPreset, AccentConfig> = {

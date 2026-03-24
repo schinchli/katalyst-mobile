@@ -28,7 +28,7 @@ import { BadgeCelebrationModal } from '@/components/ui/BadgeCelebrationModal';
 import { PremiumGateModal } from '@/components/ui/PremiumGateModal';
 import { DailyLimitModal } from '@/components/ui/DailyLimitModal';
 import { useInterstitialAd, INTERSTITIAL_AD_INTERVAL } from '@/hooks/useInterstitialAd';
-import { useThemeColors } from '@/hooks/useThemeColor';
+import { useDarkThemeColors } from '@/hooks/useThemeColor';
 import { useFontScale } from '@/hooks/useFontScale';
 import { useQuizStore } from '@/stores/quizStore';
 import { useProgressStore } from '@/stores/progressStore';
@@ -48,7 +48,7 @@ type Phase = 'intro' | 'quiz' | 'review' | 'results' | 'flashcard';
 
 export default function QuizScreen() {
   const { id }   = useLocalSearchParams<{ id: string }>();
-  const colors   = useThemeColors();
+  const colors   = useDarkThemeColors();
   const insets   = useSafeAreaInsets();
   const fScale   = useFontScale();
 

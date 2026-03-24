@@ -16,8 +16,17 @@ import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 
-function getCategoryGradient(colors: ReturnType<typeof useThemeColors>): [string, string] {
-  return [colors.gradientFrom, colors.gradientTo];
+// Dark gradients — always vivid enough for white icons, looks great on both light + dark themes
+const CARD_GRADIENTS: Array<[string, string]> = [
+  ['#312E81', '#0EA5E9'],  // indigo → sky
+  ['#064E3B', '#0284C7'],  // dark emerald → blue
+  ['#4C1D95', '#2563EB'],  // deep violet → blue
+  ['#1E3A5F', '#7C3AED'],  // dark navy → violet
+];
+
+function getCardGradient(category: string): [string, string] {
+  const score = [...category].reduce((sum, c) => sum + c.charCodeAt(0), 0);
+  return CARD_GRADIENTS[score % CARD_GRADIENTS.length];
 }
 
 const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
@@ -92,7 +101,7 @@ export default function QuizzesScreen() {
           {quizzes.filter((quiz) => quiz.enabled !== false).slice(0, 4).map((quiz, index) => (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
-                const grad = getCategoryGradient(colors);
+                const grad = getCardGradient(quiz.category);
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 const isDailyQuiz = dailyQuiz?.id === quiz.id;
                 return (
@@ -157,7 +166,7 @@ export default function QuizzesScreen() {
             return (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
-                const grad = getCategoryGradient(colors);
+                const grad = getCardGradient(quiz.category);
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 return (
                   <LinearGradient colors={grad} style={styles.courseImage}>

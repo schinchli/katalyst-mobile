@@ -41,3 +41,24 @@ export function useThemeColors(): ThemeColors {
     tabIconSelected: preset.primary,
   };
 }
+
+/** Always returns dark-mode colors regardless of the user's light/dark setting.
+ *  Used on screens that must always have a dark background (quiz screen). */
+export function useDarkThemeColors(): ThemeColors {
+  const accent  = useThemeStore((s) => s.accent);
+  const preset  = ACCENT_PRESETS[accent];
+  const base    = Colors.dark;
+  const surfaceOverrides = preset.darkOverrides ?? {};
+  return {
+    ...base,
+    ...surfaceOverrides,
+    primary:         preset.primary,
+    primaryLight:    preset.primaryLight,
+    primaryText:     preset.primaryTextDark,
+    gradientFrom:    preset.gradientFrom,
+    gradientTo:      preset.gradientTo,
+    gradientAccent:  preset.gradientAccent,
+    tint:            preset.primary,
+    tabIconSelected: preset.primary,
+  };
+}
