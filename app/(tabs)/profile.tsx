@@ -16,6 +16,7 @@ import { AppConfig } from '@/config/appConfig';
 import { supabase } from '@/config/supabase';
 import type { ReferralInfo } from '@/types';
 import { THEME_PRESET_ORDER } from '@/stores/themeStore';
+import { calculateLevel, xpToNextLevel, LEVEL_NAMES } from '@/stores/progressStore';
 
 const PRESETS: AccentPreset[] = THEME_PRESET_ORDER;
 
@@ -124,6 +125,47 @@ export default function ProfileScreen() {
           <Text style={[styles.shareButtonText, { color: colors.text }]}>{EXPERIENCE_COPY.profile.shareCta}</Text>
         </Pressable>
 
+        {/* ── Live stats ────────────────────────────────────────────────── */}
+        {(() => {
+          const level = calculateLevel(progress.xp);
+          const levelName = LEVEL_NAMES[level - 1] ?? 'Novice';
+          const { current: xpCurrent, needed: xpNeeded } = xpToNextLevel(progress.xp, level);
+          const completedCount = new Set(progress.recentResults.map((r) => r.quizId)).size;
+          const avgScore = progress.recentResults.length > 0
+            ? Math.round(progress.recentResults.reduce((sum, r) => sum + (r.score / (r.totalQuestions || 1)) * 100, 0) / progress.recentResults.length)
+            : 0;
+          return (
+            <View style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{progress.xp}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>XP</Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>Lv {level}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{levelName}</Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{completedCount}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Quizzes</Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{avgScore > 0 ? `${avgScore}%` : '—'}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Score</Text>
+              </View>
+              {xpNeeded > 0 ? (
+                <View style={[styles.xpBarWrap, { borderTopColor: colors.surfaceBorder }]}>
+                  <Text style={[styles.xpBarLabel, { color: colors.textSecondary }]}>{xpCurrent} / {xpNeeded} XP to Lv {level + 1}</Text>
+                  <View style={[styles.xpBarTrack, { backgroundColor: colors.backgroundAlt }]}>
+                    <View style={[styles.xpBarFill, { backgroundColor: colors.primary, width: `${Math.round((xpCurrent / xpNeeded) * 100)}%` }]} />
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          );
+        })()}
 
         {isAdmin ? (
           <Pressable onPress={() => router.push('/admin-settings' as any)} style={[styles.adminButton, { borderColor: colors.primary }]}>
@@ -402,6 +444,16 @@ const styles = StyleSheet.create({
   shareReferralBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   shareReferralText: { fontFamily: 'PublicSans-Bold', fontSize: 13 },
   referralStats:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  // Stats grid
+  statsGrid:   { borderWidth: 1, borderRadius: 16, padding: 14, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+  statCell:    { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4 },
+  statValue:   { fontFamily: F.bold, fontSize: 18, lineHeight: 22 },
+  statLabel:   { fontFamily: F.medium, fontSize: 11 },
+  statDivider: { width: 1, height: 36, alignSelf: 'center' },
+  xpBarWrap:   { width: '100%', marginTop: 12, paddingTop: 12, borderTopWidth: 1, gap: 6 },
+  xpBarLabel:  { fontFamily: F.medium, fontSize: 11, textAlign: 'center' },
+  xpBarTrack:  { height: 6, borderRadius: 999, overflow: 'hidden' },
+  xpBarFill:   { height: '100%', borderRadius: 999 },
   // Font size
   fontSizeRow:       { flexDirection: 'row', gap: 8 },
   fontSizeBtn:       { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, gap: 3 },

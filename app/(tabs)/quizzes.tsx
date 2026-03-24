@@ -16,17 +16,8 @@ import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 
-function getCategoryGradient(category: string, colors: ReturnType<typeof useThemeColors>): [string, string] {
-  const tones: Array<[string, string]> = [
-    [colors.gradientFrom, colors.gradientTo],
-    [colors.primary, colors.gradientAccent],
-    [colors.warning, colors.primary],
-    [colors.success, colors.gradientTo],
-    [colors.error, colors.gradientAccent],
-    [colors.gradientAccent, colors.primary],
-  ];
-  const score = [...category].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return tones[score % tones.length];
+function getCategoryGradient(colors: ReturnType<typeof useThemeColors>): [string, string] {
+  return [colors.gradientFrom, colors.gradientTo];
 }
 
 const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
@@ -101,7 +92,7 @@ export default function QuizzesScreen() {
           {quizzes.filter((quiz) => quiz.enabled !== false).slice(0, 4).map((quiz, index) => (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
-                const grad = getCategoryGradient(quiz.category, colors);
+                const grad = getCategoryGradient(colors);
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 const isDailyQuiz = dailyQuiz?.id === quiz.id;
                 return (
@@ -110,9 +101,11 @@ export default function QuizzesScreen() {
                       <Text style={[styles.trackBadgeText, { color: colors.surface }]}>{isDailyQuiz ? (dailyQuizCompleted ? 'Review' : 'Daily') : quiz.isPremium ? 'Track' : 'Start'}</Text>
                     </View>
                     {catIcon ? (
-                      <Image source={catIcon} style={styles.trackIcon} />
+                      <View style={styles.trackIconWrap}>
+                        <Image source={catIcon} style={styles.trackIcon} />
+                      </View>
                     ) : (
-                      <Feather name={quiz.icon as any} size={40} color={colors.surface} />
+                      <Feather name={quiz.icon as any} size={44} color={colors.surface} />
                     )}
                   </LinearGradient>
                 );
@@ -164,14 +157,16 @@ export default function QuizzesScreen() {
             return (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
-                const grad = getCategoryGradient(quiz.category, colors);
+                const grad = getCategoryGradient(colors);
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 return (
                   <LinearGradient colors={grad} style={styles.courseImage}>
                     {catIcon ? (
-                      <Image source={catIcon} style={styles.courseIcon} />
+                      <View style={styles.courseIconWrap}>
+                        <Image source={catIcon} style={styles.courseIcon} />
+                      </View>
                     ) : (
-                      <Feather name={quiz.icon as any} size={36} color={colors.surface} />
+                      <Feather name={quiz.icon as any} size={40} color={colors.surface} />
                     )}
                   </LinearGradient>
                 );
@@ -224,7 +219,8 @@ const styles = StyleSheet.create({
   trackRow: { gap: 10, paddingRight: 16 },
   trackCard: { width: 144, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   trackVisual: { height: 100, justifyContent: 'center', alignItems: 'center' },
-  trackIcon: { width: 38, height: 38 },
+  trackIconWrap: { width: 52, height: 52, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  trackIcon: { width: 44, height: 44 },
   trackBadge: { position: 'absolute', left: 8, top: 8, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4 },
   trackBadgeText: { fontFamily: F.bold, fontSize: 10 },
   trackBody: { padding: 8, gap: 6 },
@@ -255,7 +251,8 @@ const styles = StyleSheet.create({
   courseCard: { width: 140, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   courseCardSingleWide: { width: 180 },
   courseImage: { height: 96, alignItems: 'center', justifyContent: 'center' },
-  courseIcon: { width: 34, height: 34 },
+  courseIconWrap: { width: 56, height: 56, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  courseIcon: { width: 44, height: 44 },
   courseBody: { padding: 9, gap: 6, minHeight: 110 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   metaLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
