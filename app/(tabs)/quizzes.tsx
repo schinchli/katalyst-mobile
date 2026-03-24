@@ -16,15 +16,16 @@ import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 
-// Dark gradients — always vivid enough for white icons, looks great on both light + dark themes
-const CARD_GRADIENTS: Array<[string, string]> = [
-  ['#312E81', '#0EA5E9'],  // indigo → sky
-  ['#064E3B', '#0284C7'],  // dark emerald → blue
-  ['#4C1D95', '#2563EB'],  // deep violet → blue
-  ['#1E3A5F', '#7C3AED'],  // dark navy → violet
+// Card gradients: vivid accent at top → near-black at bottom
+// Ensures icon + any text is readable across the full card height
+const CARD_GRADIENTS: Array<[string, string, string]> = [
+  ['#4B5EFA', '#2563EB', '#050B18'],  // indigo → blue → near-black
+  ['#0EA5E9', '#0369A1', '#030F1C'],  // sky → deep blue → near-black
+  ['#8B5CF6', '#6D28D9', '#0D0720'],  // violet → deep violet → near-black
+  ['#10B981', '#047857', '#021A10'],  // emerald → dark green → near-black
 ];
 
-function getCardGradient(category: string): [string, string] {
+function getCardGradient(category: string): [string, string, string] {
   const score = [...category].reduce((sum, c) => sum + c.charCodeAt(0), 0);
   return CARD_GRADIENTS[score % CARD_GRADIENTS.length];
 }
