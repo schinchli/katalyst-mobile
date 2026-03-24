@@ -3,8 +3,8 @@ import { View, Text, ScrollView, Pressable, StyleSheet, TextInput, Image } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useThemeStore } from '@/stores/themeStore';
 import { useTypography } from '@/hooks/useTypography';
 import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
@@ -16,19 +16,6 @@ import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 
-// Card gradients: vivid accent at top → near-black at bottom
-// Ensures icon + any text is readable across the full card height
-const CARD_GRADIENTS: Array<[string, string, string]> = [
-  ['#4B5EFA', '#2563EB', '#050B18'],  // indigo → blue → near-black
-  ['#0EA5E9', '#0369A1', '#030F1C'],  // sky → deep blue → near-black
-  ['#8B5CF6', '#6D28D9', '#0D0720'],  // violet → deep violet → near-black
-  ['#10B981', '#047857', '#021A10'],  // emerald → dark green → near-black
-];
-
-function getCardGradient(category: string): [string, string, string] {
-  const score = [...category].reduce((sum, c) => sum + c.charCodeAt(0), 0);
-  return CARD_GRADIENTS[score % CARD_GRADIENTS.length];
-}
 
 const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -45,6 +32,8 @@ function isSameLocalDay(isoDate: string, reference = new Date()) {
 export default function QuizzesScreen() {
   const colors = useThemeColors();
   const t = useTypography();
+  const darkMode = useThemeStore((s) => s.darkMode);
+  const iconTint = darkMode ? '#FFFFFF' : undefined;
   const progress = useProgressStore((s) => s.progress);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<QuizCategory | 'all'>('all');
@@ -102,22 +91,19 @@ export default function QuizzesScreen() {
           {quizzes.filter((quiz) => quiz.enabled !== false).slice(0, 4).map((quiz, index) => (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
-                const grad = getCardGradient(quiz.category);
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 const isDailyQuiz = dailyQuiz?.id === quiz.id;
                 return (
-                  <LinearGradient colors={grad} style={styles.trackVisual}>
-                    <View style={[styles.trackBadge, { backgroundColor: colors.surface + '2A' }]}>
-                      <Text style={[styles.trackBadgeText, { color: colors.surface }]}>{isDailyQuiz ? (dailyQuizCompleted ? 'Review' : 'Daily') : quiz.isPremium ? 'Track' : 'Start'}</Text>
+                  <View style={[styles.trackVisual, { backgroundColor: colors.backgroundAlt }]}>
+                    <View style={[styles.trackBadge, { backgroundColor: colors.primary + '22', borderWidth: 1, borderColor: colors.primary + '44' }]}>
+                      <Text style={[styles.trackBadgeText, { color: colors.primary }]}>{isDailyQuiz ? (dailyQuizCompleted ? 'Review' : 'Daily') : quiz.isPremium ? 'Track' : 'Start'}</Text>
                     </View>
                     {catIcon ? (
-                      <View style={styles.trackIconWrap}>
-                        <Image source={catIcon} style={styles.trackIcon} />
-                      </View>
+                      <Image source={catIcon} style={[styles.trackIcon, iconTint ? { tintColor: iconTint } : null]} />
                     ) : (
-                      <Feather name={quiz.icon as any} size={44} color={colors.surface} />
+                      <Feather name={quiz.icon as any} size={44} color={darkMode ? '#FFFFFF' : colors.primary} />
                     )}
-                  </LinearGradient>
+                  </View>
                 );
               })()}
               <View style={styles.trackBody}>
@@ -167,18 +153,15 @@ export default function QuizzesScreen() {
             return (
             <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
               {(() => {
-                const grad = getCardGradient(quiz.category);
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 return (
-                  <LinearGradient colors={grad} style={styles.courseImage}>
+                  <View style={[styles.courseImage, { backgroundColor: colors.backgroundAlt }]}>
                     {catIcon ? (
-                      <View style={styles.courseIconWrap}>
-                        <Image source={catIcon} style={styles.courseIcon} />
-                      </View>
+                      <Image source={catIcon} style={[styles.courseIcon, iconTint ? { tintColor: iconTint } : null]} />
                     ) : (
-                      <Feather name={quiz.icon as any} size={40} color={colors.surface} />
+                      <Feather name={quiz.icon as any} size={40} color={darkMode ? '#FFFFFF' : colors.primary} />
                     )}
-                  </LinearGradient>
+                  </View>
                 );
               })()}
               <View style={styles.courseBody}>
