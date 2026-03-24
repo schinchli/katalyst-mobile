@@ -33,7 +33,6 @@ export default function QuizzesScreen() {
   const colors = useThemeColors();
   const t = useTypography();
   const darkMode = useThemeStore((s) => s.darkMode);
-  const iconTint = darkMode ? '#FFFFFF' : undefined;
   const progress = useProgressStore((s) => s.progress);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<QuizCategory | 'all'>('all');
@@ -94,12 +93,12 @@ export default function QuizzesScreen() {
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 const isDailyQuiz = dailyQuiz?.id === quiz.id;
                 return (
-                  <View style={[styles.trackVisual, { backgroundColor: colors.backgroundAlt }]}>
+                  <View style={[styles.trackVisual, { backgroundColor: colors.backgroundAlt, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }]}>
                     <View style={[styles.trackBadge, { backgroundColor: colors.primary + '22', borderWidth: 1, borderColor: colors.primary + '44' }]}>
                       <Text style={[styles.trackBadgeText, { color: colors.primary }]}>{isDailyQuiz ? (dailyQuizCompleted ? 'Review' : 'Daily') : quiz.isPremium ? 'Track' : 'Start'}</Text>
                     </View>
                     {catIcon ? (
-                      <Image source={catIcon} style={[styles.trackIcon, iconTint ? { tintColor: iconTint } : null]} />
+                      <Image source={catIcon} style={styles.trackIcon} />
                     ) : (
                       <Feather name={quiz.icon as any} size={44} color={darkMode ? '#FFFFFF' : colors.primary} />
                     )}
@@ -155,9 +154,9 @@ export default function QuizzesScreen() {
               {(() => {
                 const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                 return (
-                  <View style={[styles.courseImage, { backgroundColor: colors.backgroundAlt }]}>
+                  <View style={[styles.courseImage, { backgroundColor: colors.backgroundAlt, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }]}>
                     {catIcon ? (
-                      <Image source={catIcon} style={[styles.courseIcon, iconTint ? { tintColor: iconTint } : null]} />
+                      <Image source={catIcon} style={styles.courseIcon} />
                     ) : (
                       <Feather name={quiz.icon as any} size={40} color={darkMode ? '#FFFFFF' : colors.primary} />
                     )}
