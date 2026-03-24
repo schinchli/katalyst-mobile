@@ -30,10 +30,13 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "APP_ENV": "preview",
-        "EXPO_PUBLIC_API_URL": "https://staging.api.awslearn.app",
-        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://staging.cdn.awslearn.app"
+        "EXPO_PUBLIC_API_URL": "https://api.awslearn.app",
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
       }
     },
     "production": {
