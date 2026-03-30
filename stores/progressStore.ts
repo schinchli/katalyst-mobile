@@ -47,9 +47,11 @@ export function calculateLevel(xp: number): number {
 }
 
 export function xpToNextLevel(xp: number, level: number): { current: number; needed: number } {
-  const currentThreshold = LEVEL_XP[level - 1] ?? 0;
-  const nextThreshold    = LEVEL_XP[level] ?? LEVEL_XP[LEVEL_XP.length - 1];
-  return { current: xp - currentThreshold, needed: nextThreshold - currentThreshold };
+  const safeLevel       = Math.min(Math.max(level, 1), LEVEL_XP.length);
+  const currentThreshold = LEVEL_XP[safeLevel - 1] ?? 0;
+  const nextThreshold    = LEVEL_XP[safeLevel] ?? LEVEL_XP[LEVEL_XP.length - 1] ?? 0;
+  const needed           = Math.max(1, nextThreshold - currentThreshold);
+  return { current: Math.max(0, xp - currentThreshold), needed };
 }
 
 function pctForResult(result: QuizResult): number {

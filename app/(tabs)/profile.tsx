@@ -57,14 +57,18 @@ export default function ProfileScreen() {
       if (!session?.access_token) return;
       const base = AppConfig.web.baseUrl.replace(/\/$/, '');
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
         const res = await fetch(`${base}/api/referral`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
         const body = await res.json() as { ok: boolean; code?: string; referredCount?: number; coinsEarned?: number };
         if (body.ok && body.code) {
           setReferral({ code: body.code, referredCount: body.referredCount ?? 0, coinsEarned: body.coinsEarned ?? 0 });
         }
-      } catch { /* non-fatal */ }
+      } catch { /* non-fatal — network error or timeout */ }
     })();
   }, []);
 
