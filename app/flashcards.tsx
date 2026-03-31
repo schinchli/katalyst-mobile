@@ -27,9 +27,10 @@ const SWIPE_THRESHOLD = 72;
 const FLIP_DURATION  = 360;
 
 const FILTERS: { key: FlashcardCategory | 'all'; label: string }[] = [
-  { key: 'all',               label: 'All packs' },
-  { key: 'aws-practitioner',  label: 'AWS'       },
-  { key: 'genai-practitioner',label: 'GenAI'     },
+  { key: 'all',                label: 'All packs' },
+  { key: 'aws-practitioner',   label: 'AWS'       },
+  { key: 'genai-practitioner', label: 'GenAI'     },
+  { key: 'aip-c01',            label: 'AIP-C01'   },
 ];
 
 export default function FlashcardsScreen() {

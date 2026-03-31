@@ -79,31 +79,70 @@ function apiUrl(path: string): string {
   return `${base}${path}`;
 }
 
+/** In-flight request deduplication — prevents duplicate concurrent calls */
+const _inFlight = new Map<string, Promise<unknown>>();
+
+/** Minimum time between identical calls (client-side throttle, ms) */
+const MIN_CALL_INTERVAL_MS = 500;
+const _lastCallAt = new Map<string, number>();
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
+  retries = 1,
 ): Promise<T | null> {
   const token = await getAccessToken();
   if (!token) return null;
 
-  const res = await fetch(apiUrl(path), {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization:  `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  if (!res.ok) {
-    if (__DEV__) {
-      const body = await res.text();
-      console.warn(`[apiService] ${options.method ?? 'GET'} ${path} → ${res.status}`, body);
-    }
-    return null;
+  // Client-side throttle: drop duplicate calls within 500ms
+  const dedupeKey = `${options.method ?? 'GET'}:${path}`;
+  const now = Date.now();
+  const lastCall = _lastCallAt.get(dedupeKey) ?? 0;
+  if (now - lastCall < MIN_CALL_INTERVAL_MS && options.method !== 'POST') {
+    const inflight = _inFlight.get(dedupeKey);
+    if (inflight) return inflight as Promise<T | null>;
   }
+  _lastCallAt.set(dedupeKey, now);
 
-  return res.json() as Promise<T>;
+  const doFetch = async (): Promise<T | null> => {
+    try {
+      const res = await fetch(apiUrl(path), {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization:  `Bearer ${token}`,
+          ...options.headers,
+        },
+      });
+
+      if (res.status === 429) {
+        // Rate limited — respect Retry-After header if present
+        const retryAfter = Number(res.headers.get('Retry-After') ?? 2);
+        if (retries > 0) {
+          await new Promise((r) => setTimeout(r, Math.min(retryAfter, 10) * 1000));
+          return apiFetch<T>(path, options, retries - 1);
+        }
+        if (__DEV__) console.warn(`[apiService] ${path} rate-limited (429)`);
+        return null;
+      }
+
+      if (!res.ok) {
+        if (__DEV__) {
+          const body = await res.text();
+          console.warn(`[apiService] ${options.method ?? 'GET'} ${path} → ${res.status}`, body);
+        }
+        return null;
+      }
+
+      return res.json() as Promise<T>;
+    } finally {
+      _inFlight.delete(dedupeKey);
+    }
+  };
+
+  const promise = doFetch();
+  _inFlight.set(dedupeKey, promise);
+  return promise;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

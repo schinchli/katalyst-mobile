@@ -34,8 +34,8 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
         style={{
           width: MENU_WIDTH,
           backgroundColor: colors.surface,
-          borderRightWidth: 1,
-          borderRightColor: colors.surfaceBorder,
+          borderLeftWidth: 1,
+          borderLeftColor: colors.surfaceBorder,
           minHeight: Platform.OS === 'web' ? ('100vh' as any) : undefined,
         }}
       >

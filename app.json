@@ -28,7 +28,7 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
-      "versionCode": 8
+      "versionCode": 12
     },
     "web": {
       "bundler": "metro",
@@ -43,9 +43,15 @@
         "expo-build-properties",
         {
           "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24,
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRules": "-keep class com.facebook.hermes.** { *; }\n-keep class com.facebook.jni.** { *; }"
+            "extraProguardRules": "-keep class com.facebook.hermes.** { *; }\n-keep class com.facebook.jni.** { *; }\n-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.gesturehandler.** { *; }\n-keep class com.th3rdwave.safeareacontext.** { *; }\n-dontwarn com.google.errorprone.annotations.**"
+          },
+          "ios": {
+            "deploymentTarget": "16.0"
           }
         }
       ]

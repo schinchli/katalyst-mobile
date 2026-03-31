@@ -1,5 +1,7 @@
 /**
- * Design tokens — aligned with refreshed web theme (blue/teal glassmorphism).
+ * Design tokens — Vuexy-aligned, synchronized with web globals.css tokens.
+ * Dark: matches [data-theme="dark"] on web.
+ * Light: matches :root on web.
  */
 
 export interface ThemeColors {

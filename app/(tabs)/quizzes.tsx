@@ -18,11 +18,12 @@ import { resolveDailyQuiz } from '@/config/systemFeatures';
 
 
 const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'genai', label: 'AI' },
+  { key: 'all',     label: 'All'     },
+  { key: 'genai',   label: 'AI'      },
   { key: 'bedrock', label: 'Bedrock' },
-  { key: 'security', label: 'Security' },
+  { key: 'security',label: 'Security'},
   { key: 'clf-c02', label: 'CLF-C02' },
+  { key: 'aip-c01', label: 'AIP-C01' },
 ];
 
 function isSameLocalDay(isoDate: string, reference = new Date()) {

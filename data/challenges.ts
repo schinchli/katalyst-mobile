@@ -16,6 +16,10 @@ export const CHALLENGE_SCORES: Record<string, number> = {
   'clf-c02-security':              72,
   'clf-c02-technology':            74,
   'clf-c02-billing':               66,
+  // AIP-C01 — professional tier, higher baselines
+  'aip-c01-rag-foundations':       78,
+  'aip-c01-security-governance':   80,
+  'aip-c01-agents-ops':            76,
 };
 
 // ─── CPU display names ────────────────────────────────────────────────────────
@@ -35,4 +39,7 @@ export const CPU_NAMES: Record<string, string> = {
   'clf-c02-security':              'ShieldOps',
   'clf-c02-technology':            'TechStacker',
   'clf-c02-billing':               'BudgetBot',
+  'aip-c01-rag-foundations':       'VectorSage',
+  'aip-c01-security-governance':   'GuardrailsBot',
+  'aip-c01-agents-ops':            'AgentForge',
 };
