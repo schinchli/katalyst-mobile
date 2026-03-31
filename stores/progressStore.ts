@@ -47,10 +47,13 @@ export function calculateLevel(xp: number): number {
 }
 
 export function xpToNextLevel(xp: number, level: number): { current: number; needed: number } {
-  const safeLevel       = Math.min(Math.max(level, 1), LEVEL_XP.length);
+  const maxLevel = LEVEL_XP.length;
+  const safeLevel = Math.min(Math.max(level, 1), maxLevel);
+  // At max level there is no next level — return 0 so UI hides the XP bar
+  if (safeLevel >= maxLevel) return { current: 0, needed: 0 };
   const currentThreshold = LEVEL_XP[safeLevel - 1] ?? 0;
-  const nextThreshold    = LEVEL_XP[safeLevel] ?? LEVEL_XP[LEVEL_XP.length - 1] ?? 0;
-  const needed           = Math.max(1, nextThreshold - currentThreshold);
+  const nextThreshold    = LEVEL_XP[safeLevel] ?? currentThreshold;
+  const needed           = Math.max(0, nextThreshold - currentThreshold);
   return { current: Math.max(0, xp - currentThreshold), needed };
 }
 

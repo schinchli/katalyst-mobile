@@ -141,7 +141,7 @@ export default function BookmarksScreen() {
   const { isDesktop, contentContainerWeb } = useWebLayout();
 
   // Resolve bookmarks to entries (filter out deleted questions)
-  const entries: QuestionEntry[] = bookmarkedIds
+  const entries: QuestionEntry[] = (bookmarkedIds ?? [])
     .map((id) => QUESTION_INDEX[id])
     .filter(Boolean) as QuestionEntry[];
 

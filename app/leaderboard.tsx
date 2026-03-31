@@ -99,7 +99,7 @@ export default function LeaderboardScreen() {
   const rest    = display.slice(3);
   const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
   const dailyQuizResult = dailyQuiz
-    ? recentResults.find((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    ? recentResults.find((result) => result.quizId === dailyQuiz.id && !!result.completedAt && isSameLocalDay(result.completedAt))
     : undefined;
 
   return (

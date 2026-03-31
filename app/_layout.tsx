@@ -191,7 +191,8 @@ export default function RootLayout() {
             await Promise.allSettled(syncTasks);
           })();
         })
-        .catch(() => {
+        .catch((err: unknown) => {
+          if (__DEV__) console.error('[RootLayout] initAuth failed:', err);
           void SplashScreen.hideAsync();
         });
     }

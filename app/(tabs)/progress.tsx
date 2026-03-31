@@ -29,7 +29,7 @@ export default function ProgressScreen() {
     : 'Open the app daily to build your first streak.';
   const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
   const dailyQuizResult = dailyQuiz
-    ? progress.recentResults.find((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    ? progress.recentResults.find((result) => result.quizId === dailyQuiz.id && !!result.completedAt && isSameLocalDay(result.completedAt))
     : undefined;
   const recentAttempts = progress.recentResults.slice(0, 3);
 
