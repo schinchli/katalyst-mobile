@@ -29,6 +29,8 @@ interface AuthState {
   pendingEmail: string;
   /** True if this user has purchased the "remove ads" entitlement */
   adsRemoved: boolean;
+  /** Cleanup fn returned by onAuthStateChange — called before sign-out to prevent listener accumulation */
+  _authUnsubscribe: (() => void) | null;
 
   initAuth: () => Promise<void>;
   signInUser: (email: string, password: string) => Promise<void>;
@@ -117,11 +119,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   step: 'idle',
   pendingEmail: '',
   adsRemoved: false,
+  _authUnsubscribe: null,
 
   initAuth: async () => {
+    // Unsubscribe any existing listener before registering a new one,
+    // preventing duplicate callbacks if initAuth is ever called more than once.
+    get()._authUnsubscribe?.();
+
     set({ isLoading: true });
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const user = await buildUserFromSession();
         if (user) {
@@ -138,6 +145,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
     });
+
+    set({ _authUnsubscribe: () => subscription.unsubscribe() });
 
     try {
       const user = await buildUserFromSession();
@@ -208,6 +217,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOutUser: async () => {
+    get()._authUnsubscribe?.();
     try {
       await supabase.auth.signOut();
       await SecureStore.deleteItemAsync('auth_guest');
@@ -216,7 +226,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // best-effort cleanup
     }
-    set({ user: null, isAuthenticated: false, step: 'idle' });
+    set({ user: null, isAuthenticated: false, step: 'idle', _authUnsubscribe: null });
   },
 
   setGuestUser: () => {
@@ -276,7 +286,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setLoading: (isLoading) => set({ isLoading }),
   // Optimistic logout: clear state immediately for instant UX, then clean up async resources
   signOut: () => {
-    set({ user: null, isAuthenticated: false, step: 'idle', isLoading: false });
+    get()._authUnsubscribe?.();
+    set({ user: null, isAuthenticated: false, step: 'idle', isLoading: false, _authUnsubscribe: null });
     Promise.all([
       supabase.auth.signOut(),
       SecureStore.deleteItemAsync('auth_guest').catch(() => {}),
