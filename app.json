@@ -28,7 +28,7 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
-      "versionCode": 20
+      "versionCode": 21
     },
     "web": {
       "bundler": "metro",
