@@ -38,9 +38,7 @@
       "env": {
         "APP_ENV": "preview",
         "EXPO_PUBLIC_API_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev/functions/v1",
-        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3eWR5YnR6eWp4ZnR6ZnpxcW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MDczNzYsImV4cCI6MjA4Nzk4MzM3Nn0.kbhZzrXzl4u7dn754VhbY43PFpVvMoG4kJRX-8lxKV4"
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
       }
     },
     "preview-stable": {
@@ -54,9 +52,7 @@
       "env": {
         "APP_ENV": "production",
         "EXPO_PUBLIC_API_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev/functions/v1",
-        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3eWR5YnR6eWp4ZnR6ZnpxcW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MDczNzYsImV4cCI6MjA4Nzk4MzM3Nn0.kbhZzrXzl4u7dn754VhbY43PFpVvMoG4kJRX-8lxKV4"
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
       }
     },
     "production": {
@@ -65,9 +61,7 @@
       "env": {
         "APP_ENV": "production",
         "EXPO_PUBLIC_API_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev/functions/v1",
-        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3eWR5YnR6eWp4ZnR6ZnpxcW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MDczNzYsImV4cCI6MjA4Nzk4MzM3Nn0.kbhZzrXzl4u7dn754VhbY43PFpVvMoG4kJRX-8lxKV4"
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
       },
       "ios": {
         "buildConfiguration": "Release",
