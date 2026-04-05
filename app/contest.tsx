@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useProgressStore } from '@/stores/progressStore';
-import { getContests } from '@/data/contests';
+import { AppConfig } from '@/config/appConfig';
 import { F } from '@/constants/Typography';
 import type { Contest, ContestStatus } from '@/types';
 
@@ -17,12 +17,11 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'past',     label: 'Past',     icon: 'archive' },
 ];
 
-const CAT_COLORS: Record<string, string> = {
-  bedrock: '#7367F0', rag: '#28C76F', agents: '#FF9F43', guardrails: '#EA5455',
-  'prompt-eng': '#7367F0', routing: '#28C76F', security: '#EA5455',
-  monitoring: '#FF9F43', orchestration: '#7367F0', evaluation: '#28C76F',
-  cost: '#00CFE8', general: '#7367F0',
-};
+function getContestTone(category: string, colors: ReturnType<typeof useThemeColors>) {
+  const tones = [colors.primary, colors.success, colors.warning, colors.error, colors.gradientAccent];
+  const score = [...category].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return tones[score % tones.length];
+}
 
 // ─── Countdown timer display ──────────────────────────────────────────────────
 function useCountdown(endTime: string) {
@@ -56,7 +55,7 @@ function ContestCard({
   colors: ReturnType<typeof useThemeColors>;
 }) {
   const countdown = useCountdown(contest.endTime);
-  const catColor  = CAT_COLORS[contest.category] ?? colors.primary;
+  const catColor  = getContestTone(contest.category, colors);
   const canAfford = coins >= contest.entryFee;
 
   const handleJoin = () => {
@@ -64,7 +63,7 @@ function ContestCard({
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, shadowColor: colors.text }]}>
       {/* Accent strip */}
       <View style={[styles.cardStrip, { backgroundColor: catColor }]} />
 
@@ -81,9 +80,9 @@ function ContestCard({
             </Text>
           </View>
           {contest.status === 'live' && (
-            <View style={[styles.liveBadge, { backgroundColor: '#EA545518' }]}>
-              <View style={styles.liveDot} />
-              <Text style={[styles.liveBadgeText, { color: '#EA5455' }]}>LIVE</Text>
+            <View style={[styles.liveBadge, { backgroundColor: colors.error + '18' }]}>
+              <View style={[styles.liveDot, { backgroundColor: colors.error }]} />
+              <Text style={[styles.liveBadgeText, { color: colors.error }]}>LIVE</Text>
             </View>
           )}
         </View>
@@ -91,7 +90,7 @@ function ContestCard({
         {/* Stats row */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Feather name="zap" size={13} color="#FF9F43" />
+            <Feather name="zap" size={13} color={colors.warning} />
             <Text style={[styles.statText, { color: colors.textSecondary }]}>
               Fee: <Text style={{ color: colors.text, fontFamily: F.semiBold }}>{contest.entryFee} coins</Text>
             </Text>
@@ -112,9 +111,9 @@ function ContestCard({
 
         {/* Timer / date */}
         {contest.status === 'live' && (
-          <View style={[styles.timerRow, { backgroundColor: '#EA545508', borderColor: '#EA545530' }]}>
-            <Feather name="clock" size={13} color="#EA5455" />
-            <Text style={[styles.timerText, { color: '#EA5455' }]}>Ends in {countdown}</Text>
+          <View style={[styles.timerRow, { backgroundColor: colors.error + '08', borderColor: colors.error + '30' }]}>
+            <Feather name="clock" size={13} color={colors.error} />
+            <Text style={[styles.timerText, { color: colors.error }]}>Ends in {countdown}</Text>
           </View>
         )}
         {contest.status === 'upcoming' && (
@@ -124,9 +123,9 @@ function ContestCard({
           </View>
         )}
         {contest.status === 'past' && contest.winner && (
-          <View style={[styles.timerRow, { backgroundColor: '#FF9F4318', borderColor: '#FF9F4330' }]}>
-            <Feather name="award" size={13} color="#FF9F43" />
-            <Text style={[styles.timerText, { color: '#FF9F43' }]}>
+          <View style={[styles.timerRow, { backgroundColor: colors.warning + '18', borderColor: colors.warning + '30' }]}>
+            <Feather name="award" size={13} color={colors.warning} />
+            <Text style={[styles.timerText, { color: colors.warning }]}>
               Winner: {contest.winner} · {contest.topScore}%
             </Text>
           </View>
@@ -145,8 +144,8 @@ function ContestCard({
               },
             ]}
           >
-            <Feather name={contest.status === 'live' ? 'play' : 'bell'} size={15} color={canAfford ? '#fff' : colors.textSecondary} />
-            <Text style={[styles.joinBtnText, { color: canAfford ? '#fff' : colors.textSecondary }]}>
+            <Feather name={contest.status === 'live' ? 'play' : 'bell'} size={15} color={canAfford ? colors.surface : colors.textSecondary} />
+            <Text style={[styles.joinBtnText, { color: canAfford ? colors.surface : colors.textSecondary }]}>
               {contest.status === 'live' ? 'Join Now' : 'Notify Me'}
             </Text>
           </Pressable>
@@ -189,8 +188,21 @@ export default function ContestScreen() {
   const colors = useThemeColors();
   const [tab, setTab] = useState<Tab>('live');
   const coins = useProgressStore((s) => s.progress.coins ?? 0);
+  const [allContests, setAllContests] = useState<Contest[]>([]);
+  const [loadingContests, setLoadingContests] = useState(true);
 
-  const list = getContests(tab);
+  useEffect(() => {
+    const baseUrl = AppConfig.web.baseUrl || 'https://lms-amber-two.vercel.app';
+    fetch(`${baseUrl}/api/contests`)
+      .then((r) => r.json())
+      .then((d: { ok: boolean; contests?: Contest[] }) => {
+        if (d.ok && Array.isArray(d.contests)) setAllContests(d.contests);
+      })
+      .catch(() => { /* show empty state on error */ })
+      .finally(() => setLoadingContests(false));
+  }, []);
+
+  const list: Contest[] = allContests.filter((c) => c.status === tab);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
@@ -201,16 +213,16 @@ export default function ContestScreen() {
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Contests</Text>
         {/* Coin balance */}
-        <View style={[styles.coinBadge, { backgroundColor: '#FF9F4318' }]}>
-          <Feather name="zap" size={14} color="#FF9F43" />
-          <Text style={[styles.coinBadgeText, { color: '#FF9F43' }]}>{(coins).toLocaleString()}</Text>
+        <View style={[styles.coinBadge, { backgroundColor: colors.warning + '18' }]}>
+          <Feather name="zap" size={14} color={colors.warning} />
+          <Text style={[styles.coinBadgeText, { color: colors.warning }]}>{(coins).toLocaleString()}</Text>
         </View>
       </View>
 
       {/* Tabs */}
       <View style={[styles.tabs, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
         {TABS.map((t) => {
-          const count = getContests(t.key).length;
+          const count = allContests.filter((c) => c.status === t.key).length;
           return (
             <Pressable
               key={t.key}
@@ -224,7 +236,7 @@ export default function ContestScreen() {
               </Text>
               {count > 0 && (
                 <View style={[styles.tabCount, { backgroundColor: tab === t.key ? colors.primary : colors.textSecondary + '40' }]}>
-                  <Text style={[styles.tabCountText, { color: tab === t.key ? '#fff' : colors.textSecondary }]}>{count}</Text>
+                  <Text style={[styles.tabCountText, { color: tab === t.key ? colors.surface : colors.textSecondary }]}>{count}</Text>
                 </View>
               )}
             </Pressable>
@@ -233,9 +245,11 @@ export default function ContestScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {list.length === 0
-          ? <EmptyState tab={tab} colors={colors} />
-          : list.map((c) => <ContestCard key={c.id} contest={c} coins={coins} colors={colors} />)
+        {loadingContests
+          ? <ActivityIndicator style={{ marginTop: 48 }} color={colors.primary} />
+          : list.length === 0
+            ? <EmptyState tab={tab} colors={colors} />
+            : list.map((c) => <ContestCard key={c.id} contest={c} coins={coins} colors={colors} />)
         }
       </ScrollView>
     </SafeAreaView>
@@ -328,7 +342,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     flexShrink: 0,
   },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#EA5455' },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
   liveBadgeText: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.5 },
 
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

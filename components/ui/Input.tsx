@@ -36,14 +36,17 @@ export function Input({ label, error, style, ...props }: InputProps) {
 }
 
 const s = StyleSheet.create({
-  wrapper: { gap: 6 },
-  label: { fontFamily: F.medium, fontSize: 14 },
+  wrapper: { gap: 8 },
+  label: { fontFamily: F.medium, fontSize: 14, lineHeight: 18 },
   input: {
     borderWidth: 1.5,
-    borderRadius: 10,
-    padding: 14,
+    borderRadius: 12,
+    minHeight: 50,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 15,
+    lineHeight: 20,
     fontFamily: F.regular,
   },
-  error: { fontFamily: F.regular, fontSize: 13 },
+  error: { fontFamily: F.regular, fontSize: 13, lineHeight: 17 },
 });

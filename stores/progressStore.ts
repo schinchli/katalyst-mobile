@@ -6,6 +6,7 @@ import { quizzes } from '@/data/quizzes';
 import { submitQuiz, type ProgressResponse } from '@/services/apiService';
 import { saveQuizResult, getQuizResults } from '@/config/db';
 import { supabase } from '@/config/supabase';
+import { getResultPercent } from '@/utils/quizResults';
 
 // ─── Badge definitions ────────────────────────────────────────────────────────
 const BADGE_DEFS: Record<BadgeId, Omit<Badge, 'id' | 'earnedAt'>> = {
@@ -46,9 +47,84 @@ export function calculateLevel(xp: number): number {
 }
 
 export function xpToNextLevel(xp: number, level: number): { current: number; needed: number } {
-  const currentThreshold = LEVEL_XP[level - 1] ?? 0;
-  const nextThreshold    = LEVEL_XP[level] ?? LEVEL_XP[LEVEL_XP.length - 1];
-  return { current: xp - currentThreshold, needed: nextThreshold - currentThreshold };
+  const maxLevel = LEVEL_XP.length;
+  const safeLevel = Math.min(Math.max(level, 1), maxLevel);
+  // At max level there is no next level — return 0 so UI hides the XP bar
+  if (safeLevel >= maxLevel) return { current: 0, needed: 0 };
+  const currentThreshold = LEVEL_XP[safeLevel - 1] ?? 0;
+  const nextThreshold    = LEVEL_XP[safeLevel] ?? currentThreshold;
+  const needed           = Math.max(0, nextThreshold - currentThreshold);
+  return { current: Math.max(0, xp - currentThreshold), needed };
+}
+
+function pctForResult(result: QuizResult): number {
+  return getResultPercent(result);
+}
+
+function dayKey(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+function previousDay(dateStr: string): string {
+  const date = new Date(`${dateStr}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function summarizeResults(results: QuizResult[]) {
+  const sorted = [...results].sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+  const uniqueDays = Array.from(new Set(sorted.map((result) => dayKey(result.completedAt))));
+  const latestDay = uniqueDays[0] ?? null;
+  const todayStr = today();
+  const yesterdayStr = yesterday();
+
+  let currentStreak = 0;
+  if (latestDay === todayStr || latestDay === yesterdayStr) {
+    let expectedDay = latestDay;
+    for (const entry of uniqueDays) {
+      if (entry !== expectedDay) break;
+      currentStreak += 1;
+      expectedDay = previousDay(expectedDay);
+    }
+  }
+
+  let longestStreak = 0;
+  let activeRun = 0;
+  let previous: string | null = null;
+  for (const entry of uniqueDays) {
+    if (!previous) {
+      activeRun = 1;
+    } else if (previousDay(previous) === entry) {
+      activeRun += 1;
+    } else {
+      activeRun = 1;
+    }
+    longestStreak = Math.max(longestStreak, activeRun);
+    previous = entry;
+  }
+
+  const completedQuizzes = sorted.length;
+  const averageScore = completedQuizzes
+    ? Math.round(sorted.reduce((sum, result) => sum + pctForResult(result), 0) / completedQuizzes)
+    : 0;
+  const computedXP = sorted.reduce((sum, result) => {
+    const quizMeta = quizzes.find((quiz) => quiz.id === result.quizId);
+    const passed = pctForResult(result) >= 70;
+    if (!passed) return sum;
+    const diffMult = quizMeta?.difficulty === 'advanced' ? 2 : quizMeta?.difficulty === 'intermediate' ? 1.5 : 1;
+    return sum + Math.round(pctForResult(result) * diffMult);
+  }, 0);
+
+  return {
+    completedQuizzes,
+    averageScore,
+    currentStreak,
+    longestStreak,
+    lastPlayedDate: latestDay,
+    recentResults: sorted.slice(0, 20),
+    xp: computedXP,
+    level: calculateLevel(computedXP),
+  };
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -68,7 +144,7 @@ interface ProgressState {
 }
 
 const initialProgress: Progress = {
-  totalQuizzes: 0,
+  totalQuizzes: quizzes.length,
   completedQuizzes: 0,
   averageScore: 0,
   currentStreak: 0,
@@ -118,8 +194,9 @@ export const useProgressStore = create<ProgressState>()(
           const yesterdayStr = yesterday();
 
           // ── Pass / fail ─────────────────────────────────────────────────────
-          const pct    = Math.round((result.score / result.totalQuestions) * 100);
+          const pct    = pctForResult(result);
           const passed = pct >= 70;
+          const perfectScore = pct === 100;
 
           // ── Streak ──────────────────────────────────────────────────────────
           let streak = prev.currentStreak;
@@ -137,7 +214,7 @@ export const useProgressStore = create<ProgressState>()(
           const completed = prev.completedQuizzes + 1;
           const totalScore =
             prev.averageScore * prev.completedQuizzes +
-            (result.score / result.totalQuestions) * 100;
+            pct;
           const avgScore = Math.round(totalScore / completed);
 
           const newProgress: Progress = {
@@ -158,39 +235,41 @@ export const useProgressStore = create<ProgressState>()(
             if (!earned.has(id)) { newBadges.push(makeBadge(id)); earned.add(id); }
           }
 
-          // Completion badges — awarded regardless of pass/fail
-          if (completed === 1)                                           award('first-quiz');
-          if (result.score === result.totalQuestions)                    award('perfect-score');
-          if (streak >= 7)                                               award('seven-day-streak');
-          if (result.timeTaken > 0 && result.timeTaken < 60)            award('speed-demon');
-          if (completed >= 6)                                            award('half-way');
-          if (completed >= quizzes.length)                               award('quiz-marathon');
+          // Badges only when quiz is passed (>= 70%)
+          if (passed) {
+            if (completed === 1)                                           award('first-quiz');
+            if (perfectScore)                                              award('perfect-score');
+            if (streak >= 7)                                               award('seven-day-streak');
+            if (result.timeTaken > 0 && result.timeTaken < 60)             award('speed-demon');
+            if (completed >= 6)                                            award('half-way');
+            if (completed >= quizzes.length)                               award('quiz-marathon');
 
-          // Category master: all quizzes in same category completed
-          // Use all historical results (not just the recent-20 window) to avoid
-          // missing older completions that were pushed out of the rolling slice.
-          const completedIds = new Set([result, ...prev.recentResults].map((r) => r.quizId));
-          if (quizMeta) {
-            const catQuizIds = quizzes
-              .filter((q) => q.category === quizMeta.category)
-              .map((q) => q.id);
-            if (catQuizIds.every((qid) => completedIds.has(qid))) {
-              award('category-master');
+            // Category master: all quizzes in same category completed
+            const completedIds = new Set([result, ...prev.recentResults].map((r) => r.quizId));
+            if (quizMeta) {
+              const catQuizIds = quizzes
+                .filter((q) => q.category === quizMeta.category)
+                .map((q) => q.id);
+              if (catQuizIds.every((qid) => completedIds.has(qid))) {
+                award('category-master');
+              }
             }
           }
 
           // ── Coin & XP calculation ─────────────────────────────────────────
           // Coins awarded for every completion; XP only on pass (≥ 70%)
-          const totalNewCoins =
-            result.score * 10                                             // 10 per correct answer
-            + 20                                                          // completion bonus
-            + (result.score === result.totalQuestions ? 50 : 0)          // perfect score bonus
-            + newBadges.length * 100;                                     // badge rewards
+          // Coins only on pass to avoid rewarding failed attempts
+          const totalNewCoins = passed
+            ? result.score * 10                                           // 10 per correct answer
+              + 20                                                        // completion bonus
+              + (perfectScore ? 50 : 0)                                   // perfect score bonus
+              + newBadges.length * 100                                    // badge rewards
+            : 0;
 
           const diffMult = quizMeta?.difficulty === 'advanced' ? 2
             : quizMeta?.difficulty === 'intermediate' ? 1.5 : 1;
           const xpEarned = passed
-            ? Math.round((result.score / result.totalQuestions) * 100 * diffMult)
+            ? Math.round(pct * diffMult)
             : 0;
 
           const newXP    = prev.xp + xpEarned;
@@ -216,16 +295,27 @@ export const useProgressStore = create<ProgressState>()(
         set((state) => {
           const remote = data.statistics;
           const prev   = state.progress;
+          const recentResults = data.recentAttempts.map((attempt) => ({
+            quizId: attempt.quizId,
+            score: attempt.score,
+            totalQuestions: attempt.totalQuestions,
+            timeTaken: attempt.timeTaken,
+            answers: attempt.answers,
+            completedAt: attempt.completedAt,
+          }));
+          const summary = summarizeResults(recentResults);
+          const mergedXP = Math.max(prev.xp ?? 0, summary.xp, remote.totalXP ?? 0);
           // Merge: take the higher value for numeric fields to avoid regressing
           return {
             progress: {
               ...prev,
-              totalQuizzes:     Math.max(prev.completedQuizzes, remote.totalQuizzes),
-              completedQuizzes: Math.max(prev.completedQuizzes, remote.totalQuizzes),
+              ...summary,
+              totalQuizzes:     quizzes.length,
+              completedQuizzes: Math.max(prev.completedQuizzes, summary.completedQuizzes, remote.totalQuizzes),
               coins:            Math.max(prev.coins ?? 0, remote.totalCoins ?? 0),
               totalCoinsEarned: Math.max(prev.totalCoinsEarned ?? 0, remote.totalCoins ?? 0),
-              xp:               Math.max(prev.xp ?? 0, remote.totalXP ?? 0),
-              level:            calculateLevel(Math.max(prev.xp ?? 0, remote.totalXP ?? 0)),
+              xp:               mergedXP,
+              level:            calculateLevel(mergedXP),
             },
           };
         }),
@@ -236,11 +326,14 @@ export const useProgressStore = create<ProgressState>()(
       initFromSupabase: async (userId: string) => {
         const results = await getQuizResults(userId).catch(() => [] as QuizResult[]);
         if (results.length === 0) return;
+        const summary = summarizeResults(results);
         set((state) => ({
           progress: {
             ...state.progress,
-            recentResults:    results.slice(0, 20),
-            completedQuizzes: Math.max(state.progress.completedQuizzes, results.length),
+            ...summary,
+            totalQuizzes: quizzes.length,
+            xp: Math.max(state.progress.xp ?? 0, summary.xp),
+            level: calculateLevel(Math.max(state.progress.xp ?? 0, summary.xp)),
           },
         }));
       },

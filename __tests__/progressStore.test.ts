@@ -34,7 +34,7 @@ function makeResult(overrides: Partial<{
 }> = {}) {
   return {
     quizId: 'bedrock-fundamentals',
-    score: 5,
+    score: 8,
     totalQuestions: 10,
     timeTaken: 120,
     answers: {},
@@ -163,6 +163,12 @@ describe('badge: first-quiz', () => {
     useProgressStore.getState().addResult(makeResult());
     const { pendingBadges } = useProgressStore.getState();
     expect(pendingBadges.some((b) => b.id === 'first-quiz')).toBe(true);
+  });
+
+  it('does NOT award badges when score is below pass threshold (70%)', () => {
+    useProgressStore.getState().addResult(makeResult({ score: 6, totalQuestions: 10 }));
+    const { pendingBadges } = useProgressStore.getState();
+    expect(pendingBadges.length).toBe(0);
   });
 
   it('does NOT award first-quiz badge on second completion', () => {
@@ -332,11 +338,11 @@ describe('badge: category-master', () => {
 describe('coin calculation', () => {
   it('earns completion + correct-answer coins', () => {
     const before = useProgressStore.getState().progress.coins;
-    useProgressStore.getState().addResult(makeResult({ score: 5, totalQuestions: 10 }));
+    useProgressStore.getState().addResult(makeResult({ score: 8, totalQuestions: 10 }));
     const { progress, pendingCoins } = useProgressStore.getState();
-    // 5 correct × 10 + 20 completion + 100 (first-quiz badge) = 170 coins
-    expect(pendingCoins).toBe(170);
-    expect(progress.coins).toBe(before + 170);
+    // 8 correct × 10 + 20 completion + 100 (first-quiz badge) = 200 coins
+    expect(pendingCoins).toBe(200);
+    expect(progress.coins).toBe(before + 200);
   });
 
   it('earns perfect-score bonus (+50 coins)', () => {

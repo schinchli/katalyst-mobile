@@ -2,7 +2,7 @@ module.exports = function (api) {
   api.cache(true);
   return {
     presets: [
-      ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
+      'babel-preset-expo',
     ],
     plugins: [
       // Explicitly add expo-router plugin: babel-preset-expo's hasModule('expo-router') check

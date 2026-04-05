@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useTypography } from '@/hooks/useTypography';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { quizzes, quizQuestions } from '@/data/quizzes';
 import { F } from '@/constants/Typography';
@@ -23,12 +24,15 @@ function buildQuestionIndex(): Record<string, QuestionEntry> {
 
 const QUESTION_INDEX = buildQuestionIndex();
 
-// ─── Difficulty accent colors ─────────────────────────────────────────────────
-const DIFF_COLOR: Record<string, string> = {
-  beginner:     '#28C76F',
-  intermediate: '#FF9F43',
-  advanced:     '#EA5455',
-};
+// ─── Difficulty accent colors — resolved from theme ───────────────────────────
+function getDiffColor(difficulty: string, colors: ReturnType<typeof useThemeColors>): string {
+  switch (difficulty) {
+    case 'beginner':     return colors.success;
+    case 'intermediate': return colors.warning;
+    case 'advanced':     return colors.error;
+    default:             return colors.primary;
+  }
+}
 
 // ─── Bookmark card ────────────────────────────────────────────────────────────
 function BookmarkCard({
@@ -41,8 +45,9 @@ function BookmarkCard({
   onPress:  () => void;
 }) {
   const colors = useThemeColors();
+  const t = useTypography();
   const { question, quiz } = entry;
-  const diffColor = DIFF_COLOR[quiz.difficulty] ?? '#7367F0';
+  const diffColor = getDiffColor(quiz.difficulty, colors);
 
   return (
     <Pressable
@@ -53,6 +58,7 @@ function BookmarkCard({
         {
           backgroundColor: colors.surface,
           borderColor: colors.surfaceBorder,
+          shadowColor: colors.text,
           opacity: pressed ? 0.92 : 1,
         },
       ]}
@@ -77,7 +83,7 @@ function BookmarkCard({
         </View>
 
         {/* Question text */}
-        <Text style={[styles.questionText, { color: colors.text }]} numberOfLines={3}>
+        <Text style={[styles.questionText, { color: colors.text, fontSize: t.body }]} numberOfLines={3}>
           {question.text}
         </Text>
 
@@ -89,10 +95,10 @@ function BookmarkCard({
             onPress={(e) => { e.stopPropagation?.(); onRemove(); }}
             hitSlop={8}
             accessibilityRole="button"
-            style={[styles.removeBtn, { backgroundColor: '#EA545518' }]}
+            style={[styles.removeBtn, { backgroundColor: colors.error + '18' }]}
           >
-            <Feather name="bookmark" size={14} color="#EA5455" />
-            <Text style={styles.removeBtnText}>Remove</Text>
+            <Feather name="bookmark" size={14} color={colors.error} />
+            <Text style={[styles.removeBtnText, { color: colors.error }]} numberOfLines={1}>Remove</Text>
           </Pressable>
         </View>
       </View>
@@ -119,8 +125,8 @@ function EmptyState({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
           { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
         ]}
       >
-        <Feather name="book-open" size={16} color="#fff" />
-        <Text style={styles.emptyBtnText}>Browse Quizzes</Text>
+        <Feather name="book-open" size={16} color={colors.surface} />
+        <Text style={[styles.emptyBtnText, { color: colors.surface }]}>Browse Quizzes</Text>
       </Pressable>
     </View>
   );
@@ -129,14 +135,17 @@ function EmptyState({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function BookmarksScreen() {
   const colors         = useThemeColors();
+  const t              = useTypography();
   const bookmarkedIds  = useBookmarkStore((s) => s.bookmarkedIds);
   const toggle         = useBookmarkStore((s) => s.toggle);
   const { isDesktop, contentContainerWeb } = useWebLayout();
 
   // Resolve bookmarks to entries (filter out deleted questions)
-  const entries: QuestionEntry[] = bookmarkedIds
+  const entries: QuestionEntry[] = (bookmarkedIds ?? [])
     .map((id) => QUESTION_INDEX[id])
     .filter(Boolean) as QuestionEntry[];
+
+  const hasBookmarks = entries.length > 0;
 
   return (
     <SafeAreaView
@@ -149,13 +158,34 @@ export default function BookmarksScreen() {
       >
         {/* Page title */}
         <View style={styles.pageHeader}>
-          <Text style={[styles.title, { color: colors.text }]}>Bookmarks</Text>
+          <Text style={[styles.title, { color: colors.text, fontSize: t.screenTitle }]}>Bookmarks</Text>
           {entries.length > 0 && (
             <View style={[styles.countBadge, { backgroundColor: colors.primaryLight }]}>
               <Text style={[styles.countBadgeText, { color: colors.primary }]}>{entries.length}</Text>
             </View>
           )}
         </View>
+
+        {/* Start Review button */}
+        {hasBookmarks ? (
+          <Pressable
+            onPress={() => router.push('/quiz/bookmarks-review' as never)}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.reviewBtn,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1, marginBottom: 14 },
+            ]}
+          >
+            <Feather name="play" size={16} color={colors.surface} />
+            <Text style={[styles.reviewBtnText, { color: colors.surface }]}>Start Review ({entries.length})</Text>
+          </Pressable>
+        ) : (
+          <View style={[styles.reviewBtnDisabled, { backgroundColor: colors.surfaceBorder, marginBottom: 14 }]}>
+            <Text style={[styles.reviewBtnText, { color: colors.textSecondary }]}>
+              Bookmark questions during a quiz to review them
+            </Text>
+          </View>
+        )}
 
         {entries.length === 0 ? (
           <EmptyState colors={colors} />
@@ -177,26 +207,26 @@ export default function BookmarksScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll:   { padding: 20, paddingBottom: 48 },
+  scroll:   { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40 },
 
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 20,
+    gap: 8,
+    marginBottom: 12,
   },
   title: {
     fontFamily: F.bold,
-    fontSize: 26,
+    fontSize: 22,
   },
   countBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   countBadgeText: {
     fontFamily: F.bold,
-    fontSize: 13,
+    fontSize: 11,
   },
 
   // ── Card ───────────────────────────────────────────────────────────────────
@@ -204,22 +234,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 10,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   accentBar: {
-    width: 4,
+    width: 3,
     flexShrink: 0,
   },
   cardContent: {
     flex: 1,
-    padding: 14,
-    gap: 8,
+    padding: 11,
+    gap: 7,
   },
 
   quizRow: {
@@ -241,9 +271,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   diffBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    minHeight: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 7,
+    justifyContent: 'center',
   },
   diffBadgeText: {
     fontFamily: F.semiBold,
@@ -252,8 +284,8 @@ const styles = StyleSheet.create({
 
   questionText: {
     fontFamily: F.medium,
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 19,
   },
 
   footer: {
@@ -270,15 +302,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
+    minHeight: 28,
+    paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 7,
   },
   removeBtnText: {
     fontFamily: F.semiBold,
     fontSize: 11,
-    color: '#EA5455',
   },
+
+  // ── Start Review button ────────────────────────────────────────────────────
+  reviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 46,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+  },
+  reviewBtnDisabled: {
+    minHeight: 46,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewBtnText: { fontFamily: F.bold, fontSize: 14 },
 
   // ── Empty state ────────────────────────────────────────────────────────────
   emptyWrap: {
@@ -297,27 +348,24 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontFamily: F.bold,
-    fontSize: 20,
+    fontSize: 16,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontFamily: F.regular,
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    lineHeight: 21,
+    lineHeight: 18,
   },
   emptyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    gap: 7,
+    marginTop: 6,
+    minHeight: 38,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 10,
   },
-  emptyBtnText: {
-    fontFamily: F.semiBold,
-    color: '#fff',
-    fontSize: 14,
-  },
+  emptyBtnText: { fontFamily: F.semiBold, fontSize: 13 },
 });

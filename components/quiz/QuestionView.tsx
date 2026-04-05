@@ -1,24 +1,24 @@
+/**
+ * QuestionView — clean, no-bullet layout:
+ *  - Large question text, full-width
+ *  - Report link below question
+ *  - "Select the correct answer" label in primary color
+ *  - Options: plain text only, selected = primary color bold, no circles/bullets
+ *  - Answered state: correct = success color, wrong = error color, explanation card below
+ */
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
-import { useThemeStore } from '@/stores/themeStore';
+import { useFontScale } from '@/hooks/useFontScale';
 import { F } from '@/constants/Typography';
 import type { Question } from '@/types';
-
-const SUCCESS_BG     = '#D1F7E2';
-const ERROR_BG       = '#FFE5E6';
-const SUCCESS_BORDER = '#28C76F';
-const ERROR_BORDER   = '#EA5455';
-const LETTERS        = ['A', 'B', 'C', 'D', 'E'];
-// Selected-but-unconfirmed option colours (used before result is shown)
-const SELECTED_BG     = '#EBE9FD';
-const SELECTED_BORDER = '#7367F0';
 
 interface QuestionViewProps {
   question:         Question;
   selectedOptionId: string | undefined;
   onSelectOption:   (optionId: string) => void;
   showResult?:      boolean;
+  resultTone?:      'correct' | 'incorrect';
   hiddenOptionIds?: string[];
   onReport?:        () => void;
 }
@@ -28,173 +28,147 @@ export function QuestionView({
   selectedOptionId,
   onSelectOption,
   showResult      = false,
+  resultTone      = 'correct',
   hiddenOptionIds = [],
   onReport,
 }: QuestionViewProps) {
-  const colors   = useThemeColors();
-  const darkMode = useThemeStore((s) => s.darkMode);
-  // Explanation box bg: use surface in dark mode (readable), primaryLight tint in light mode
-  const explanationBg = darkMode ? colors.surface : colors.primaryLight;
+  const colors        = useThemeColors();
+  const scale         = useFontScale();
+  const isCorrectTone = resultTone === 'correct';
+  const resultAccent  = isCorrectTone ? colors.success : colors.error;
 
   return (
-    <View style={s.container}>
+    <View style={s.root}>
 
-      {/* ── Question card ────────────────────────────────────── */}
-      <View style={[s.questionCard, {
-        backgroundColor: colors.surface,
-        borderColor: colors.surfaceBorder,
-        borderLeftColor: colors.primary,
-      }]}>
-        <Text style={[s.questionText, { color: colors.text }]}>{question.text}</Text>
-        {onReport && (
-          <Pressable onPress={onReport} hitSlop={10} style={s.reportBtn}>
-            <Feather name="flag" size={13} color={colors.textSecondary} />
-            <Text style={[s.reportText, { color: colors.textSecondary }]}>Report</Text>
-          </Pressable>
-        )}
-      </View>
+      {/* ── Question ── */}
+      <Text style={[s.questionText, { color: colors.text, fontSize: Math.round(28 * scale), lineHeight: Math.round(40 * scale) }]}>{question.text}</Text>
 
-      {/* ── Options ──────────────────────────────────────────── */}
+      {/* ── Report link ── */}
+      {onReport && (
+        <Pressable onPress={onReport} style={s.reportBtn} hitSlop={12}>
+          <Feather name="flag" size={13} color={colors.textMuted} />
+          <Text style={[s.reportText, { color: colors.textMuted }]}>Report</Text>
+        </Pressable>
+      )}
+
+      {/* ── "Select the correct answer" label ── */}
+      {!showResult && (
+        <Text style={[s.selectLabel, { color: colors.primary, fontSize: Math.round(15 * scale) }]}>
+          Select the correct answer
+        </Text>
+      )}
+
+      {/* ── Options — card background, no circles ── */}
       <View style={s.optionsList}>
-        {question.options.map((option, idx) => {
+        {question.options.map((option) => {
           const isSelected = selectedOptionId === option.id;
           const isCorrect  = option.id === question.correctOptionId;
           const isHidden   = hiddenOptionIds.includes(option.id);
 
-          let optBg: string     = colors.surface;
-          let optBorder: string = colors.surfaceBorder;
-          if (showResult) {
-            if (isCorrect)       { optBg = SUCCESS_BG; optBorder = SUCCESS_BORDER; }
-            else if (isSelected) { optBg = ERROR_BG;   optBorder = ERROR_BORDER; }
-          } else if (isSelected) {
-            optBg = SELECTED_BG; optBorder = SELECTED_BORDER;
-          }
+          // Card background + border
+          const cardBg = (() => {
+            if (!showResult) return isSelected ? colors.primaryLight : colors.surface;
+            if (isCorrect)   return colors.success + '18';
+            if (isSelected)  return colors.error   + '18';
+            return colors.surface;
+          })();
+          const cardBorder = (() => {
+            if (!showResult) return isSelected ? colors.primary : colors.surfaceBorder;
+            if (isCorrect)   return colors.success + '66';
+            if (isSelected)  return colors.error   + '66';
+            return colors.surfaceBorder;
+          })();
 
-          const letter = LETTERS[idx] ?? option.id.toUpperCase();
-          let labelColor = showResult
-            ? isCorrect ? SUCCESS_BORDER
-            : isSelected ? ERROR_BORDER
-            : colors.textSecondary
-            : isSelected ? colors.primary
-            : colors.textSecondary;
+          // Text color
+          const textColor = (() => {
+            if (!showResult) return isSelected ? colors.primary : colors.text;
+            if (isCorrect)   return colors.success;
+            if (isSelected)  return colors.error;
+            return colors.textMuted;
+          })();
+
+          const isBold = isSelected || (showResult && isCorrect);
 
           return (
             <Pressable
               key={option.id}
               onPress={() => !showResult && !isHidden && onSelectOption(option.id)}
               disabled={showResult || isHidden}
-              style={({ pressed }) => [
-                s.option,
-                { backgroundColor: optBg, borderColor: optBorder, opacity: isHidden ? 0.25 : pressed ? 0.9 : 1 },
-              ]}
-              accessibilityRole="button"
+              style={[s.option, {
+                opacity:         isHidden ? 0.15 : 1,
+                backgroundColor: cardBg,
+                borderColor:     cardBorder,
+              }]}
             >
-              <Text style={[s.optionLabel, { color: labelColor }]}>{letter}.</Text>
-              <Text style={[s.optionText, { color: colors.text }]}>{option.text}</Text>
-
-              {showResult && isCorrect && (
-                <Feather name="check-circle" size={18} color={SUCCESS_BORDER} />
-              )}
-              {showResult && isSelected && !isCorrect && (
-                <Feather name="x-circle" size={18} color={ERROR_BORDER} />
-              )}
+              <Text style={[s.optionText, { color: textColor, fontFamily: isBold ? F.bold : F.semiBold, fontSize: Math.round(18 * scale), lineHeight: Math.round(28 * scale) }]}>
+                {option.text}
+              </Text>
             </Pressable>
           );
         })}
       </View>
 
-      {/* ── Explanation ───────────────────────────────────────── */}
-      {showResult && question.explanation ? (
-        <View style={[s.explanationBox, { borderLeftColor: colors.primary, backgroundColor: explanationBg }]}>
+      {/* ── Explanation (shown after answering) ── */}
+      {showResult && (
+        <View style={[s.explanation, {
+          backgroundColor: resultAccent + '1A',
+          borderColor:     resultAccent + '44',
+        }]}>
           <View style={s.explanationHeader}>
-            <View style={[s.explanationIconWrap, { backgroundColor: colors.primary }]}>
-              <Feather name="zap" size={11} color="#fff" />
+            <View style={[s.explanationBadge, { backgroundColor: resultAccent + '22' }]}>
+              <Feather name={isCorrectTone ? 'check' : 'x'} size={12} color={resultAccent} />
             </View>
-            <Text style={[s.explanationLabel, { color: colors.primary }]}>Explanation</Text>
+            <Text style={[s.explanationTitle, { color: resultAccent, fontSize: Math.round(14 * scale) }]}>
+              {isCorrectTone ? 'Correct!' : 'Incorrect'}
+            </Text>
           </View>
-          <Text style={[s.explanationText, { color: colors.text }]}>{question.explanation}</Text>
+          <Text style={[s.explanationBody, { color: colors.text, fontSize: Math.round(14 * scale), lineHeight: Math.round(22 * scale) }]}>
+            {question.explanation ?? 'No explanation available.'}
+          </Text>
         </View>
-      ) : showResult ? (
-        <View style={[s.explanationBox, { borderLeftColor: colors.surfaceBorder, backgroundColor: colors.surface }]}>
-          <Text style={[s.explanationText, { color: colors.textSecondary }]}>No explanation available.</Text>
-        </View>
-      ) : null}
+      )}
 
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { gap: 12 },
+  root: { gap: 22 },
 
-  questionCard: {
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderLeftWidth: 5,
-    shadowColor: '#4B465C',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  questionText: {
-    fontFamily: F.semiBold,
-    fontSize: 17,
-    lineHeight: 28,
-  },
+  // Question
+  questionText: { fontFamily: F.bold, fontSize: 28, lineHeight: 40, letterSpacing: -0.4 },
 
+  // Report
+  reportBtn:  { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: -8 },
+  reportText: { fontFamily: F.medium, fontSize: 13 },
+
+  // "Select the correct answer"
+  selectLabel: { fontFamily: F.semiBold, fontSize: 15, marginTop: -4 },
+
+  // Options list
   optionsList: { gap: 10 },
+
+  // Single option — card style, no circles
   option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 16,
+    paddingVertical:   16,
+    paddingHorizontal: 18,
+    borderRadius:      14,
+    borderWidth:       1,
+  },
+
+  // Option label
+  optionText: { fontSize: 18, lineHeight: 28 },
+
+  // Explanation card
+  explanation: {
+    borderWidth: 1,
     borderRadius: 14,
-    borderWidth: 1.5,
+    padding: 14,
     gap: 10,
-    shadowColor: '#4B465C',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  optionLabel: { fontFamily: F.bold, fontSize: 15, minWidth: 22 },
-  optionText:  { fontFamily: F.medium, fontSize: 15, lineHeight: 22, flex: 1 },
-
-  explanationBox: {
-    padding: 16,
-    borderRadius: 14,
-    borderLeftWidth: 4,
     marginTop: 4,
-    shadowColor: '#7367F0',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
-  explanationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  explanationIconWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  explanationLabel: { fontFamily: F.bold,    fontSize: 13, letterSpacing: 0.3 },
-  explanationText:  { fontFamily: F.regular, fontSize: 14, lineHeight: 22 },
-
-  reportBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 12,
-    alignSelf: 'flex-end',
-  },
-  reportText: { fontFamily: F.regular, fontSize: 12 },
+  explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  explanationBadge:  { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  explanationTitle:  { fontFamily: F.bold, fontSize: 14 },
+  explanationBody:   { fontFamily: F.medium, fontSize: 14, lineHeight: 22 },
 });

@@ -1,7 +1,8 @@
 {
   "cli": {
     "version": ">= 14.0.0",
-    "appVersionSource": "local"
+    "appVersionSource": "local",
+    "requireCommit": true
   },
   "build": {
     "development": {
@@ -12,17 +13,46 @@
         "EXPO_PUBLIC_API_URL": "https://dev.api.awslearn.app",
         "EXPO_PUBLIC_CLOUDFRONT_URL": "https://dev.cdn.awslearn.app"
       },
+      "channel": "development"
+    },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
       "ios": {
         "simulator": true
-      }
+      },
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_API_URL": "https://dev.api.awslearn.app",
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://dev.cdn.awslearn.app"
+      },
+      "channel": "development-simulator"
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a -Pexpo.gif.enabled=false"
+      },
       "env": {
         "APP_ENV": "preview",
-        "EXPO_PUBLIC_API_URL": "https://staging.api.awslearn.app",
-        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://staging.cdn.awslearn.app"
+        "EXPO_PUBLIC_API_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev/functions/v1",
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
+      }
+    },
+    "preview-stable": {
+      "distribution": "internal",
+      "channel": "preview",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a,x86_64 -Pexpo.gif.enabled=false -Pexpo.webp.enabled=true"
+      },
+      "env": {
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_API_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev/functions/v1",
+        "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
       }
     },
     "production": {
@@ -30,7 +60,7 @@
       "autoIncrement": true,
       "env": {
         "APP_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.awslearn.app",
+        "EXPO_PUBLIC_API_URL": "https://katalyst-supabase-proxy.schinchli5801.workers.dev/functions/v1",
         "EXPO_PUBLIC_CLOUDFRONT_URL": "https://cdn.awslearn.app"
       },
       "ios": {
@@ -50,7 +80,7 @@
         "appleTeamId": "TODO: XXXXXXXXXX"
       },
       "android": {
-        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "serviceAccountKeyPath": "./credentials/google-play-service-account.json",
         "track": "internal"
       }
     }

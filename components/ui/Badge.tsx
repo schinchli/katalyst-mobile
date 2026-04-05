@@ -12,7 +12,7 @@ interface BadgeProps {
 export function Badge({ label, color, size = 'sm', style }: BadgeProps) {
   const colors = useThemeColors();
   const bg    = color ?? colors.primaryLight;
-  const fg    = color ? '#FFFFFF' : colors.primary;
+  const fg    = color ? colors.surface : colors.primary;
   const px    = size === 'sm' ? 8  : 12;
   const py    = size === 'sm' ? 4  : 6;
   const fs    = size === 'sm' ? 12 : 14;

@@ -1,553 +1,530 @@
-import { View, Text, ScrollView, Alert, Pressable, StyleSheet } from 'react-native';
+import React from 'react';
+import { Alert, Share, View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useTypography } from '@/hooks/useTypography';
 import { useAuthStore } from '@/stores/authStore';
-import { useProgressStore, LEVEL_NAMES, xpToNextLevel } from '@/stores/progressStore';
-import { useThemeStore, ACCENT_PRESETS, type AccentPreset } from '@/stores/themeStore';
-import { useWebLayout } from '@/hooks/useWebLayout';
+import { useProgressStore } from '@/stores/progressStore';
+import { useThemeStore, ACCENT_PRESETS, type AccentPreset, type FontSizePreset } from '@/stores/themeStore';
 import { F } from '@/constants/Typography';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { AppConfig } from '@/config/appConfig';
+import { supabase } from '@/config/supabase';
+import type { ReferralInfo } from '@/types';
+import { THEME_PRESET_ORDER } from '@/stores/themeStore';
+import { calculateLevel, xpToNextLevel, LEVEL_NAMES } from '@/stores/progressStore';
 
-const BANNER_H = 100;
-const AVATAR_SIZE = 80;
-const AVATAR_RING = AVATAR_SIZE + 8;
+const PRESETS: AccentPreset[] = THEME_PRESET_ORDER;
 
-const ACCOUNT_ITEMS = [
-  { icon: 'bookmark',    label: 'Bookmarks',    route: '/(tabs)/bookmarks' },
-  { icon: 'bell',        label: 'Notifications', route: undefined },
-  { icon: 'moon',        label: 'Appearance',    route: undefined },
-  { icon: 'download',    label: 'Downloads',     route: undefined },
-] as const;
-
-const SUPPORT_ITEMS = [
-  { icon: 'help-circle', label: 'Help & Support', route: undefined },
-  { icon: 'info',        label: 'About',           route: undefined },
-] as const;
-
-type Colors = ReturnType<typeof useThemeColors>;
-
-function MenuSection({
-  title,
-  items,
-  colors,
-}: {
-  title: string;
-  items: readonly { icon: string; label: string; route?: string }[];
-  colors: Colors;
-}) {
-  return (
-    <View style={styles.menuSection}>
-      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{title}</Text>
-      <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-        {items.map((item, idx) => (
-          <View key={item.label}>
-            <Pressable
-              onPress={() => { if (item.route) router.push(item.route as any); }}
-              style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.8 : 1 }]}
-            >
-              <View style={[styles.menuIconWrap, { backgroundColor: colors.primaryLight }]}>
-                <Feather name={item.icon as any} size={15} color={colors.primary} />
-              </View>
-              <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
-              <Feather name="chevron-right" size={15} color={colors.textSecondary} />
-            </Pressable>
-            {idx < items.length - 1 && (
-              <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />
-            )}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function ThemePicker({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
-  const accent     = useThemeStore((s) => s.accent);
-  const darkMode   = useThemeStore((s) => s.darkMode);
-  const setAccent  = useThemeStore((s) => s.setAccent);
-  const toggleDark = useThemeStore((s) => s.toggleDark);
-  const presetKeys: AccentPreset[] = ['aurora', 'ocean', 'forest', 'sunset', 'midnight', 'sand', 'rose', 'slate', 'indigo', 'amber', 'emerald'];
-  const presets = presetKeys.map((k) => [k, ACCENT_PRESETS[k]]) as [AccentPreset, typeof ACCENT_PRESETS[AccentPreset]][];
-
-  return (
-    <View style={styles.menuSection}>
-      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>APPEARANCE</Text>
-      <View style={[styles.themeCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-
-        {/* Dark mode toggle row */}
-        <Pressable
-          onPress={toggleDark}
-          style={[styles.darkRow, { borderBottomColor: colors.surfaceBorder }]}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: darkMode }}
-        >
-          <View style={[styles.menuIconWrap, { backgroundColor: darkMode ? '#43406B' : colors.primaryLight }]}>
-            <Feather name={darkMode ? 'moon' : 'sun'} size={17} color={darkMode ? '#A79BF4' : colors.primary} />
-          </View>
-          <Text style={[styles.menuLabel, { color: colors.text, flex: 1 }]}>Dark Mode</Text>
-          {/* Toggle pill */}
-          <View style={[styles.toggleTrack, { backgroundColor: darkMode ? colors.primary : colors.surfaceBorder }]}>
-            <View style={[styles.toggleThumb, { transform: [{ translateX: darkMode ? 18 : 2 }] }]} />
-          </View>
-        </Pressable>
-
-        {/* Accent color grid */}
-        <View style={styles.themeGrid}>
-          {presets.map(([key, cfg]) => {
-            const isActive = accent === key;
-            return (
-              <Pressable
-                key={key}
-                onPress={() => setAccent(key)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isActive }}
-                style={({ pressed }) => [
-                  styles.themeBtn,
-                  { borderColor: isActive ? cfg.primary : colors.surfaceBorder,
-                    backgroundColor: isActive ? cfg.primary + '18' : 'transparent',
-                    opacity: pressed ? 0.8 : 1,
-                  },
-                ]}
-              >
-                <LinearGradient
-                  colors={[cfg.gradientFrom, cfg.gradientTo]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[styles.themeCircle, { backgroundColor: cfg.primary }]}
-                >
-                  {isActive && <Feather name="check" size={11} color="#fff" />}
-                </LinearGradient>
-                <Text style={[styles.themeLabel, { color: isActive ? cfg.primary : colors.textSecondary }]}>
-                  {cfg.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-    </View>
-  );
-}
+const FONT_SIZE_OPTIONS: { key: FontSizePreset; label: string; sample: number }[] = [
+  { key: 'small',  label: 'Small',  sample: 13 },
+  { key: 'medium', label: 'Medium', sample: 15 },
+  { key: 'large',  label: 'Large',  sample: 18 },
+];
 
 export default function ProfileScreen() {
-  const colors   = useThemeColors();
-  const user     = useAuthStore((s) => s.user);
-  const signOut  = useAuthStore((s) => s.signOut);
+  const colors = useThemeColors();
+  const t = useTypography();
+  const user = useAuthStore((s) => s.user);
+  const step = useAuthStore((s) => s.step);
+  const signOut = useAuthStore((s) => s.signOut);
+  const isGuest = step === 'guest';
+  const isLoggedIn = step === 'authenticated';
   const progress = useProgressStore((s) => s.progress);
-  const { isDesktop, contentContainerWeb } = useWebLayout();
+  const accent             = useThemeStore((s) => s.accent);
+  const setAccent          = useThemeStore((s) => s.setAccent);
+  const animationsEnabled    = useThemeStore((s) => s.animationsEnabled);
+  const setAnimationsEnabled = useThemeStore((s) => s.setAnimationsEnabled);
+  const fontSizePreset       = useThemeStore((s) => s.fontSizePreset);
+  const setFontSizePreset    = useThemeStore((s) => s.setFontSizePreset);
+  const initials = isGuest ? '?' : (user?.name?.charAt(0)?.toUpperCase() ?? 'K');
+  const platformConfig = usePlatformConfigStore((s) => s.config);
+  const isAdmin = (user?.role ?? '').toLowerCase() === 'admin';
+  const [referral, setReferral] = React.useState<ReferralInfo | null>(null);
+  // Account deletion state
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = React.useState('');
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState('');
 
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out', style: 'destructive',
-        onPress: () => { signOut(); router.replace('/(auth)/login'); },
-      },
-    ]);
+  React.useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const base = AppConfig.web.baseUrl.replace(/\/$/, '');
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(`${base}/api/referral`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        const body = await res.json() as { ok: boolean; code?: string; referredCount?: number; coinsEarned?: number };
+        if (body.ok && body.code) {
+          setReferral({ code: body.code, referredCount: body.referredCount ?? 0, coinsEarned: body.coinsEarned ?? 0 });
+        }
+      } catch { /* non-fatal — network error or timeout */ }
+    })();
+  }, []);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setDeleteError('Session expired. Please sign in again.');
+        setDeleteLoading(false);
+        return;
+      }
+      const base = AppConfig.web.baseUrl.replace(/\/$/, '');
+      const res = await fetch(`${base}/api/account/delete`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const body = await res.json() as { ok: boolean; error?: string };
+      if (!body.ok) {
+        setDeleteError(body.error ?? 'Deletion failed. Please try again.');
+        setDeleteLoading(false);
+        return;
+      }
+      // Sign out and navigate to login
+      await signOut();
+    } catch {
+      setDeleteError('An unexpected error occurred. Please try again.');
+      setDeleteLoading(false);
+    }
   };
 
-  const initials  = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
-  const isPremium = user?.subscription === 'premium';
-
-  const level      = progress.level ?? 1;
-  const levelName  = LEVEL_NAMES[level - 1] ?? 'Novice';
-  const xpInfo     = xpToNextLevel(progress.xp ?? 0, level);
-  const xpProgress = xpInfo.needed > 0 ? xpInfo.current / xpInfo.needed : 1;
-
-  const stats = [
-    {
-      icon: 'check-square', label: 'Quizzes',
-      value: progress.completedQuizzes,
-      color: colors.primary,
-      bg: colors.primaryLight,
-    },
-    {
-      icon: 'trending-up', label: 'Avg Score',
-      value: `${progress.averageScore}%`,
-      color: colors.success,
-      bg: colors.success + '22',
-    },
-    {
-      icon: 'zap', label: 'Coins',
-      value: (progress.coins ?? 0).toLocaleString(),
-      color: colors.warning,
-      bg: colors.warning + '22',
-    },
-    {
-      icon: 'award', label: 'Badges',
-      value: progress.badges.length,
-      color: '#EA5455',
-      bg: '#EA545522',
-    },
-  ];
+  const handleShareReferral = async () => {
+    if (!referral) return;
+    const base = AppConfig.web.baseUrl.replace(/\/$/, '');
+    const link = `${base}/signup?ref=${referral.code}`;
+    await Share.share({
+      message: `Join me on Katalyst for AWS & GenAI cert prep! Use my referral code ${referral.code}: ${link}`,
+      url: link,
+    }).catch(() => {});
+  };
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
-      <ScrollView contentContainerStyle={[styles.scroll, contentContainerWeb as any]}>
-
-        {/* ── Profile Header ── */}
-        <View style={styles.headerCard}>
-          {/* Banner */}
-          <LinearGradient
-            colors={[colors.gradientFrom, colors.gradientTo, colors.gradientAccent]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerBanner}
-          />
-
-          {/* Avatar */}
-          <View style={[styles.avatarRing, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.profileTop}>
+          <View style={[styles.avatarWrap, { borderColor: colors.surfaceBorder }]}>
             <View style={[styles.avatarInner, { backgroundColor: colors.primaryLight }]}>
-              <Text style={[styles.avatarInitial, { color: colors.primary }]}>{initials}</Text>
+              <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
+            </View>
+            <View style={[styles.editBadge, { backgroundColor: colors.primary }]}>
+              <Feather name="edit-2" size={12} color={colors.surface} />
             </View>
           </View>
-
-          {/* Body */}
-          <View style={[styles.headerBody, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[styles.userName, { color: colors.text }]}>{user?.name ?? 'User'}</Text>
-            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email ?? ''}</Text>
-            <View style={styles.badgeWrap}>
-              <Badge
-                label={isPremium ? 'Premium' : 'Free Plan'}
-                color={isPremium ? colors.aws : undefined}
-                size="md"
-              />
-              <View style={[styles.levelBadge, { backgroundColor: colors.primaryLight }]}>
-                <Text style={[styles.levelBadgeText, { color: colors.primary }]}>
-                  Lv.{level} · {levelName}
-                </Text>
-              </View>
-            </View>
-            {/* XP Progress */}
-            <View style={styles.xpWrap}>
-              <View style={styles.xpRow}>
-                <Text style={[styles.xpLabel, { color: colors.textSecondary }]}>XP Progress</Text>
-                <Text style={[styles.xpLabel, { color: colors.primary }]}>
-                  {xpInfo.current}/{xpInfo.needed}
-                </Text>
-              </View>
-              <ProgressBar progress={xpProgress} height={6} color={colors.primary} />
-            </View>
-          </View>
+          <Text style={[styles.profileName, { color: colors.text, fontSize: t.screenTitle }]}>
+            {isGuest ? 'Guest' : (user?.name ?? 'Katalyst learner')}
+          </Text>
+          <Text style={[styles.profileHandle, { color: colors.textSecondary, fontSize: t.body }]}>
+            {isGuest ? 'Exploring as guest' : `@${(user?.email ?? '').split('@')[0]}`}
+          </Text>
         </View>
 
-        {/* ── Quick Stats ── */}
-        <View style={styles.statsRow}>
-          {stats.map((s) => (
-            <View key={s.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <View style={[styles.statIconWrap, { backgroundColor: s.bg }]}>
-                <Feather name={s.icon as any} size={18} color={s.color} />
+        {/* ── Guest login prompt ──────────────────────────────────────── */}
+        {isGuest ? (
+          <View style={[styles.guestBanner, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '44' }]}>
+            <Feather name="user" size={18} color={colors.primary} />
+            <View style={styles.guestBannerText}>
+              <Text style={[styles.guestBannerTitle, { color: colors.text }]}>Save your progress</Text>
+              <Text style={[styles.guestBannerSub, { color: colors.textSecondary }]}>Sign in to track XP, streaks and quiz history across devices.</Text>
+            </View>
+            <Pressable
+              onPress={() => router.push('/(auth)/login' as any)}
+              accessibilityRole="button"
+              accessibilityLabel="Log in to Katalyst"
+              style={[styles.guestLoginBtn, { backgroundColor: colors.primary }]}
+            >
+              <Text style={[styles.guestLoginBtnText, { color: colors.surface }]}>Log In</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            onPress={handleShareReferral}
+            accessibilityRole="button"
+            accessibilityLabel="Share your profile"
+            style={[styles.shareButton, { borderColor: colors.gradientAccent }]}
+          >
+            <Text style={[styles.shareButtonText, { color: colors.text }]}>{EXPERIENCE_COPY.profile.shareCta}</Text>
+          </Pressable>
+        )}
+
+        {/* ── Live stats ────────────────────────────────────────────────── */}
+        {(() => {
+          const level = calculateLevel(progress.xp);
+          const levelName = LEVEL_NAMES[level - 1] ?? 'Novice';
+          const { current: xpCurrent, needed: xpNeeded } = xpToNextLevel(progress.xp, level);
+          const completedCount = new Set(progress.recentResults.map((r) => r.quizId)).size;
+          const avgScore = progress.recentResults.length > 0
+            ? Math.round(progress.recentResults.reduce((sum, r) => sum + (r.score / (r.totalQuestions || 1)) * 100, 0) / progress.recentResults.length)
+            : 0;
+          return (
+            <View style={[styles.statsGrid, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{progress.xp}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>XP</Text>
               </View>
-              <Text style={[styles.statNumber, { color: s.color }]}>{s.value}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{s.label}</Text>
+              <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>Lv {level}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{levelName}</Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{completedCount}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Quizzes</Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={styles.statCell}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{avgScore > 0 ? `${avgScore}%` : '—'}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Score</Text>
+              </View>
+              {xpNeeded > 0 ? (
+                <View style={[styles.xpBarWrap, { borderTopColor: colors.surfaceBorder }]}>
+                  <Text style={[styles.xpBarLabel, { color: colors.textSecondary }]}>{xpCurrent} / {xpNeeded} XP to Lv {level + 1}</Text>
+                  <View style={[styles.xpBarTrack, { backgroundColor: colors.backgroundAlt }]}>
+                    <View style={[styles.xpBarFill, { backgroundColor: colors.primary, width: `${Math.round((xpCurrent / xpNeeded) * 100)}%` }]} />
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          );
+        })()}
+
+        {isAdmin ? (
+          <Pressable onPress={() => router.push('/admin-settings' as any)} style={[styles.adminButton, { borderColor: colors.primary }]}>
+            <Feather name="tool" size={16} color={colors.primary} />
+            <Text style={[styles.adminButtonText, { color: colors.primary }]}>Admin mobile settings</Text>
+          </Pressable>
+        ) : null}
+
+        {referral ? (
+          <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Refer a Friend</Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
+              Earn coins when friends sign up with your code.
+            </Text>
+            <View style={styles.referralCodeRow}>
+              <Text style={[styles.referralCode, { color: colors.primary, borderColor: colors.surfaceBorder }]}>
+                {referral.code}
+              </Text>
+              <Pressable onPress={handleShareReferral} style={[styles.shareReferralBtn, { backgroundColor: colors.primary }]}>
+                <Feather name="share-2" size={14} color={colors.surface} />
+                <Text style={[styles.shareReferralText, { color: colors.surface }]}>Share</Text>
+              </Pressable>
+            </View>
+            <View style={styles.referralStats}>
+              <View>
+                <Text style={[styles.metricValue, { color: colors.text }]}>{referral.referredCount}</Text>
+                <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Friends referred</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={[styles.metricValue, { color: colors.warning }]}>{referral.coinsEarned} ⚡</Text>
+                <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Coins earned</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
+
+        {/* ── IAP / Subscription notice (P6-4) ────────────────────────────── */}
+        {/* TODO: Replace with Apple StoreKit / Google Play Billing before App Store submission */}
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Premium Subscription</Text>
+          <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
+            Premium subscriptions are managed through the App Store / Google Play.
+            Tap &quot;Restore Purchases&quot; if you&apos;ve already subscribed.
+          </Text>
+          <Pressable
+            onPress={() => Alert.alert(
+              'Restore Purchases',
+              'Coming soon — contact support@katalyst.app to restore your subscription.',
+              [{ text: 'OK', style: 'default' }],
+            )}
+            style={[styles.restoreBtn, { borderColor: colors.primary }]}
+          >
+            <Feather name="refresh-cw" size={14} color={colors.primary} />
+            <Text style={[styles.restoreBtnText, { color: colors.primary }]}>Restore Purchases</Text>
+          </Pressable>
+        </View>
+
+        <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          {[
+            { icon: 'bell',       label: 'Notifications',   badge: undefined, route: null },
+            { icon: 'award',      label: 'Leaderboard',                  route: '/leaderboard' as const },
+            { icon: 'zap',        label: 'Coin History',                 route: '/coin-history' as const },
+            { icon: 'book-open',  label: 'My library',                   route: '/(tabs)/bookmarks' as const },
+            { icon: 'shield',     label: 'Privacy Policy',               route: '/privacy' as const },
+            { icon: 'file-text',  label: 'Terms & Conditions',           route: '/terms' as const },
+            { icon: 'info',       label: 'About Us',                     route: '/about' as const },
+            { icon: 'help-circle',label: 'How To Play',                  route: '/instructions' as const },
+          ].map((item, index) => (
+            <View key={item.label}>
+              <Pressable
+                onPress={() => item.route && router.push(item.route as any)}
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+                style={styles.listRow}
+              >
+                <Feather name={item.icon as any} size={24} color={colors.text} />
+                <Text style={[styles.listLabel, { color: colors.text, fontSize: t.cardTitle }]}>{item.label}</Text>
+                {item.badge ? <View style={[styles.rowBadge, { backgroundColor: colors.primary }]}><Text style={[styles.rowBadgeText, { color: colors.surface }]}>{item.badge}</Text></View> : null}
+                <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+              </Pressable>
+              {index < 7 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
           ))}
         </View>
 
-        {/* ── Brand color picker ── */}
-        <ThemePicker colors={colors} />
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Streaks</Text>
+          <View style={styles.panelMetrics}>
+            <View>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{progress.currentStreak} days</Text>
+              <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Total</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{Math.max(0, 2 - Math.min(2, progress.currentStreak))} freezes</Text>
+              <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>Left</Text>
+            </View>
+          </View>
+        </View>
 
-        {/* ── Menus ── */}
-        <MenuSection title="ACCOUNT"      items={ACCOUNT_ITEMS} colors={colors} />
-        <MenuSection title="APP SETTINGS" items={SUPPORT_ITEMS} colors={colors} />
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Theme</Text>
 
-        {/* ── Sign Out ── */}
-        <View style={styles.signOutWrap}>
+          {/* Animations toggle */}
           <Pressable
-            onPress={handleSignOut}
-            style={({ pressed }) => [
-              styles.signOutBtn,
-              { borderColor: colors.error, opacity: pressed ? 0.8 : 1 },
-            ]}
+            onPress={() => setAnimationsEnabled(!animationsEnabled)}
+            accessibilityRole="switch"
+            accessibilityLabel="Animations"
+            accessibilityState={{ checked: animationsEnabled }}
+            style={[styles.prefRow, { borderColor: colors.surfaceBorder }]}
+          >
+            <View style={styles.prefRowLeft}>
+              <Feather name="zap" size={20} color={animationsEnabled ? colors.primary : colors.textSecondary} />
+              <View>
+                <Text style={[styles.prefLabel, { color: colors.text, fontSize: t.body }]}>Animations</Text>
+                <Text style={[styles.prefSub, { color: colors.textSecondary, fontSize: t.caption }]}>
+                  {animationsEnabled ? 'Smooth transitions enabled' : 'Instant transitions (reduced motion)'}
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.toggle, { backgroundColor: animationsEnabled ? colors.primary : colors.surfaceBorder }]}>
+              <View style={[styles.toggleThumb, { backgroundColor: colors.surface, transform: [{ translateX: animationsEnabled ? 14 : 2 }] }]} />
+            </View>
+          </Pressable>
+
+          {/* Font size selector */}
+          <View style={[styles.prefRow, { borderColor: colors.surfaceBorder }]}>
+            <View style={styles.prefRowLeft}>
+              <Feather name="type" size={20} color={colors.primary} />
+              <View>
+                <Text style={[styles.prefLabel, { color: colors.text, fontSize: t.body }]}>Text Size</Text>
+                <Text style={[styles.prefSub, { color: colors.textSecondary, fontSize: t.caption }]}>Affects quiz questions and answers</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.fontSizeRow}>
+            {FONT_SIZE_OPTIONS.map((opt) => {
+              const active = fontSizePreset === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => setFontSizePreset(opt.key)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${opt.label} text size`}
+                  accessibilityState={{ checked: active }}
+                  style={[styles.fontSizeBtn, {
+                    backgroundColor: active ? colors.primary        : colors.backgroundAlt,
+                    borderColor:     active ? colors.primary        : colors.surfaceBorder,
+                  }]}
+                >
+                  <Text style={[styles.fontSizeBtnSample, { color: active ? colors.surface : colors.text, fontSize: opt.sample }]}>Aa</Text>
+                  <Text style={[styles.fontSizeBtnLabel,  { color: active ? colors.surface : colors.textSecondary }]}>{opt.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.swatchGrid}>
+            {PRESETS.map((preset) => {
+              const item = ACCENT_PRESETS[preset];
+              const active = accent === preset;
+              return (
+                <Pressable
+                  key={preset}
+                  onPress={() => setAccent(preset)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${item.label} theme`}
+                  accessibilityState={{ checked: active }}
+                  style={[styles.swatchCard, { borderColor: active ? item.primary : colors.surfaceBorder, backgroundColor: active ? colors.backgroundAlt : 'transparent' }]}
+                >
+                  <LinearGradient colors={[item.gradientFrom, item.gradientTo]} style={styles.swatchBubble} />
+                  <Text style={[styles.swatchLabel, { color: colors.text }]}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        {isLoggedIn ? (
+          <Pressable
+            onPress={() => signOut()}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out of your account"
+            style={[styles.signOutButton, { borderColor: colors.error }]}
           >
             <Feather name="log-out" size={16} color={colors.error} />
             <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
           </Pressable>
+        ) : null}
+
+        {/* ── Danger Zone ────────────────────────────────────────────── */}
+        {isLoggedIn ? (
+        <View style={[styles.dangerZone, { borderColor: colors.error + '4D', backgroundColor: colors.surface }]}>
+          <Text style={[styles.dangerTitle, { color: colors.error }]}>Danger Zone</Text>
+          <Text style={[styles.dangerDesc, { color: colors.textSecondary }]}>
+            Deleting your account is permanent. All progress, quiz history, and profile data will be erased.
+          </Text>
+          {!showDeleteConfirm ? (
+            <Pressable
+              onPress={() => { setShowDeleteConfirm(true); setDeleteConfirmText(''); setDeleteError(''); }}
+              style={[styles.deleteBtn, { borderColor: colors.error }]}
+            >
+              <Feather name="trash-2" size={15} color={colors.error} />
+              <Text style={[styles.deleteBtnText, { color: colors.error }]}>Delete Account</Text>
+            </Pressable>
+          ) : (
+            <View style={{ gap: 10 }}>
+              <Text style={{ fontFamily: F.regular, fontSize: 13, color: colors.error, lineHeight: 18 }}>
+                Type DELETE to confirm permanent account deletion.
+              </Text>
+              <TextInput
+                value={deleteConfirmText}
+                onChangeText={setDeleteConfirmText}
+                placeholder="Type DELETE"
+                placeholderTextColor={colors.textSecondary}
+                style={[styles.deleteInput, { borderColor: deleteConfirmText === 'DELETE' ? colors.error : colors.surfaceBorder, color: colors.text, backgroundColor: colors.backgroundAlt }]}
+                autoCapitalize="characters"
+              />
+              {deleteError ? <Text style={{ fontFamily: F.regular, fontSize: 12, color: colors.error }}>{deleteError}</Text> : null}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Pressable
+                  onPress={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
+                  style={[styles.deleteConfirmBtn, { backgroundColor: deleteConfirmText === 'DELETE' ? colors.error : colors.surfaceBorder }]}
+                >
+                  <Text style={[styles.deleteConfirmText, { color: colors.surface, opacity: deleteConfirmText === 'DELETE' ? 1 : 0.5 }]}>
+                    {deleteLoading ? 'Deleting…' : 'Confirm Delete'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); setDeleteError(''); }}
+                  style={[styles.cancelBtn, { borderColor: colors.surfaceBorder }]}
+                >
+                  <Text style={[styles.cancelBtnText, { color: colors.text }]}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
         </View>
-
-
-        {/* ── Version ── */}
-        <Text style={[styles.version, { color: colors.textSecondary }]}>Katalyst v1.0.0 · KataHQ</Text>
-
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1 },
-  scroll: { paddingBottom: 48 },
-
-  /* ── Header ── */
-  headerCard: {
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  headerBanner: {
-    width: '100%',
-    height: BANNER_H,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  avatarRing: {
-    width: AVATAR_RING,
-    height: AVATAR_RING,
-    borderRadius: AVATAR_RING / 2,
-    marginTop: -(AVATAR_RING / 2),
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  avatarInner: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    fontFamily: F.bold,
-    fontSize: 30,
-  },
-  headerBody: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    borderWidth: 1,
-    borderTopWidth: 0,
-  },
-  userName: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    marginBottom: 2,
-  },
-  userEmail: {
-    fontFamily: F.regular,
-    fontSize: 13,
-  },
-  badgeWrap: {
-    marginTop: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  levelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  levelBadgeText: {
-    fontFamily: F.semiBold,
-    fontSize: 12,
-  },
-  xpWrap: {
-    marginTop: 12,
-    width: '100%',
-    gap: 6,
-  },
-  xpRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  xpLabel: {
-    fontFamily: F.medium,
-    fontSize: 12,
-  },
-
-  /* ── Stats ── */
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginHorizontal: 20,
-    marginBottom: 24,
-  },
-  statCard: {
-    width: '47%',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  statIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  statNumber: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  statLabel: {
-    fontFamily: F.medium,
-    fontSize: 11,
-    marginTop: 2,
-  },
-
-  /* ── Menu ── */
-  menuSection: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    fontFamily: F.semiBold,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    marginBottom: 6,
-    marginLeft: 4,
-  },
-  menuCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    gap: 12,
-  },
-  menuIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuLabel: {
-    flex: 1,
-    fontFamily: F.medium,
-    fontSize: 14,
-  },
-  divider: {
-    height: 1,
-    marginLeft: 58,
-  },
-
-  /* ── Theme picker ── */
-  themeCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  darkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    borderBottomWidth: 1,
-  },
-  toggleTrack: {
-    width: 42,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-  },
-  toggleThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  themeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    padding: 14,
-  },
-  themeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  themeCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeLabel: {
-    fontFamily: F.medium,
-    fontSize: 12,
-  },
-
-  /* ── Sign out ── */
-  signOutWrap: {
-    marginHorizontal: 20,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  signOutText: {
-    fontFamily: F.semiBold,
-    fontSize: 15,
-  },
-
-  /* ── Dev row ── */
-  devRow: {
-    marginTop: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-  },
-  devText: {
-    fontFamily: F.medium,
-    fontSize: 13,
-  },
-  devBadge: {
-    borderRadius: 99,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  devBadgeText: {
-    fontFamily: F.bold,
-    fontSize: 10,
-  },
-
-  /* ── Version ── */
-  version: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 4,
-  },
+  safeArea: { flex: 1 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 14 },
+  profileTop: { alignItems: 'center', gap: 7 },
+  avatarWrap: { width: 120, height: 120, borderRadius: 60, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  avatarInner: { width: 110, height: 110, borderRadius: 55, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontFamily: F.bold, fontSize: 42 },
+  editBadge: { position: 'absolute', right: 4, top: 4, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  profileName: { fontFamily: F.bold, fontSize: 24, lineHeight: 30 },
+  profileHandle: { fontFamily: F.medium, fontSize: 14 },
+  guestBanner: { borderWidth: 1, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  guestBannerText: { flex: 1, gap: 3 },
+  guestBannerTitle: { fontFamily: F.bold, fontSize: 14 },
+  guestBannerSub: { fontFamily: F.regular, fontSize: 12, lineHeight: 17 },
+  guestLoginBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+  guestLoginBtnText: { fontFamily: F.bold, fontSize: 13 },
+  shareButton: { minHeight: 42, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  shareButtonText: { fontFamily: F.bold, fontSize: 14 },
+  offerCard: { borderWidth: 1, borderRadius: 16, padding: 12, minHeight: 90, justifyContent: 'center', gap: 5, overflow: 'hidden' },
+  offerTitle: { fontFamily: F.bold, fontSize: 17 },
+  offerSubtitle: { fontFamily: F.bold, fontSize: 14 },
+  offerArrow: { position: 'absolute', right: 12, top: 12, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  listCard: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  listLabel: { fontFamily: F.semiBold, fontSize: 15, flex: 1 },
+  rowBadge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  rowBadgeText: { fontFamily: F.bold, fontSize: 12 },
+  divider: { height: 1, marginHorizontal: 14 },
+  panel: { borderWidth: 1, borderRadius: 16, padding: 12, gap: 12 },
+  panelTitle: { fontFamily: F.bold, fontSize: 17 },
+  panelMetrics: { flexDirection: 'row', justifyContent: 'space-between' },
+  metricValue: { fontFamily: F.bold, fontSize: 20 },
+  metricLabel: { fontFamily: F.regular, fontSize: 12, marginTop: 3 },
+  swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  swatchCard: { width: '31%', borderWidth: 1, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center', gap: 5 },
+  swatchBubble: { width: 26, height: 26, borderRadius: 13 },
+  swatchLabel: { fontFamily: F.medium, fontSize: 10, textAlign: 'center' },
+  signOutButton: { borderWidth: 1.5, borderRadius: 12, minHeight: 42, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  dangerZone: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
+  dangerTitle: { fontFamily: F.bold, fontSize: 15 },
+  dangerDesc: { fontFamily: F.regular, fontSize: 13, lineHeight: 18 },
+  deleteBtn: { borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
+  deleteBtnText: { fontFamily: F.bold, fontSize: 13 },
+  deleteInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: F.regular, fontSize: 14 },
+  deleteConfirmBtn: { flex: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  deleteConfirmText: { fontFamily: F.bold, fontSize: 13 },
+  cancelBtn: { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  cancelBtnText: { fontFamily: F.bold, fontSize: 13 },
+  adminButton: { borderWidth: 1.5, borderRadius: 12, minHeight: 42, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  adminButtonText: { fontFamily: F.bold, fontSize: 13 },
+  signOutText: { fontFamily: F.bold, fontSize: 13 },
+  // Preferences
+  prefRow:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10, gap: 10 },
+  prefRowLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  prefLabel:    { fontFamily: F.semiBold, fontSize: 14 },
+  prefSub:      { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
+  toggle:       { width: 36, height: 22, borderRadius: 11, justifyContent: 'center' },
+  toggleThumb:  { width: 18, height: 18, borderRadius: 9 },
+  // IAP / Restore
+  restoreBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, alignSelf: 'flex-start', marginTop: 8 },
+  restoreBtnText:  { fontFamily: 'PublicSans-Bold', fontSize: 13 },
+  // Referral
+  referralCodeRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  referralCode:      { fontFamily: 'PublicSans-Bold', fontSize: 20, letterSpacing: 4, borderWidth: 1, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 6 },
+  shareReferralBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  shareReferralText: { fontFamily: 'PublicSans-Bold', fontSize: 13 },
+  referralStats:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  // Stats grid
+  statsGrid:   { borderWidth: 1, borderRadius: 16, padding: 14, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+  statCell:    { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4 },
+  statValue:   { fontFamily: F.bold, fontSize: 18, lineHeight: 22 },
+  statLabel:   { fontFamily: F.medium, fontSize: 11 },
+  statDivider: { width: 1, height: 36, alignSelf: 'center' },
+  xpBarWrap:   { width: '100%', marginTop: 12, paddingTop: 12, borderTopWidth: 1, gap: 6 },
+  xpBarLabel:  { fontFamily: F.medium, fontSize: 11, textAlign: 'center' },
+  xpBarTrack:  { height: 6, borderRadius: 999, overflow: 'hidden' },
+  xpBarFill:   { height: '100%', borderRadius: 999 },
+  // Font size
+  fontSizeRow:       { flexDirection: 'row', gap: 8 },
+  fontSizeBtn:       { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, gap: 3 },
+  fontSizeBtnSample: { fontFamily: 'PublicSans-Bold' },
+  fontSizeBtnLabel:  { fontFamily: 'PublicSans-Medium', fontSize: 10 },
 });

@@ -3,6 +3,8 @@
 > **This is the single source of truth for all AI-assisted development on this project. Every rule here is a hard constraint — not a suggestion. Last validated: February 2026 against Expo SDK 54 + React Native 0.81 + React 19.1.**
 > ⚠️ **April 28, 2026 deadline:** All App Store submissions must use Xcode 26 + iOS 26 SDK. See §12.4a.
 
+> **Operational note (March 2026):** Quiz premium/free state is no longer hardcoded-only. Admin overrides live in `app_settings.key = quiz_catalog_overrides` and must be respected by both the web dashboard and the mobile app before changing any quiz gating logic.
+
 ***
 
 ## 🏗️ Project Overview

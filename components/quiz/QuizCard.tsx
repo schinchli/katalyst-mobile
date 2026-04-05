@@ -1,15 +1,9 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Badge } from '@/components/ui/Badge';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 import type { Quiz } from '@/types';
-
-const DIFF_COLOR: Record<string, string> = {
-  beginner:     '#28C76F',
-  intermediate: '#FF9F43',
-  advanced:     '#EA5455',
-};
+import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -18,9 +12,14 @@ interface QuizCardProps {
 
 export function QuizCard({ quiz, onPress }: QuizCardProps) {
   const colors  = useThemeColors();
-  const accent  = DIFF_COLOR[quiz.difficulty] ?? colors.primary;
+  const accent =
+    quiz.difficulty === 'beginner' ? colors.success
+    : quiz.difficulty === 'intermediate' ? colors.warning
+    : quiz.difficulty === 'advanced' ? colors.error
+    : colors.primary;
   const badgeBg = accent + '18';
   const iconBg  = accent + '22';
+  const playableQuestionCount = getPlayableQuestionCount(quiz);
 
   return (
     <Pressable
@@ -47,7 +46,6 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
           <Text style={[s.title, { color: colors.text }]} numberOfLines={1}>
             {quiz.title}
           </Text>
-          {quiz.isPremium && <Badge label="PRO" color={colors.aws} size="sm" />}
         </View>
 
         <Text style={[s.desc, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -64,7 +62,7 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
           <View style={s.meta}>
             <Feather name="help-circle" size={12} color={colors.textSecondary} />
             <Text style={[s.metaText, { color: colors.textSecondary }]}>
-              {quiz.questionCount}q
+              {playableQuestionCount}q
             </Text>
           </View>
           <View style={s.meta}>
@@ -73,6 +71,12 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
               {quiz.duration}m
             </Text>
           </View>
+          {quiz.isPremium ? (
+            <View style={s.meta}>
+              <Feather name="lock" size={12} color={colors.textSecondary} />
+              <Text style={[s.metaText, { color: colors.textSecondary }]}>Premium</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -88,13 +92,13 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
-    marginBottom: 10,
+    marginBottom: 12,
     overflow: 'hidden',
     shadowColor: '#4B465C',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    shadowOpacity: 0.09,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   cardPressed: { opacity: 0.88, transform: [{ scale: 0.99 }] },
 
@@ -104,24 +108,24 @@ const s = StyleSheet.create({
   },
 
   iconWrap: {
-    width: 46,
-    height: 46,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 14,
+    marginLeft: 15,
     flexShrink: 0,
   },
 
   content: {
     flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 13,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
   },
 
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 6,
     marginBottom: 3,
   },
@@ -135,14 +139,14 @@ const s = StyleSheet.create({
   desc: {
     fontFamily: F.regular,
     fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 8,
+    lineHeight: 18,
+    marginBottom: 9,
   },
 
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 9,
   },
   diffBadge: {
     flexDirection: 'row',
@@ -172,12 +176,12 @@ const s = StyleSheet.create({
   },
 
   chevronWrap: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 15,
     flexShrink: 0,
   },
 });

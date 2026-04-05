@@ -27,10 +27,15 @@ interface AuthState {
   isLoading: boolean;
   step: AuthStep;
   pendingEmail: string;
+  /** True if this user has purchased the "remove ads" entitlement */
+  adsRemoved: boolean;
+  /** Cleanup fn returned by onAuthStateChange — called before sign-out to prevent listener accumulation */
+  _authUnsubscribe: (() => void) | null;
 
   initAuth: () => Promise<void>;
   signInUser: (email: string, password: string) => Promise<void>;
   signUpUser: (name: string, email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   confirmEmail: (email: string, code: string) => Promise<void>;
   resendCode: (email: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -60,10 +65,12 @@ async function buildUserFromSession(): Promise<User | null> {
 
   const sbUser = session.user;
 
-  // Fetch profile name from user_profiles
+  // Fetch profile name + ads_removed from user_profiles
+  // DB migration required:
+  // ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS ads_removed boolean DEFAULT false;
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('name, role')
+    .select('name, role, ads_removed')
     .eq('id', sbUser.id)
     .single();
 
@@ -96,6 +103,7 @@ async function buildUserFromSession(): Promise<User | null> {
     id:              sbUser.id,
     email:           sbUser.email ?? '',
     name:            profile?.name ?? sbUser.user_metadata?.name ?? sbUser.email?.split('@')[0] ?? 'User',
+    role:            profile?.role ?? 'Student',
     subscription,
     unlockedCourses,
     createdAt:       sbUser.created_at ?? new Date().toISOString(),
@@ -110,14 +118,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
   step: 'idle',
   pendingEmail: '',
+  adsRemoved: false,
+  _authUnsubscribe: null,
 
   initAuth: async () => {
+    // Unsubscribe any existing listener before registering a new one,
+    // preventing duplicate callbacks if initAuth is ever called more than once.
+    get()._authUnsubscribe?.();
+
     set({ isLoading: true });
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const user = await buildUserFromSession();
-        if (user) set({ user, isAuthenticated: true, step: 'authenticated', isLoading: false });
+        if (user) {
+          const { data: pRow } = await supabase.from('user_profiles').select('ads_removed').eq('id', session.user.id).maybeSingle();
+          const adsRemoved = (pRow as { ads_removed?: boolean } | null)?.ads_removed ?? false;
+          set({ user, isAuthenticated: true, step: 'authenticated', isLoading: false, adsRemoved });
+        }
       } else {
         const guest = await SecureStore.getItemAsync('auth_guest').catch(() => null);
         if (guest === 'true') {
@@ -127,6 +145,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
     });
+
+    set({ _authUnsubscribe: () => subscription.unsubscribe() });
 
     try {
       const user = await buildUserFromSession();
@@ -164,6 +184,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ step: 'confirm_signup', pendingEmail: email });
   },
 
+  signInWithGoogle: async () => {
+    const { error, data } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) throw new Error(error.message);
+    // For mobile, Supabase handles redirect; session listener in initAuth will pick up user.
+    if (!data) throw new Error('Redirect to Google failed');
+  },
+
   confirmEmail: async (email, code) => {
     const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
     if (error) throw new Error(error.message);
@@ -188,6 +217,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOutUser: async () => {
+    get()._authUnsubscribe?.();
     try {
       await supabase.auth.signOut();
       await SecureStore.deleteItemAsync('auth_guest');
@@ -196,7 +226,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // best-effort cleanup
     }
-    set({ user: null, isAuthenticated: false, step: 'idle' });
+    set({ user: null, isAuthenticated: false, step: 'idle', _authUnsubscribe: null });
   },
 
   setGuestUser: () => {
@@ -207,18 +237,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   upgradeToPremium: async (plan?: string) => {
     const current = get().user;
     if (!current) return;
+    const previousSubscription = current.subscription;
+    // Optimistic update
     set({ user: { ...current, subscription: 'premium' } });
     await SecureStore.setItemAsync('auth_subscription', 'premium').catch(() => {});
-    // Write to subscriptions table (and profiles via trigger)
-    await saveSubscription(current.id, 'premium', plan).catch(() => {});
-    // Record purchase audit
-    if (plan) {
-      await recordPurchase(current.id, {
-        purchaseType: 'subscription',
-        plan,
-        amount: plan === 'annual' ? 999 : 149,
-        date: new Date().toISOString(),
-      }).catch(() => {});
+    try {
+      // Write to subscriptions table (critical — rollback on failure)
+      await saveSubscription(current.id, 'premium', plan);
+      // Record purchase audit (non-critical — swallow errors)
+      if (plan) {
+        await recordPurchase(current.id, {
+          purchaseType: 'subscription',
+          plan,
+          amount: plan === 'annual' ? 999 : 149,
+          date: new Date().toISOString(),
+        }).catch(() => {});
+      }
+    } catch {
+      // DB write failed — rollback optimistic state
+      set({ user: { ...get().user!, subscription: previousSubscription } });
+      await SecureStore.deleteItemAsync('auth_subscription').catch(() => {});
+      throw new Error('Failed to activate subscription. Please try again.');
     }
   },
 
@@ -247,7 +286,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setLoading: (isLoading) => set({ isLoading }),
   // Optimistic logout: clear state immediately for instant UX, then clean up async resources
   signOut: () => {
-    set({ user: null, isAuthenticated: false, step: 'idle', isLoading: false });
+    get()._authUnsubscribe?.();
+    set({ user: null, isAuthenticated: false, step: 'idle', isLoading: false, _authUnsubscribe: null });
     Promise.all([
       supabase.auth.signOut(),
       SecureStore.deleteItemAsync('auth_guest').catch(() => {}),

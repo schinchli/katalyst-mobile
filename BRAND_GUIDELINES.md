@@ -39,7 +39,7 @@ These never change regardless of accent preset:
 | Warning | `#FF9F43` | Intermediate level, coins, timers |
 | Error / Danger | `#FF4C51` | Incorrect answers, fail state |
 | Info | `#00BAD1` | Informational states |
-| AWS Orange | `#FF9900` | AWS brand elements, PRO badges |
+| AWS Orange | `#FF9900` | AWS brand elements and gated access accents |
 
 ### 2.3 Light Mode Base (locked)
 

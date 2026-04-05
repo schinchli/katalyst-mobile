@@ -3,23 +3,27 @@ import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable, Styl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useWebLayout } from '@/hooks/useWebLayout';
 import { F } from '@/constants/Typography';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 
 export default function LoginScreen() {
-  const colors          = useThemeColors();
-  const signInUser      = useAuthStore((s) => s.signInUser);
-  const setGuestUser    = useAuthStore((s) => s.setGuestUser);
-  const [email, setEmail]       = useState('');
+  const colors = useThemeColors();
+  const signInUser = useAuthStore((s) => s.signInUser);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
+  const setGuestUser = useAuthStore((s) => s.setGuestUser);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { isDesktop } = useWebLayout();
+  const platformConfig = usePlatformConfigStore((s) => s.config);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -30,10 +34,8 @@ export default function LoginScreen() {
     setError('');
     try {
       await signInUser(email.trim().toLowerCase(), password);
-      // AuthGuard in _layout.tsx handles the redirect once isAuthenticated flips
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign in failed';
-      // If user needs to verify email, navigate to verify screen
       if (msg.toLowerCase().includes('verify') || msg.toLowerCase().includes('confirm')) {
         router.push({ pathname: '/(auth)/verify', params: { email: email.trim().toLowerCase() } });
       } else {
@@ -46,88 +48,69 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView
-          contentContainerStyle={[styles.scroll, isDesktop && styles.scrollDesktop]}
-          keyboardShouldPersistTaps="handled"
-        >
-
-          {/* ── Logo / Header card ──────────────────────── */}
-          <View style={styles.logoCard}>
-            <View style={styles.iconWrap}>
-              <Feather name="cloud" size={38} color="#FFFFFF" />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.root}>
+        <ScrollView contentContainerStyle={[styles.scroll, isDesktop && styles.scrollDesktop]} keyboardShouldPersistTaps="handled">
+          <LinearGradient colors={[colors.background, colors.backgroundAlt, colors.surface]} style={[styles.hero, { borderColor: colors.surfaceBorder }]}>
+            <View style={[styles.languageChip, { backgroundColor: colors.surfaceElevated, borderColor: colors.surfaceBorder }]}>
+              <Feather name="globe" size={16} color={colors.primary} />
+              <Text style={[styles.languageText, { color: colors.text }]}>EN</Text>
             </View>
-            <Text style={styles.logoTitle}>Katalyst</Text>
-            <Text style={styles.logoSubtitle}>
-              AWS Certified GenAI Developer — Professional
-            </Text>
-          </View>
+            <View style={styles.heroBrand}>
+              <Text style={[styles.heroTitle, { color: colors.text }]}>{platformConfig.copy.authHeadline}</Text>
+              <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>{platformConfig.copy.authSubheadline}</Text>
+            </View>
+            <View style={styles.heroHighlights}>
+              {EXPERIENCE_COPY.auth.highlights.map((item) => (
+                <View key={item} style={[styles.highlightPill, { backgroundColor: colors.surfaceElevated, borderColor: colors.surfaceBorder }]}>
+                  <Feather name="check" size={13} color={colors.primary} />
+                  <Text style={[styles.highlightText, { color: colors.text }]}>{item}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={[styles.socialProof, { color: colors.textSecondary }]}>{EXPERIENCE_COPY.auth.socialProof}</Text>
+            <LinearGradient colors={[colors.primary, colors.gradientAccent, colors.error]} style={styles.wave} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} />
+          </LinearGradient>
 
-          {/* ── Form ────────────────────────────────────── */}
           <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[styles.formHeading, { color: colors.text }]}>Welcome back</Text>
-            <Text style={[styles.formSubheading, { color: colors.textSecondary }]}>Sign in to continue</Text>
+            <Text style={[styles.formHeading, { color: colors.text }]}>{EXPERIENCE_COPY.auth.loginTitle}</Text>
+            <Text style={[styles.formSubheading, { color: colors.textSecondary }]}>{EXPERIENCE_COPY.auth.loginSubtitle}</Text>
 
             <View style={styles.fields}>
-              <Input
-                label="Email"
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
-              <Input
-                label="Password"
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoComplete="password"
-              />
+              <Input label="Email" placeholder="you@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
+              <Input label="Password" placeholder="Enter your password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
             </View>
 
-            {/* Forgot password */}
-            <Pressable
-              onPress={() => router.push('/(auth)/forgot-password')}
-              style={styles.forgotRow}
-            >
+            <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotRow}>
               <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot password?</Text>
             </Pressable>
 
             {error ? (
-              <View style={styles.errorWrap}>
-                <Feather name="alert-circle" size={14} color="#EA5455" />
-                <Text style={styles.errorText}>{error}</Text>
+              <View style={[styles.errorWrap, { backgroundColor: colors.error + '20', borderColor: colors.error + '40' }]}>
+                <Feather name="alert-circle" size={15} color={colors.error} />
+                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
               </View>
             ) : null}
 
-            <Button title="Sign In" onPress={handleLogin} loading={loading} size="lg" style={styles.signInBtn} />
+            <Button title="Log In" onPress={handleLogin} loading={loading} size="lg" style={styles.primaryBtn} />
+            <Pressable
+              onPress={signInWithGoogle}
+              style={({ pressed }) => [styles.secondaryBtn, { borderColor: colors.surfaceBorder, backgroundColor: colors.backgroundAlt, opacity: pressed ? 0.9 : 1 }]}
+            >
+              <Feather name="globe" size={18} color={colors.text} />
+              <Text style={[styles.secondaryBtnText, { color: colors.text }]}>Continue with Google</Text>
+            </Pressable>
 
-            <View style={styles.signUpRow}>
-              <Text style={[styles.signUpPrompt, { color: colors.textSecondary }]}>Don't have an account?</Text>
+            <View style={styles.footerRow}>
+              <Text style={[styles.footerPrompt, { color: colors.textSecondary }]}>Don&apos;t have an account?</Text>
               <Pressable onPress={() => router.push('/(auth)/signup')}>
-                <Text style={[styles.signUpLink, { color: colors.primary }]}>Sign Up</Text>
+                <Text style={[styles.footerLink, { color: colors.primary }]}>Sign Up</Text>
               </Pressable>
             </View>
           </View>
 
-          {/* ── Separator ───────────────────────────────── */}
-          <View style={styles.separatorRow}>
-            <View style={[styles.separatorLine, { backgroundColor: colors.surfaceBorder }]} />
-            <Text style={[styles.separatorText, { color: colors.textSecondary }]}>or</Text>
-            <View style={[styles.separatorLine, { backgroundColor: colors.surfaceBorder }]} />
-          </View>
-
-          {/* ── Guest skip ──────────────────────────────── */}
-          <Pressable
-            onPress={() => setGuestUser()}
-            style={({ pressed }) => [styles.guestBtn, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Text style={[styles.guestText, { color: colors.textSecondary }]}>Skip — Continue as Guest</Text>
+          <Pressable onPress={() => setGuestUser()} style={styles.guestBtn}>
+            <Text style={[styles.guestText, { color: colors.textSecondary }]}>Continue as guest</Text>
           </Pressable>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -135,130 +118,34 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1 },
-  flex:   { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
-    justifyContent: 'center',
-  },
-  scrollDesktop: {
-    maxWidth: 440,
-    alignSelf: 'center',
-    width: '100%',
-  },
-
-  /* ── Logo card ── */
-  logoCard: {
-    backgroundColor: '#7367F0',
-    borderRadius: 20,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#7367F0',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  logoTitle: {
-    fontFamily: F.bold,
-    fontSize: 28,
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  logoSubtitle: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 4,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-
-  /* ── Form card ── */
-  formCard: {
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    shadowColor: '#4B465C',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  formHeading: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    marginBottom: 2,
-  },
-  formSubheading: {
-    fontFamily: F.regular,
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  fields: {
-    gap: 14,
-  },
-  forgotRow: {
-    alignSelf: 'flex-end',
-    marginTop: 8,
-  },
-  forgotText: {
-    fontFamily: F.medium,
-    fontSize: 13,
-  },
-  errorWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-    backgroundColor: '#EA545520',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  errorText: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    color: '#EA5455',
-    flex: 1,
-  },
-  signInBtn: {
-    marginTop: 20,
-  },
-  signUpRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 16,
-  },
-  signUpPrompt: { fontFamily: F.regular, fontSize: 14 },
-  signUpLink:   { fontFamily: F.semiBold, fontSize: 14 },
-
-  /* ── Separator ── */
-  separatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    gap: 10,
-  },
-  separatorLine: { flex: 1, height: 1 },
-  separatorText: { fontFamily: F.medium, fontSize: 13 },
-
-  /* ── Guest ── */
-  guestBtn: { alignItems: 'center', paddingVertical: 12 },
+  root: { flex: 1 },
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 24, gap: 18 },
+  scrollDesktop: { maxWidth: 460, width: '100%', alignSelf: 'center' },
+  hero: { borderRadius: 28, borderWidth: 1, padding: 24, gap: 18, overflow: 'hidden' },
+  languageChip: { alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8 },
+  languageText: { fontFamily: F.bold, fontSize: 14 },
+  heroBrand: { gap: 10 },
+  heroTitle: { fontFamily: F.bold, fontSize: 38, lineHeight: 46, letterSpacing: -1.4 },
+  heroSubtitle: { fontFamily: F.regular, fontSize: 15, lineHeight: 24 },
+  heroHighlights: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  highlightPill: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  highlightText: { fontFamily: F.medium, fontSize: 13 },
+  socialProof: { fontFamily: F.medium, fontSize: 16 },
+  wave: { height: 4, borderRadius: 999, marginTop: 2 },
+  formCard: { borderRadius: 28, borderWidth: 1, padding: 22, gap: 14 },
+  formHeading: { fontFamily: F.bold, fontSize: 26 },
+  formSubheading: { fontFamily: F.regular, fontSize: 14, lineHeight: 22 },
+  fields: { gap: 12 },
+  forgotRow: { alignSelf: 'flex-end' },
+  forgotText: { fontFamily: F.semiBold, fontSize: 13 },
+  errorWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
+  errorText: { fontFamily: F.medium, fontSize: 13, flex: 1 },
+  primaryBtn: { marginTop: 2 },
+  secondaryBtn: { minHeight: 52, borderWidth: 1, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
+  secondaryBtnText: { fontFamily: F.semiBold, fontSize: 15 },
+  footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 2 },
+  footerPrompt: { fontFamily: F.regular, fontSize: 14 },
+  footerLink: { fontFamily: F.semiBold, fontSize: 14 },
+  guestBtn: { alignItems: 'center', paddingVertical: 4 },
   guestText: { fontFamily: F.medium, fontSize: 14 },
 });

@@ -1,8 +1,11 @@
 # Expo
 .expo/
+.turbo/
 dist/
 web-build/
 expo-env.d.ts
+coverage/
+*.tsbuildinfo
 
 # Node
 node_modules/
@@ -21,16 +24,18 @@ yarn-error.*
 *.xcworkspace
 .xcode.env.local
 
-# iOS
-ios/Pods/
-ios/build/
-ios/.xcode.env.local
+# iOS (prebuild artifact — regenerate with: npx expo prebuild --platform ios)
+ios/
 
 # Android
+android/
 android/build/
 android/app/build/
 android/.gradle/
 android/local.properties
+credentials/*
+!credentials/.gitkeep
+google-play-service-account.json
 
 # macOS
 .DS_Store
@@ -43,3 +48,4 @@ android/local.properties
 
 # Build outputs
 *.log
+*-qr.png

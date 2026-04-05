@@ -23,7 +23,12 @@
         "backgroundColor": "#0F172A"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.awslearn.app"
+      "package": "com.awslearn.app",
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "versionCode": 32
     },
     "web": {
       "bundler": "metro",
@@ -32,7 +37,24 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-updates",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.facebook.hermes.** { *; }\n-keep class com.facebook.jni.** { *; }\n-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.gesturehandler.** { *; }\n-keep class com.th3rdwave.safeareacontext.** { *; }\n-dontwarn com.google.errorprone.annotations.**"
+          },
+          "ios": {
+            "deploymentTarget": "16.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -40,8 +62,16 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
-      }
+        "projectId": "db2edb2b-e3f3-4a88-84a9-8435c80db3f8"
+      },
+      "router": {}
+    },
+    "owner": "schinchli",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/db2edb2b-e3f3-4a88-84a9-8435c80db3f8"
     }
   }
 }

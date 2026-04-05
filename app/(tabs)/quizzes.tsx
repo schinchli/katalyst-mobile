@@ -1,347 +1,261 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useThemeStore } from '@/stores/themeStore';
+import { useTypography } from '@/hooks/useTypography';
 import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
-import type { QuizCategory, Quiz } from '@/types';
-import { useWebLayout } from '@/hooks/useWebLayout';
+import type { QuizCategory } from '@/types';
 import { F } from '@/constants/Typography';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
+import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
+import { getPlayableQuestionCount } from '@/utils/quizMetadata';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
 
 
-// ─── Difficulty filters ───────────────────────────────────────────────────────
-const difficulties: { key: 'all' | 'beginner' | 'intermediate' | 'advanced'; label: string }[] = [
-  { key: 'all',          label: 'All Levels' },
-  { key: 'beginner',     label: 'Beginner' },
-  { key: 'intermediate', label: 'Intermediate' },
-  { key: 'advanced',     label: 'Advanced' },
-];
-
-// ─── Domain filters ───────────────────────────────────────────────────────────
-const categories: { key: QuizCategory | 'all'; label: string }[] = [
-  { key: 'all',     label: 'All Domains' },
+const FILTERS: { key: QuizCategory | 'all'; label: string }[] = [
+  { key: 'all',     label: 'All'     },
+  { key: 'genai',   label: 'AI'      },
+  { key: 'bedrock', label: 'Bedrock' },
+  { key: 'security',label: 'Security'},
   { key: 'clf-c02', label: 'CLF-C02' },
+  { key: 'aip-c01', label: 'AIP-C01' },
 ];
 
-// ─── Course Card ──────────────────────────────────────────────────────────────
-function CourseCard({ quiz, onPress, completedIds }: { quiz: Quiz; onPress: () => void; completedIds: Set<string> }) {
-  const colors    = useThemeColors();
-  const completed = completedIds.has(quiz.id);
-
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Start ${quiz.title} quiz`}
-      style={({ pressed }) => [
-        s.courseCard,
-        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-        pressed && s.cardPressed,
-      ]}
-    >
-      {/* Header banner — neutral primary tint */}
-      <View style={[s.cardBanner, { backgroundColor: colors.primaryLight }]}>
-        {quiz.isPremium && (
-          <View style={[s.proBadge, { backgroundColor: colors.aws }]}>
-            <Text style={s.proBadgeText}>PRO</Text>
-          </View>
-        )}
-        {completed && (
-          <View style={[s.completedBadge, { backgroundColor: colors.success + '22', borderColor: colors.success + '55' }]}>
-            <Feather name="check-circle" size={11} color={colors.success} />
-            <Text style={[s.completedBadgeText, { color: colors.success }]}>Done</Text>
-          </View>
-        )}
-        <View style={[s.cardIconCircle, { backgroundColor: colors.primary + '28' }]}>
-          <Feather name={quiz.icon as any} size={28} color={colors.primary} />
-        </View>
-      </View>
-
-      {/* Body */}
-      <View style={s.cardBody}>
-        {/* Top content group */}
-        <View style={s.cardTop}>
-          <Text style={[s.cardTitle, { color: colors.text }]} numberOfLines={2}>{quiz.title}</Text>
-          <Text style={[s.cardDesc, { color: colors.textSecondary }]} numberOfLines={3}>{quiz.description}</Text>
-        </View>
-
-        {/* Start button — pinned to bottom */}
-        <View style={[s.startBtn, { backgroundColor: colors.primary }]}>
-          <Text style={s.startBtnText}>Start →</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
+function isSameLocalDay(isoDate: string, reference = new Date()) {
+  return new Date(isoDate).toDateString() === reference.toDateString();
 }
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
 export default function QuizzesScreen() {
   const colors = useThemeColors();
-  const { isDesktop, contentContainerWeb } = useWebLayout();
-  const [selectedCategory, setSelectedCategory] = useState<QuizCategory | 'all'>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
-  const results = useProgressStore((s) => s.progress.recentResults);
+  const t = useTypography();
+  const darkMode = useThemeStore((s) => s.darkMode);
+  const progress = useProgressStore((s) => s.progress);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<QuizCategory | 'all'>('all');
+  const completedIds = new Set(progress.recentResults.map((item) => item.quizId));
+  const platformConfig = usePlatformConfigStore((s) => s.config);
+  const systemFeatures = useSystemFeatureStore((s) => s.config);
+  const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
+  const dailyQuizCompleted = dailyQuiz
+    ? progress.recentResults.some((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    : false;
 
-  const completedIds = new Set(results.map((r) => r.quizId));
-
-  const filtered = quizzes.filter((q) => {
-    const catMatch  = selectedCategory === 'all' || q.category === selectedCategory;
-    const diffMatch = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
-    return catMatch && diffMatch;
-  });
-
-  const totalCategories = new Set(quizzes.map((q) => q.category)).size;
+  const visibleCourses = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return quizzes.filter((quiz) => {
+      if (quiz.enabled === false) return false;
+      const matchFilter = filter === 'all' || quiz.category === filter;
+      const matchQuery = normalized.length === 0 || quiz.title.toLowerCase().includes(normalized) || quiz.description.toLowerCase().includes(normalized);
+      return matchFilter && matchQuery;
+    });
+  }, [filter, query]);
+  const dailyQuizFilteredOut = Boolean(dailyQuiz && !visibleCourses.some((quiz) => quiz.id === dailyQuiz.id));
 
   return (
-    <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background }]} edges={isDesktop ? [] : ['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Explore</Text>
 
-      {/* ── Header ── */}
-      <View style={[s.header, contentContainerWeb]}>
-        <View>
-          <Text style={[s.screenTitle, { color: colors.text }]}>All Courses</Text>
+        <View style={[styles.searchShell, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Feather name="search" size={18} color={colors.textSecondary} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search courses"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.searchInput, { color: colors.text }]}
+          />
         </View>
-        <View style={[s.headerStatsRow]}>
-          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.primary }]}>{quizzes.length}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Quizzes</Text>
-          </View>
-          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.primary }]}>{totalCategories}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Topics</Text>
-          </View>
-          <View style={[s.headerStat, { backgroundColor: colors.primary + '18' }]}>
-            <Text style={[s.headerStatVal, { color: colors.primary }]}>{completedIds.size}</Text>
-            <Text style={[s.headerStatLabel, { color: colors.primary }]}>Done</Text>
-          </View>
-        </View>
-      </View>
 
-      {/* ── Difficulty filter pills ── */}
-      <View style={s.diffRow}>
-        {difficulties.map((d) => {
-          const active = selectedDifficulty === d.key;
-          return (
-            <Pressable
-              key={d.key}
-              onPress={() => setSelectedDifficulty(d.key)}
-              style={[
-                s.diffPill,
-                active
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-              ]}
-            >
-              <Text style={[s.diffPillText, { color: active ? '#fff' : colors.text }]}>{d.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {FILTERS.map((item) => {
+            const active = item.key === filter;
+            return (
+              <Pressable
+                key={item.key}
+                onPress={() => setFilter(item.key)}
+                style={[styles.filterChip, { backgroundColor: active ? colors.primary : colors.surface, borderColor: active ? colors.primary : colors.surfaceBorder }]}
+              >
+                <Text style={[styles.filterChipText, { color: active ? colors.surface : colors.text }]}>{item.label}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-      {/* ── Category filter pills ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.pillRow}
-        style={s.pillScroll}
-      >
-        {categories.map((cat) => {
-          const active = selectedCategory === cat.key;
-          return (
-            <Pressable
-              key={cat.key}
-              onPress={() => setSelectedCategory(cat.key)}
-              style={[
-                s.pill,
-                active
-                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-              ]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-            >
-              <Text style={[s.pillText, { color: active ? '#FFFFFF' : colors.text }]}>
-                {cat.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* ── Results count ── */}
-      <Text style={[s.resultCount, { color: colors.textSecondary }]}>
-        {filtered.length} {filtered.length === 1 ? 'course' : 'courses'} available
-      </Text>
-
-      {/* ── Course grid ── */}
-      <ScrollView
-        contentContainerStyle={[s.grid, contentContainerWeb]}
-        showsVerticalScrollIndicator={false}
-      >
-        {filtered.length === 0 ? (
-          <View style={s.emptyState}>
-            <View style={[s.emptyIconWrap, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}>
-              <Feather name="search" size={32} color={colors.textSecondary} />
-            </View>
-            <Text style={[s.emptyTitle, { color: colors.textSecondary }]}>No quizzes found</Text>
-            <Text style={[s.emptySubtitle, { color: colors.textSecondary }]}>Try a different category filter</Text>
-          </View>
-        ) : (
-          <View style={[s.gridRow, isDesktop && s.gridRowDesktop]}>
-            {filtered.map((quiz) => (
-              <View key={quiz.id} style={[s.gridCell, isDesktop && s.gridCellDesktop]}>
-                <CourseCard
-                  quiz={quiz}
-                  onPress={() => router.push(`/quiz/${quiz.id}`)}
-                  completedIds={completedIds}
-                />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trackRow}>
+          {quizzes.filter((quiz) => quiz.enabled !== false).slice(0, 4).map((quiz, index) => (
+            <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              {(() => {
+                const catIcon = AWS_CATEGORY_ICONS[quiz.category];
+                const isDailyQuiz = dailyQuiz?.id === quiz.id;
+                return (
+                  <View style={[styles.trackVisual, { backgroundColor: colors.backgroundAlt, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }]}>
+                    <View style={[styles.trackBadge, { backgroundColor: colors.primary + '22', borderWidth: 1, borderColor: colors.primary + '44' }]}>
+                      <Text style={[styles.trackBadgeText, { color: colors.primary }]}>{isDailyQuiz ? (dailyQuizCompleted ? 'Review' : 'Daily') : quiz.isPremium ? 'Track' : 'Start'}</Text>
+                    </View>
+                    {catIcon ? (
+                      <Image source={catIcon} style={styles.trackIcon} />
+                    ) : (
+                      <Feather name={quiz.icon as any} size={44} color={darkMode ? '#FFFFFF' : colors.primary} />
+                    )}
+                  </View>
+                );
+              })()}
+              <View style={styles.trackBody}>
+                <View style={styles.trackProgressRow}>
+                  <View style={[styles.trackProgressBar, { backgroundColor: colors.backgroundAlt }]}>
+                    <View style={[styles.trackProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 2) * 16)}%` }]} />
+                  </View>
+                  <Text style={[styles.trackPercent, { color: colors.text }]}>{Math.min(100, (index + 2) * 16)}%</Text>
+                </View>
+                <Text style={[styles.trackTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{quiz.title}</Text>
               </View>
-            ))}
-          </View>
-        )}
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Available courses</Text>
+          <Text style={[styles.sectionMeta, { color: colors.textSecondary }]}>{visibleCourses.length} total</Text>
+        </View>
+
+        {dailyQuiz && dailyQuizFilteredOut ? (
+          <Pressable
+            onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
+            style={[styles.pinnedDailyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+          >
+            <View style={styles.pinnedDailyCopy}>
+              <View style={styles.pinnedDailyHeader}>
+                <Text style={[styles.pinnedDailyEyebrow, { color: colors.warning }]}>{systemFeatures.dailyQuizLabel}</Text>
+                <Text style={[styles.pinnedDailyState, { color: dailyQuizCompleted ? colors.success : colors.textSecondary }]}>
+                  {dailyQuizCompleted ? 'Review available' : 'Pinned above filters'}
+                </Text>
+              </View>
+              <Text style={[styles.pinnedDailyTitle, { color: colors.text }]} numberOfLines={2}>{dailyQuiz.title}</Text>
+              <Text style={[styles.pinnedDailySubtitle, { color: colors.textSecondary }]} numberOfLines={2}>
+                Your current search or category filter hides today&apos;s featured quiz, so it stays visible here.
+              </Text>
+            </View>
+            <Feather name="arrow-right-circle" size={20} color={dailyQuizCompleted ? colors.success : colors.primary} />
+          </Pressable>
+        ) : null}
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.courseRow}>
+          {visibleCourses.map((quiz) => {
+            const playableQuestionCount = getPlayableQuestionCount(quiz);
+            const isDailyQuiz = dailyQuiz?.id === quiz.id;
+            const dailyQuizActionLabel = isDailyQuiz ? (dailyQuizCompleted ? 'Review Daily Quiz' : 'Play Daily Quiz') : null;
+            return (
+            <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              {(() => {
+                const catIcon = AWS_CATEGORY_ICONS[quiz.category];
+                return (
+                  <View style={[styles.courseImage, { backgroundColor: colors.backgroundAlt, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }]}>
+                    {catIcon ? (
+                      <Image source={catIcon} style={styles.courseIcon} />
+                    ) : (
+                      <Feather name={quiz.icon as any} size={40} color={darkMode ? '#FFFFFF' : colors.primary} />
+                    )}
+                  </View>
+                );
+              })()}
+              <View style={styles.courseBody}>
+                <View style={styles.metaRow}>
+                  <View style={styles.metaLabelRow}>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{quiz.category.toUpperCase()}</Text>
+                    {isDailyQuiz ? (
+                      <View style={[styles.dailyBadge, { backgroundColor: colors.warning + '18' }]}>
+                        <Text style={[styles.dailyBadgeText, { color: colors.warning }]}>{systemFeatures.dailyQuizLabel}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  {quiz.isPremium ? <Feather name="lock" size={14} color={colors.textSecondary} /> : null}
+                </View>
+                <Text style={[styles.courseTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{quiz.title}</Text>
+                <Text style={[styles.courseSubtitle, { color: colors.textSecondary, fontSize: t.caption }]} numberOfLines={2}>{quiz.description}</Text>
+                <View style={styles.cardFooter}>
+                  <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+                    {playableQuestionCount} questions
+                  </Text>
+                  {dailyQuizActionLabel ? (
+                    <Text style={[styles.footerDone, { color: dailyQuizCompleted ? colors.success : colors.warning }]}>{dailyQuizActionLabel}</Text>
+                  ) : completedIds.has(quiz.id) ? (
+                    <Text style={[styles.footerDone, { color: colors.primary }]}>Completed</Text>
+                  ) : (
+                    <Text style={[styles.footerDone, { color: colors.text }]}>Open</Text>
+                  )}
+                </View>
+              </View>
+            </Pressable>
+            );
+          })}
+        </ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-
-  // ── Header ──
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 8,
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 16 },
+  screenTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
+  searchShell: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  searchInput: { flex: 1, fontFamily: F.medium, fontSize: 14 },
+  filterRow: { gap: 8, paddingRight: 16 },
+  filterChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+  filterChipText: { fontFamily: F.semiBold, fontSize: 11 },
+  trackRow: { gap: 10, paddingRight: 16 },
+  trackCard: { width: 144, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  trackVisual: { height: 100, justifyContent: 'center', alignItems: 'center' },
+  trackIconWrap: { width: 52, height: 52, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  trackIcon: { width: 44, height: 44 },
+  trackBadge: { position: 'absolute', left: 8, top: 8, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4 },
+  trackBadgeText: { fontFamily: F.bold, fontSize: 10 },
+  trackBody: { padding: 8, gap: 6 },
+  trackProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  trackProgressBar: { flex: 1, height: 6, borderRadius: 999, overflow: 'hidden' },
+  trackProgressFill: { height: '100%', borderRadius: 999 },
+  trackPercent: { fontFamily: F.semiBold, fontSize: 10 },
+  trackTitle: { fontFamily: F.bold, fontSize: 12, lineHeight: 16 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+  sectionTitle: { fontFamily: F.bold, fontSize: 17 },
+  sectionMeta: { fontFamily: F.medium, fontSize: 12 },
+  pinnedDailyCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 12,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
   },
-  screenTitle: { fontFamily: F.bold, fontSize: 22, lineHeight: 28 },
-  headerStatsRow: { flexDirection: 'row', gap: 6 },
-  headerStat: {
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    minWidth: 48,
-  },
-  headerStatVal:   { fontFamily: F.bold,    fontSize: 16, lineHeight: 20 },
-  headerStatLabel: { fontFamily: F.regular, fontSize: 10, marginTop: 1 },
-
-  // ── Difficulty row ──
-  diffRow:     { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 8 },
-  diffPill:    { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
-  diffPillText:{ fontFamily: F.semiBold, fontSize: 12 },
-
-  // ── Pills ──
-  pillScroll: { flexGrow: 0 },
-  pillRow:    { paddingHorizontal: 20, paddingVertical: 10, gap: 8, flexDirection: 'row' },
-  pill:       { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
-  pillText:   { fontFamily: F.semiBold, fontSize: 13 },
-
-  // ── Result count ──
-  resultCount: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-
-  // ── Grid ──
-  grid: { paddingHorizontal: 16, paddingBottom: 40 },
-  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  gridRowDesktop: { gap: 16 },
-  gridCell: { width: '47.5%', alignSelf: 'stretch' },
-  gridCellDesktop: { width: '30%' },
-
-  // ── Course card ──
-  courseCard: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowColor: '#4B465C',
-    shadowOpacity: 0.10,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
-  cardPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
-
-  cardBanner: {
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  cardIconCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  proBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  proBadgeText: { fontFamily: F.bold, fontSize: 10, color: '#fff', letterSpacing: 0.3 },
-  completedBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  completedBadgeText: { fontFamily: F.semiBold, fontSize: 10 },
-
-  cardBody: { padding: 12, flex: 1, justifyContent: 'space-between' },
-  cardTop:  { gap: 6 },
-
-  catChip: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  catChipText: { fontFamily: F.semiBold, fontSize: 10 },
-
-  cardTitle: {
-    fontFamily: F.bold,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-
-  cardDesc: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-
-  startBtn: {
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  startBtnText: { fontFamily: F.semiBold, fontSize: 12, color: '#fff' },
-
-  // ── Empty state ──
-  emptyState:    { alignItems: 'center', paddingTop: 64, paddingBottom: 32 },
-  emptyIconWrap: { width: 72, height: 72, borderRadius: 36, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  emptyTitle:    { fontFamily: F.semiBold, fontSize: 16, marginBottom: 6 },
-  emptySubtitle: { fontFamily: F.regular,  fontSize: 13 },
+  pinnedDailyCopy: { flex: 1, gap: 4 },
+  pinnedDailyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
+  pinnedDailyEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  pinnedDailyState: { fontFamily: F.bold, fontSize: 11 },
+  pinnedDailyTitle: { fontFamily: F.bold, fontSize: 15, lineHeight: 21 },
+  pinnedDailySubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 18 },
+  courseRow: { gap: 10, paddingRight: 16 },
+  courseCard: { width: 140, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  courseCardSingleWide: { width: 180 },
+  courseImage: { height: 96, alignItems: 'center', justifyContent: 'center' },
+  courseIconWrap: { width: 56, height: 56, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  courseIcon: { width: 44, height: 44 },
+  courseBody: { padding: 9, gap: 6, minHeight: 110 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  metaLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  metaLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.6 },
+  dailyBadge: { borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3 },
+  dailyBadgeText: { fontFamily: F.bold, fontSize: 9, textTransform: 'uppercase' },
+  courseTitle: { fontFamily: F.bold, fontSize: 14, lineHeight: 20 },
+  courseSubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 17 },
+  cardFooter: { marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  footerText: { fontFamily: F.medium, fontSize: 11 },
+  footerDone: { fontFamily: F.bold, fontSize: 11 },
 });

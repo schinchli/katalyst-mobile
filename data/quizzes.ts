@@ -6,6 +6,12 @@ import {
   clf02BillingQuestions,
   clf02FullPracticeQuestions,
 } from './clf-c02-questions';
+import {
+  aipC01RagFoundationsQuestions,
+  aipC01SecurityOpsQuestions,
+  aipC01AdvancedPatternsQuestions,
+  aipC01FullExamQuestions,
+} from './aip-c01-questions';
 
 export const quizzes: Quiz[] = [
   // ── AWS Foundational Topic Quizzes ─────────────────────────────────────────
@@ -164,8 +170,7 @@ export const quizzes: Quiz[] = [
     difficulty: 'beginner',
     questionCount: 29,
     duration: 25,
-    isPremium: true,
-    price: 149,
+    isPremium: false,
     icon: 'cloud',
     certLevel: 'foundational',
     examCode: 'CLF-C02',
@@ -178,8 +183,7 @@ export const quizzes: Quiz[] = [
     difficulty: 'intermediate',
     questionCount: 42,
     duration: 35,
-    isPremium: true,
-    price: 199,
+    isPremium: false,
     icon: 'shield',
     certLevel: 'foundational',
     examCode: 'CLF-C02',
@@ -192,8 +196,7 @@ export const quizzes: Quiz[] = [
     difficulty: 'intermediate',
     questionCount: 90,
     duration: 60,
-    isPremium: true,
-    price: 299,
+    isPremium: false,
     icon: 'cpu',
     certLevel: 'foundational',
     examCode: 'CLF-C02',
@@ -206,11 +209,65 @@ export const quizzes: Quiz[] = [
     difficulty: 'beginner',
     questionCount: 34,
     duration: 30,
-    isPremium: true,
-    price: 149,
+    isPremium: false,
     icon: 'dollar-sign',
     certLevel: 'foundational',
     examCode: 'CLF-C02',
+  },
+
+  // ── AWS Certified GenAI Developer – Professional (AIP-C01) ──────────────────
+  {
+    id: 'aip-c01-full-exam',
+    title: 'AIP-C01 Full Practice Exam',
+    description: 'All 85 professional-level questions covering RAG, Bedrock Agents, Guardrails, security, governance, MLOps, and advanced GenAI patterns.',
+    category: 'aip-c01',
+    difficulty: 'advanced',
+    questionCount: 85,
+    duration: 130,
+    isPremium: true,
+    price: 499,
+    icon: 'cpu',
+    certLevel: 'professional',
+    examCode: 'AIP-C01',
+  },
+  {
+    id: 'aip-c01-rag-foundations',
+    title: 'AIP-C01: RAG & Bedrock Foundations',
+    description: '30 questions on Knowledge Bases, chunking, vector stores, embeddings, prompt caching, fine-tuning vs RAG, and model evaluation.',
+    category: 'aip-c01',
+    difficulty: 'advanced',
+    questionCount: 30,
+    duration: 45,
+    isPremium: false,
+    icon: 'database',
+    certLevel: 'professional',
+    examCode: 'AIP-C01',
+  },
+  {
+    id: 'aip-c01-security-governance',
+    title: 'AIP-C01: Security & Governance',
+    description: '27 questions on IAM, VPC endpoints, Guardrails, CloudTrail, KMS, SCPs, data residency, compliance, and responsible AI.',
+    category: 'aip-c01',
+    difficulty: 'advanced',
+    questionCount: 27,
+    duration: 40,
+    isPremium: false,
+    icon: 'shield',
+    certLevel: 'professional',
+    examCode: 'AIP-C01',
+  },
+  {
+    id: 'aip-c01-agents-ops',
+    title: 'AIP-C01: Agents, MLOps & Advanced Patterns',
+    description: '28 questions on Bedrock Agents, AgentCore, multi-agent collaboration, Intelligent Prompt Routing, SageMaker Neo, and production patterns.',
+    category: 'aip-c01',
+    difficulty: 'advanced',
+    questionCount: 28,
+    duration: 42,
+    isPremium: false,
+    icon: 'zap',
+    certLevel: 'professional',
+    examCode: 'AIP-C01',
   },
 ];
 
@@ -365,6 +422,12 @@ export const quizQuestions: Record<string, Question[]> = {
   'clf-c02-technology':     clf02TechnologyQuestions,
   'clf-c02-billing':        clf02BillingQuestions,
   'clf-c02-full-exam':      clf02FullPracticeQuestions,
+
+  // ── AIP-C01 (imported from separate file per CLAUDE.md rule #11) ─────────────
+  'aip-c01-rag-foundations':    aipC01RagFoundationsQuestions,
+  'aip-c01-security-governance': aipC01SecurityOpsQuestions,
+  'aip-c01-agents-ops':         aipC01AdvancedPatternsQuestions,
+  'aip-c01-full-exam':          aipC01FullExamQuestions,
 
   // Legacy key kept for backward-compat with stored results
   'clf-c02': [

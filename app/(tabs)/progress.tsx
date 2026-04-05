@@ -1,163 +1,182 @@
-import { useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
-import { useAuthStore } from '@/stores/authStore';
+import { useTypography } from '@/hooks/useTypography';
 import { useProgressStore } from '@/stores/progressStore';
-import { quizzes } from '@/data/quizzes';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { F } from '@/constants/Typography';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { quizzes } from '@/data/quizzes';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-function pct(score: number, total: number) {
-  if (!total) return 0;
-  return Math.round((score / total) * 100);
+function isSameLocalDay(isoDate: string, reference = new Date()) {
+  return new Date(isoDate).toDateString() === reference.toDateString();
 }
-
-function fmtDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch {
-    return iso.slice(0, 10);
-  }
-}
-
-function quizTitle(quizId: string) {
-  return quizzes.find((q) => q.id === quizId)?.title ?? quizId;
-}
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-
-function StatCard({
-  icon, label, value, accent, colors,
-}: {
-  icon: string; label: string; value: string; accent: string;
-  colors: ReturnType<typeof useThemeColors>;
-}) {
-  return (
-    <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <View style={[styles.statIcon, { backgroundColor: accent + '18' }]}>
-        <Feather name={icon as any} size={18} color={accent} />
-      </View>
-      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
-  );
-}
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function ProgressScreen() {
-  const colors    = useThemeColors();
-  const userId    = useAuthStore((s) => s.user?.id);
-  const step      = useAuthStore((s) => s.step);
-  const progress  = useProgressStore((s) => s.progress);
-  const initFromSupabase = useProgressStore((s) => s.initFromSupabase);
-
-  // Load history from Supabase on first mount for real users
-  useEffect(() => {
-    if (step === 'authenticated' && userId) {
-      initFromSupabase(userId).catch(() => {});
-    }
-  }, [step, userId, initFromSupabase]);
-
-  const results   = progress.recentResults ?? [];
-  const total     = quizzes.length;
-  const completed = progress.completedQuizzes;
-  const avgScore  = progress.averageScore;
-  const bestScore = results.reduce((best, r) => Math.max(best, pct(r.score, r.totalQuestions)), 0);
-  const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const colors = useThemeColors();
+  const t = useTypography();
+  const progress = useProgressStore((s) => s.progress);
+  const systemFeatures = useSystemFeatureStore((s) => s.config);
+  const activeDay = Math.min(6, Math.max(0, new Date().getDay() === 0 ? 6 : new Date().getDay() - 1));
+  const streakLength = Math.max(0, Math.min(7, progress.currentStreak));
+  const streakMessage = progress.currentStreak > 0
+    ? 'Keep showing up today to protect your streak.'
+    : 'Open the app daily to build your first streak.';
+  const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
+  const dailyQuizResult = dailyQuiz
+    ? progress.recentResults.find((result) => result.quizId === dailyQuiz.id && !!result.completedAt && isSameLocalDay(result.completedAt))
+    : undefined;
+  const recentAttempts = progress.recentResults.slice(0, 3);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>My Progress</Text>
-        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Track your learning journey</Text>
-      </View>
-
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Growth</Text>
 
-        {/* ── Stats grid ──────────────────────────────────────────────── */}
-        <View style={styles.statsGrid}>
-          <StatCard icon="percent"     label="Completion"  value={`${completionPct}%`} accent="#7367F0" colors={colors} />
-          <StatCard icon="trending-up" label="Avg Score"   value={`${avgScore}%`}      accent="#28C76F" colors={colors} />
-          <StatCard icon="award"       label="Best Score"  value={`${bestScore}%`}     accent="#FF9F43" colors={colors} />
-          <StatCard icon="check-circle" label="Taken"      value={String(completed)}   accent="#00BAD1" colors={colors} />
-        </View>
-
-        {/* ── Overall completion bar ──────────────────────────────────── */}
-        <View style={[styles.completionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <View style={styles.completionHeader}>
-            <Text style={[styles.completionTitle, { color: colors.text }]}>Overall Completion</Text>
-            <Text style={[styles.completionPct, { color: colors.primary }]}>{completionPct}%</Text>
-          </View>
-          <View style={[styles.trackBg, { backgroundColor: colors.surfaceBorder }]}>
-            <View style={[styles.trackFill, { width: `${completionPct}%` as any, backgroundColor: colors.primary }]} />
-          </View>
-          <Text style={[styles.completionSub, { color: colors.textSecondary }]}>
-            {completed} of {total} quizzes completed
-          </Text>
-        </View>
-
-        {/* ── Quiz history ────────────────────────────────────────────── */}
-        <View style={styles.historySection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quiz History</Text>
-
-          {results.length === 0 ? (
-            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <Feather name="bar-chart-2" size={32} color={colors.textSecondary} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No quizzes yet</Text>
-              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-                Complete your first quiz to see your progress here
-              </Text>
-              <Pressable
-                onPress={() => router.push('/(tabs)/quizzes')}
-                style={[styles.browseBtn, { backgroundColor: colors.primary }]}
-              >
-                <Text style={styles.browseBtnText}>Browse Quizzes</Text>
+        <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          {[
+            { icon: 'bell',      title: 'Notifications', badge: '1', route: null },
+            { icon: 'award',     title: 'Leaderboard',              route: '/leaderboard' as const },
+            { icon: 'book-open', title: 'My library',               route: '/(tabs)/bookmarks' as const },
+          ].map((item, index) => (
+            <View key={item.title}>
+              <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.menuRow}>
+                <View style={[styles.menuIcon, { backgroundColor: colors.backgroundAlt }]}>
+                  <Feather name={item.icon as any} size={18} color={colors.text} />
+                </View>
+                <Text style={[styles.menuTitle, { color: colors.text, fontSize: t.cardTitle }]}>{item.title}</Text>
+                {item.badge ? (
+                  <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+                    <Text style={[styles.badgeText, { color: colors.surface }]}>{item.badge}</Text>
+                  </View>
+                ) : null}
+                <Feather name="chevron-right" size={18} color={colors.textSecondary} />
               </Pressable>
+              {index < 2 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
             </View>
-          ) : (
-            results.map((r, idx) => {
-              const p      = pct(r.score, r.totalQuestions);
-              const passed = p >= 70;
-              const accent = passed ? '#28C76F' : '#FF4C51';
+          ))}
+        </View>
+
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>{EXPERIENCE_COPY.progress.streakTitle}</Text>
+          <Text style={[styles.panelHint, { color: colors.textSecondary, fontSize: t.caption }]}>{streakMessage}</Text>
+          <View style={styles.streakNumbers}>
+            <View>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.currentStreak} days</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Total</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{Math.max(0, 2 - Math.min(2, progress.currentStreak))} freezes</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Left</Text>
+            </View>
+          </View>
+          <View style={styles.weekRow}>
+            {WEEK.map((label, index) => {
+              const distance = (activeDay - index + 7) % 7;
+              const active = distance < streakLength;
               return (
-                <View
-                  key={`${r.quizId}-${idx}`}
-                  style={[styles.resultRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-                >
-                  {/* Accent bar */}
-                  <View style={[styles.resultAccent, { backgroundColor: accent }]} />
-
-                  <View style={styles.resultBody}>
-                    <View style={styles.resultTop}>
-                      <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={1}>
-                        {quizTitle(r.quizId)}
-                      </Text>
-                      <View style={[styles.passBadge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
-                        <Text style={[styles.passBadgeText, { color: accent }]}>
-                          {passed ? 'PASS' : 'FAIL'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.resultMeta}>
-                      <Text style={[styles.resultScore, { color: accent }]}>{p}%</Text>
-                      <Text style={[styles.resultDetail, { color: colors.textSecondary }]}>
-                        {r.score}/{r.totalQuestions} correct
-                      </Text>
-                      <Text style={[styles.resultDate, { color: colors.textSecondary }]}>
-                        {fmtDate(r.completedAt)}
-                      </Text>
-                    </View>
+                <View key={`${label}-${index}`} style={styles.weekCell}>
+                  <Text style={[styles.weekLabel, { color: colors.textSecondary }]}>{label}</Text>
+                  <View style={[styles.weekBolt, { borderColor: active ? colors.warning : 'transparent' }]}>
+                    <Feather name="zap" size={16} color={active ? colors.warning : colors.surfaceBorder} />
                   </View>
                 </View>
               );
-            })
+            })}
+          </View>
+        </View>
+
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          {dailyQuiz ? (
+            <View style={[styles.dailyQuizCard, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+              <View style={styles.dailyQuizRow}>
+                <View>
+                  <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+                  <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
+                </View>
+                <View style={[styles.dailyQuizStatus, { backgroundColor: dailyQuizResult ? colors.success + '18' : colors.warning + '18' }]}>
+                  <Text style={[styles.dailyQuizStatusText, { color: dailyQuizResult ? colors.success : colors.warning }]}>
+                    {dailyQuizResult ? `${Math.round((dailyQuizResult.score / Math.max(1, dailyQuizResult.totalQuestions)) * 100)}%` : 'Pending'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary, fontSize: t.caption }]}>
+                {dailyQuizResult ? 'Completed today. Reopen the daily quiz from Home to improve your result.' : 'Today\'s daily quiz is still available from Home.'}
+              </Text>
+              <Pressable
+                onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
+                style={[styles.dailyQuizCta, { backgroundColor: colors.primary }]}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.dailyQuizCtaText, { color: colors.surface }]}>{dailyQuizResult ? 'Review Daily Quiz' : 'Open Daily Quiz'}</Text>
+                <Feather name="arrow-right" size={14} color={colors.surface} />
+              </Pressable>
+            </View>
+          ) : null}
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>{EXPERIENCE_COPY.progress.xpTitle}</Text>
+          <View style={styles.streakNumbers}>
+            <View>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.xp ?? 0}</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Last 30 days</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[styles.bigValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.averageScore}%</Text>
+              <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Today</Text>
+            </View>
+          </View>
+          <View style={styles.chartArea}>
+            {Array.from({ length: 5 }).map((_, row) => (
+              <View key={row} style={styles.chartRow}>
+                <Text style={[styles.chartAxisLabel, { color: colors.textSecondary }]}>1</Text>
+                <View style={[styles.chartLine, { borderColor: colors.surfaceBorder }]} />
+              </View>
+            ))}
+          </View>
+          <View style={styles.chartFooter}>
+            <Text style={[styles.chartFooterText, { color: colors.textSecondary }]}>09 February</Text>
+            <Text style={[styles.chartFooterText, { color: colors.textSecondary }]}>Today</Text>
+          </View>
+        </View>
+
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Recent attempts</Text>
+          {recentAttempts.length === 0 ? (
+            <Text style={[styles.panelHint, { color: colors.textSecondary, fontSize: t.caption }]}>
+              Your latest quiz attempts will appear here.
+            </Text>
+          ) : (
+            <View style={styles.attemptList}>
+              {recentAttempts.map((result) => {
+                const quiz = quizzes.find((item) => item.id === result.quizId);
+                const pct = Math.round((result.score / Math.max(1, result.totalQuestions)) * 100);
+                const isDailyQuizAttempt = dailyQuiz?.id === result.quizId && isSameLocalDay(result.completedAt);
+                return (
+                  <View key={`${result.quizId}-${result.completedAt}`} style={[styles.attemptCard, { borderColor: colors.surfaceBorder, backgroundColor: colors.backgroundAlt }]}>
+                    <View style={styles.attemptHeader}>
+                      <View style={styles.attemptTitleWrap}>
+                        <Text style={[styles.attemptTitle, { color: colors.text }]} numberOfLines={1}>
+                          {quiz?.title ?? result.quizId}
+                        </Text>
+                        {isDailyQuizAttempt ? (
+                          <View style={[styles.dailyAttemptBadge, { backgroundColor: colors.warning + '18' }]}>
+                            <Text style={[styles.dailyAttemptBadgeText, { color: colors.warning }]}>{systemFeatures.dailyQuizLabel}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={[styles.attemptScore, { color: pct >= 70 ? colors.success : colors.error }]}>{pct}%</Text>
+                    </View>
+                    <Text style={[styles.attemptMeta, { color: colors.textSecondary }]}>
+                      {result.score}/{result.totalQuestions} · {new Date(result.completedAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -165,64 +184,58 @@ export default function ProgressScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  safe:   { flex: 1 },
-  scroll: { paddingBottom: 40, paddingHorizontal: 16, paddingTop: 16 },
-
-  header: {
-    paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1,
+  safeArea: { flex: 1 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 14 },
+  screenTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
+  menuCard: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  menuIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  menuTitle: { fontFamily: F.semiBold, fontSize: 15, flex: 1 },
+  badge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontFamily: F.bold, fontSize: 12 },
+  divider: { height: 1, marginHorizontal: 14 },
+  panel: { borderWidth: 1, borderRadius: 16, padding: 12, gap: 12 },
+  panelTitle: { fontFamily: F.bold, fontSize: 17 },
+  panelHint: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -4 },
+  dailyQuizCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 8 },
+  dailyQuizRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizTitle: { fontFamily: F.semiBold, fontSize: 15, marginTop: 4 },
+  dailyQuizSubtitle: { fontFamily: F.regular, lineHeight: 18 },
+  dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  dailyQuizStatusText: { fontFamily: F.bold, fontSize: 11 },
+  dailyQuizCta: {
+    marginTop: 4,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  headerTitle: { fontFamily: F.bold,    fontSize: 22 },
-  headerSub:   { fontFamily: F.regular, fontSize: 13, marginTop: 2 },
-
-  // Stats
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
-  statCard: {
-    flex: 1, minWidth: '45%', padding: 14, borderRadius: 12, borderWidth: 1,
-    alignItems: 'center', gap: 6,
-  },
-  statIcon:  { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontFamily: F.bold,    fontSize: 20 },
-  statLabel: { fontFamily: F.regular, fontSize: 11 },
-
-  // Completion
-  completionCard: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 24 },
-  completionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  completionTitle:  { fontFamily: F.semiBold, fontSize: 14 },
-  completionPct:    { fontFamily: F.bold,     fontSize: 14 },
-  trackBg:   { height: 8,  borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
-  trackFill: { height: '100%' as any, borderRadius: 4 },
-  completionSub: { fontFamily: F.regular, fontSize: 12, textAlign: 'center' },
-
-  // History
-  historySection: { gap: 10 },
-  sectionTitle:   { fontFamily: F.bold, fontSize: 16, marginBottom: 4 },
-
-  emptyCard: {
-    padding: 32, borderRadius: 12, borderWidth: 1,
-    alignItems: 'center', gap: 8,
-  },
-  emptyTitle: { fontFamily: F.semiBold, fontSize: 16, marginTop: 8 },
-  emptySub:   { fontFamily: F.regular,  fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  browseBtn:  { marginTop: 8, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
-  browseBtnText: { fontFamily: F.semiBold, fontSize: 14, color: '#fff' },
-
-  resultRow: {
-    flexDirection: 'row', borderRadius: 12, borderWidth: 1, overflow: 'hidden',
-  },
-  resultAccent: { width: 4 },
-  resultBody:   { flex: 1, padding: 14, gap: 6 },
-  resultTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  resultTitle:  { fontFamily: F.semiBold, fontSize: 14, flex: 1, marginRight: 8 },
-  passBadge: {
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5, borderWidth: 1, flexShrink: 0,
-  },
-  passBadgeText: { fontFamily: F.bold, fontSize: 10 },
-  resultMeta:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  resultScore:  { fontFamily: F.bold,    fontSize: 16 },
-  resultDetail: { fontFamily: F.regular, fontSize: 12 },
-  resultDate:   { fontFamily: F.regular, fontSize: 11, marginLeft: 'auto' },
+  dailyQuizCtaText: { fontFamily: F.bold, fontSize: 12 },
+  attemptList: { gap: 10 },
+  attemptCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 6 },
+  attemptHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  attemptTitleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  attemptTitle: { fontFamily: F.semiBold, fontSize: 14, flexShrink: 1 },
+  attemptScore: { fontFamily: F.bold, fontSize: 14 },
+  attemptMeta: { fontFamily: F.regular, fontSize: 12 },
+  dailyAttemptBadge: { borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3 },
+  dailyAttemptBadgeText: { fontFamily: F.bold, fontSize: 9, textTransform: 'uppercase' },
+  streakNumbers: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  bigValue: { fontFamily: F.bold, fontSize: 20 },
+  subLabel: { fontFamily: F.regular, fontSize: 12, marginTop: 3 },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  weekCell: { alignItems: 'center', gap: 6 },
+  weekLabel: { fontFamily: F.medium, fontSize: 11 },
+  weekBolt: { width: 38, height: 38, borderRadius: 19, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  chartArea: { gap: 12, marginTop: 2 },
+  chartRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  chartAxisLabel: { width: 12, fontFamily: F.regular, fontSize: 11 },
+  chartLine: { flex: 1, borderBottomWidth: 1, borderStyle: 'dotted' },
+  chartFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  chartFooterText: { fontFamily: F.regular, fontSize: 11 },
 });

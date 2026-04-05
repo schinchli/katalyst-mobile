@@ -1,656 +1,302 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { QuizCard } from '@/components/quiz/QuizCard';
-import { BadgeCelebrationModal } from '@/components/ui/BadgeCelebrationModal';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useTypography } from '@/hooks/useTypography';
 import { useAuthStore } from '@/stores/authStore';
-import { useProgressStore } from '@/stores/progressStore';
-import { LEVEL_NAMES } from '@/stores/progressStore';
+import { useProgressStore, calculateLevel, LEVEL_NAMES } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
-import { getContests } from '@/data/contests';
-import { getDailyQuiz } from '@/utils/dailyChallenge';
-import { useWebLayout } from '@/hooks/useWebLayout';
+import { flashcards } from '@/data/flashcards';
 import { F } from '@/constants/Typography';
+import { EXPERIENCE_COPY } from '@/config/experience';
+import { usePlatformConfigStore } from '@/stores/platformConfigStore';
+import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
+import { resolveDailyQuiz } from '@/config/systemFeatures';
+import { AWS_SERVICE_ICONS, AWS_SERVICE_ACCENT, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const CARD_SHADOW = {
-  shadowColor: '#4B465C',
-  shadowOpacity: 0.08,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 2,
-};
-
-// ─── Stat card definition ─────────────────────────────────────────────────────
-interface StatDef {
-  icon: string;
-  label: string;
-  getValue: (p: ReturnType<typeof useProgressStore.getState>['progress']) => string;
-}
-
-const STAT_DEFS: StatDef[] = [
-  { icon: 'zap',          label: 'Day Streak', getValue: (p) => String(p.currentStreak) },
-  { icon: 'check-circle', label: 'Completed',  getValue: (p) => String(p.completedQuizzes) },
-  { icon: 'trending-up',  label: 'Avg Score',  getValue: (p) => `${p.averageScore}%` },
-  { icon: 'award',        label: 'Badges',     getValue: (p) => String(p.badges?.length ?? 0) },
-];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function GreetingHeader({ userName, coins, level, badges }: { userName: string; coins: number; level: number; badges: number }) {
-  const colors = useThemeColors();
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  return (
-    <View style={[styles.headerCard, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder }, CARD_SHADOW]}>
-      <View style={[styles.headerAccentStrip, { backgroundColor: colors.primary }]} />
-      <View style={styles.headerInner}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.greetingSubtext, { color: colors.textSecondary }]}>{greeting},</Text>
-          <Text style={[styles.greetingName, { color: colors.text }]} numberOfLines={1}>{userName}</Text>
-          <View style={styles.headerPillsRow}>
-            <View style={[styles.hPill, { backgroundColor: colors.warning + '18' }]}>
-              <Feather name="zap" size={11} color={colors.warning} />
-              <Text style={[styles.hPillText, { color: colors.warning }]}>{coins.toLocaleString()}</Text>
-            </View>
-            <View style={[styles.hPill, { backgroundColor: colors.primaryLight }]}>
-              <Feather name="shield" size={11} color={colors.primary} />
-              <Text style={[styles.hPillText, { color: colors.primary }]}>Lv.{level}</Text>
-            </View>
-            <View style={[styles.hPill, { backgroundColor: colors.success + '18' }]}>
-              <Feather name="award" size={11} color={colors.success} />
-              <Text style={[styles.hPillText, { color: colors.success }]}>{badges} badges</Text>
-            </View>
-          </View>
-        </View>
-        <Pressable
-          onPress={() => router.push('/(tabs)/quizzes')}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.ctaButton, { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 }]}
-        >
-          <Feather name="play" size={15} color="#FFFFFF" />
-          <Text style={styles.ctaButtonText}>Start</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-function StatCard({
-  def,
-  progress,
-  flex,
-}: {
-  def: StatDef;
-  progress: ReturnType<typeof useProgressStore.getState>['progress'];
-  flex?: boolean;
-}) {
-  const colors = useThemeColors();
-  return (
-    <View
-      style={[
-        styles.statCard,
-        { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
-        CARD_SHADOW,
-        flex && { flex: 1 },
-      ]}
-    >
-      <View style={[styles.statIconContainer, { backgroundColor: colors.primaryLight }]}>
-        <Feather name={def.icon as any} size={16} color={colors.primary} />
-      </View>
-      <Text style={[styles.statValue, { color: colors.text }]}>
-        {def.getValue(progress)}
-      </Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-        {def.label}
-      </Text>
-    </View>
-  );
-}
-
-function RecentResultsStrip() {
-  const colors  = useThemeColors();
-  const results = useProgressStore((s) => s.progress.recentResults).slice(0, 3);
-  if (results.length === 0) return null;
-  return (
-    <>
-      <SectionHeader title="Recent Results" />
-      <View style={[styles.recentCard, { backgroundColor: colors.surface }, CARD_SHADOW]}>
-        {results.map((r, i) => {
-          const quiz = quizzes.find((q) => q.id === r.quizId);
-          const pct  = Math.round((r.score / r.totalQuestions) * 100);
-          const pass = pct >= 70;
-          return (
-            <View
-              key={`${r.quizId}-${r.completedAt}`}
-              style={[styles.recentRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.surfaceBorder }]}
-            >
-              <Text style={[styles.recentTitle, { color: colors.text }]} numberOfLines={1}>
-                {quiz?.title ?? r.quizId}
-              </Text>
-              <View style={[styles.recentBadge, { backgroundColor: (pass ? colors.success : colors.error) + '18' }]}>
-                <Text style={[styles.recentBadgeText, { color: pass ? colors.success : colors.error }]}>
-                  {pct}%
-                </Text>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-    </>
-  );
-}
-
-function SectionHeader({
-  title,
-  onViewAll,
-}: {
-  title: string;
-  onViewAll?: () => void;
-}) {
-  const colors = useThemeColors();
-  return (
-    <View style={styles.sectionHeader}>
-      <View style={[styles.sectionAccentBar, { backgroundColor: colors.primary }]} />
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-      {onViewAll && (
-        <Pressable onPress={onViewAll} hitSlop={8} accessibilityRole="button">
-          <Text style={[styles.sectionViewAll, { color: colors.primary }]}>View All</Text>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-function QuickActionsRow() {
-  const colors = useThemeColors();
-  const ACTIONS = [
-    { icon: 'award',    label: 'Leaderboard', color: colors.warning, route: '/leaderboard' as const },
-    { icon: 'zap',      label: 'Challenge',   color: colors.primary, route: '/challenge' as const },
-    { icon: 'calendar', label: 'Contests',    color: colors.error,   route: '/contest' as const },
+function getCategoryVisual(category: string, colors: ReturnType<typeof useThemeColors>) {
+  const labels: Record<string, string> = {
+    'clf-c02': 'CLF-C02',
+    bedrock: 'Bedrock',
+    genai: 'GenAI',
+    security: 'Security',
+    mlops: 'MLOps',
+    compute: 'Compute',
+    networking: 'Network',
+    databases: 'Database',
+    'cost-optimization': 'Cost',
+  };
+  const tones: Array<[string, string]> = [
+    [colors.gradientFrom, colors.gradientTo],
+    [colors.primary, colors.gradientAccent],
+    [colors.warning, colors.primary],
+    [colors.success, colors.gradientTo],
+    [colors.error, colors.gradientAccent],
+    [colors.gradientAccent, colors.primary],
   ];
+  const score = [...category].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const [from, to] = tones[score % tones.length];
+  return {
+    from,
+    to,
+    label: labels[category] ?? category.toUpperCase().slice(0, 5),
+  };
+}
+
+function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap; value: string; colors: ReturnType<typeof useThemeColors> }) {
   return (
-    <View style={styles.quickRow}>
-      {ACTIONS.map((a) => (
-        <Pressable
-          key={a.label}
-          onPress={() => router.push(a.route as any)}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.quickBtn,
-            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.88 : 1 },
-          ]}
-        >
-          <View style={[styles.quickIconWrap, { backgroundColor: a.color + '18' }]}>
-            <Feather name={a.icon as any} size={20} color={a.color} />
-          </View>
-          <Text style={[styles.quickBtnLabel, { color: colors.text }]}>{a.label}</Text>
-        </Pressable>
-      ))}
+    <View style={[styles.statPill, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+      <Feather name={icon} size={16} color={colors.primary} />
+      <Text style={[styles.statPillText, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }
 
-function LiveContestBanner() {
-  const colors = useThemeColors();
-  const live   = getContests('live')[0];
-  if (!live) return null;
-  return (
-    <Pressable
-      onPress={() => router.push('/contest' as any)}
-      accessibilityRole="button"
-      style={({ pressed }) => [styles.liveContest, { opacity: pressed ? 0.92 : 1 }]}
-    >
-      <View style={styles.liveContestLeft}>
-        <View style={styles.liveContestDot} />
-        <Text style={styles.liveContestLabel}>LIVE NOW</Text>
-      </View>
-      <Text style={styles.liveContestTitle} numberOfLines={1}>{live.title}</Text>
-      <Feather name="chevron-right" size={16} color="#fff" />
-    </Pressable>
-  );
+function isSameLocalDay(isoDate: string, reference = new Date()) {
+  return new Date(isoDate).toDateString() === reference.toDateString();
 }
-
-// ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const colors = useThemeColors();
+  const t = useTypography();
   const user = useAuthStore((s) => s.user);
   const progress = useProgressStore((s) => s.progress);
-  const { isDesktop, isWide, contentContainerWeb } = useWebLayout();
+  const firstName = user?.name?.split(' ')[0] ?? 'Learner';
+  const platformConfig = usePlatformConfigStore((s) => s.config);
+  const systemFeatures = useSystemFeatureStore((s) => s.config);
+  const visibleQuizzes = quizzes.filter((quiz) => quiz.enabled !== false);
+  const popularCourses = visibleQuizzes.slice(0, 6);
+  const flashcardItems = flashcards.slice(0, 4);
+  const streak = progress.currentStreak;
+  const xp = progress.xp ?? 0;
+  const level = calculateLevel(xp);
+  const levelName = LEVEL_NAMES[level - 1] ?? 'Novice';
+  const dailyQuiz = resolveDailyQuiz(systemFeatures, visibleQuizzes);
+  const dailyQuizCompleted = dailyQuiz
+    ? progress.recentResults.some((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
+    : false;
+  const streakMessage =
+    streak === 0 ? '🚀 Start your learning streak today!'
+    : streak === 1 ? '🔥 1 day streak! Come back tomorrow to keep it going!'
+    : streak >= 7 ? `⚡ ${streak} day streak! You're unstoppable!`
+    : streak >= 3 ? `🔥 ${streak} day streak! You're on fire!`
+    : `🔥 ${streak} day streak! Keep it going!`;
+  const actionCards = [
+    { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/flashcards' as const, tone: colors.gradientAccent },
+    { icon: 'activity', title: 'Practice', subtitle: 'Explore every quiz and start a session', route: '/(tabs)/quizzes' as const, tone: colors.warning },
+    { icon: 'globe', title: 'Resources', subtitle: 'Cheat sheets, guides, and updates', route: '/(tabs)/learn' as const, tone: colors.primary },
+    { icon: 'star', title: 'Premium', subtitle: 'Unlock all content and projects', route: '/(tabs)/profile' as const, tone: colors.primary },
+  ];
 
-  const userName = user?.name ?? 'Learner';
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {platformConfig.widgets.showHomeStats ? (
+          <View style={styles.topStats}>
+            <StatPill icon="zap" value={`${xp} XP · Lv.${level} ${levelName}`} colors={colors} />
+            <StatPill icon="activity" value={streak > 0 ? `🔥 ${streak} day streak` : '🚀 Start streak'} colors={colors} />
+          </View>
+        ) : null}
 
-  // ── Desktop two-column layout ─────────────────────────────────────────────
-  if (isDesktop) {
-    return (
-      <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: colors.background }]}
-        edges={[]}
-      >
-        <BadgeCelebrationModal />
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            contentContainerWeb,
-            { paddingHorizontal: isWide ? 40 : 28 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} badges={progress.badges?.length ?? 0} />
-
-          {/* Stats row — 4 equal columns on desktop */}
-          <View style={styles.statsRowDesktop}>
-            {STAT_DEFS.map((def) => (
-              <View key={def.label} style={styles.statColDesktop}>
-                <StatCard def={def} progress={progress} />
+        {dailyQuiz ? (
+          <Pressable onPress={() => router.push(`/quiz/${dailyQuiz.id}`)} style={[styles.dailyQuizCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={styles.dailyQuizCopy}>
+              <View style={styles.dailyQuizHeaderRow}>
+                <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+                <View style={[styles.dailyQuizStatus, { backgroundColor: dailyQuizCompleted ? colors.success + '18' : colors.warning + '18' }]}>
+                  <Text style={[styles.dailyQuizStatusText, { color: dailyQuizCompleted ? colors.success : colors.warning }]}>
+                    {dailyQuizCompleted ? 'Completed' : 'Ready'}
+                  </Text>
+                </View>
               </View>
+              <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
+              <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>
+                {dailyQuizCompleted ? 'Today\'s daily quiz is complete. Open it again to review or improve your score.' : dailyQuiz.description}
+              </Text>
+            </View>
+            <Feather name={dailyQuizCompleted ? 'check-circle' : 'arrow-right-circle'} size={22} color={dailyQuizCompleted ? colors.success : colors.primary} />
+          </Pressable>
+        ) : null}
+
+        <LinearGradient colors={[colors.backgroundAlt, colors.surface, colors.surfaceElevated]} style={[styles.heroCard, { borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.heroEyebrow, { color: colors.primary, fontSize: t.micro }]}>{EXPERIENCE_COPY.home.heroEyebrow}</Text>
+          <Text style={[styles.heroTitle, { color: colors.text, fontSize: t.screenTitle }]}>Hi {firstName}, {platformConfig.copy.homeHeroTitle}</Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary, fontSize: t.body }]}>{platformConfig.copy.homeHeroSubtitle}</Text>
+          <Text style={[styles.heroStreakMessage, { color: colors.textSecondary, fontSize: t.caption }]}>{streakMessage}</Text>
+
+        </LinearGradient>
+
+        {platformConfig.widgets.showHomeActions ? (
+          <View style={platformConfig.layout.homeActionsStyle === 'stack' ? styles.actionStack : styles.actionGrid}>
+            {actionCards.map((item) => (
+            <Pressable key={item.title} onPress={() => router.push(item.route as any)} style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={[styles.actionIcon, { backgroundColor: item.tone + '20' }]}>
+                <Feather name={item.icon as any} size={18} color={item.tone} />
+              </View>
+              <Text style={[styles.actionTitle, { color: colors.text, fontSize: t.cardTitle }]}>{item.title}</Text>
+              <Text style={[styles.actionSubtitle, { color: colors.textSecondary, fontSize: t.caption }]}>{item.subtitle}</Text>
+            </Pressable>
             ))}
           </View>
+        ) : null}
 
-          {/* Progress + Topics + Quiz list: side by side on wide screens */}
-          <View style={styles.desktopBodyRow}>
-            {/* Left col: recent results */}
-            <View style={styles.desktopLeftCol}>
-              <RecentResultsStrip />
+        {platformConfig.widgets.showPopularCourses ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Popular Courses</Text>
+              <Pressable onPress={() => router.push('/(tabs)/quizzes')}>
+                <Text style={[styles.sectionLink, { color: colors.text }]}>{'See All'}</Text>
+              </Pressable>
             </View>
 
-            {/* Right col: quiz list */}
-            <View style={styles.desktopRightCol}>
-              <SectionHeader
-                title="Start Practicing"
-                onViewAll={() => router.push('/(tabs)/quizzes')}
-              />
-              {quizzes.slice(0, 5).map((quiz) => (
-                <QuizCard
-                  key={quiz.id}
-                  quiz={quiz}
-                  onPress={() => router.push(`/quiz/${quiz.id}`)}
-                />
-              ))}
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // ── Mobile layout ─────────────────────────────────────────────────────────
-  return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-      edges={['top']}
-    >
-      <BadgeCelebrationModal />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <GreetingHeader userName={userName} coins={progress.coins ?? 0} level={progress.level ?? 1} badges={progress.badges?.length ?? 0} />
-
-        {/* Quick actions */}
-        <View style={styles.sectionGap}>
-          <QuickActionsRow />
-        </View>
-
-        {/* Stats — 2×2 grid on mobile */}
-        <View style={styles.statsGrid}>
-          {STAT_DEFS.map((def) => (
-            <View key={def.label} style={styles.statGridCell}>
-              <StatCard def={def} progress={progress} />
-            </View>
-          ))}
-        </View>
-
-        {/* Daily Quiz Card */}
-        <View style={styles.sectionGap}>
-          <SectionHeader title="Daily Quiz" />
-          {(() => {
-            const dailyQuiz = getDailyQuiz(quizzes);
-            return (
-              <Pressable
-                onPress={() => router.push(`/quiz/${dailyQuiz.id}`)}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.dailyCard,
-                  { backgroundColor: colors.surface, opacity: pressed ? 0.92 : 1 },
-                  CARD_SHADOW,
-                ]}
-              >
-                <View style={[styles.dailyAccent, { backgroundColor: colors.warning }]} />
-                <View style={styles.dailyBody}>
-                  <View style={[styles.dailyIconWrap, { backgroundColor: colors.primaryLight }]}>
-                    <Feather name={dailyQuiz.icon as any} size={22} color={colors.primary} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalRow}>
+              {popularCourses.map((quiz, index) => (
+                <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                  {(() => {
+                    const cv = getCategoryVisual(quiz.category, colors);
+                    const catIcon = AWS_CATEGORY_ICONS[quiz.category];
+                    return (
+                      <LinearGradient colors={[cv.from, cv.to]} style={styles.courseVisual}>
+                        {catIcon ? (
+                          <Image source={catIcon} style={styles.courseVisualIcon} />
+                        ) : (
+                          <Feather name="book" size={30} color={colors.surface} />
+                        )}
+                        <Text style={[styles.courseVisualLabel, { color: colors.surface }]}>{cv.label}</Text>
+                      </LinearGradient>
+                    );
+                  })()}
+                  <View style={styles.courseBody}>
+                    <View style={[styles.courseProgressTrack, { backgroundColor: colors.backgroundAlt }]}>
+                      <View style={[styles.courseProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 1) * 14)}%` }]} />
+                    </View>
+                    <Text style={[styles.courseTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{quiz.title}</Text>
                   </View>
-                  <View style={styles.dailyInfo}>
-                    <Text style={[styles.dailyLabel, { color: colors.primary }]}>TODAY'S CHALLENGE</Text>
-                    <Text style={[styles.dailyTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
-                    <Text style={[styles.dailyMeta, { color: colors.textSecondary }]}>
-                      {dailyQuiz.questionCount} questions · {dailyQuiz.duration} min
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        ) : null}
+
+        {platformConfig.widgets.showFlashcards ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Flashcard Packs</Text>
+            </View>
+
+            <View style={styles.flashcardList}>
+              {flashcardItems.map((item, index) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => router.push({ pathname: '/flashcards', params: { category: item.category } })}
+                  style={[styles.flashcardRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+                >
+                  {(() => {
+                    const svcIcon = AWS_SERVICE_ICONS[item.front];
+                    const accent = AWS_SERVICE_ACCENT[item.front] ?? (index % 2 === 0 ? colors.primary : colors.error);
+                    return (
+                      <View style={[styles.flashcardBadge, { backgroundColor: accent + '18' }]}>
+                        {svcIcon ? (
+                          <Image source={svcIcon} style={styles.flashcardIcon} />
+                        ) : (
+                          <Feather name="cpu" size={22} color={accent} />
+                        )}
+                      </View>
+                    );
+                  })()}
+                  <View style={styles.flashcardBody}>
+                    <Text style={[styles.flashcardTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{item.front}</Text>
+                    <Text style={[styles.flashcardSubtitle, { color: colors.textSecondary, fontSize: t.caption }]} numberOfLines={1}>
+                      {item.tag ?? 'Core concept'} · tap to review
                     </Text>
                   </View>
-                  <View style={[styles.dailyStartBtn, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.dailyStartText}>Start</Text>
-                  </View>
-                </View>
-              </Pressable>
-            );
-          })()}
-        </View>
+                  <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
 
-        {/* Recent Results */}
-        <View style={styles.sectionGap}>
-          <RecentResultsStrip />
-        </View>
-
+        {platformConfig.widgets.showGrowthWidget ? (
+          <LinearGradient colors={[colors.surface, colors.surfaceElevated]} style={[styles.growthCard, { borderColor: colors.surfaceBorder }]}>
+            <View style={styles.growthHeader}>
+              <Text style={[styles.growthTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Growth snapshot</Text>
+              <Text style={[styles.growthChip, { color: colors.primary }]}>{progress.currentStreak} day streak</Text>
+            </View>
+            <View style={styles.growthGrid}>
+              <View>
+                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.completedQuizzes}</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Completed</Text>
+              </View>
+              <View>
+                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.averageScore}%</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Average score</Text>
+              </View>
+              <View>
+                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.badges.length}</Text>
+                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Badges</Text>
+              </View>
+            </View>
+          </LinearGradient>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 48,
-  },
-
-  // ── Header card ────────────────────────────────────────────────────────────
-  headerCard: {
-    borderRadius: 12,
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
-  headerAccentStrip: {
-    height: 4,
-  },
-  headerInner: {
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  headerLeft: {
-    flex: 1,
-    gap: 2,
-  },
-  greetingSubtext: {
-    fontFamily: F.regular,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  greetingName: {
-    fontFamily: F.bold,
-    fontSize: 24,
-    lineHeight: 32,
-    marginTop: 1,
-  },
-
-  // ── Header pills row ────────────────────────────────────────────────────────
-  headerPillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  hPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  hPillText: {
-    fontFamily: F.semiBold,
-    fontSize: 11,
-  },
-
-  // ── CTA button ─────────────────────────────────────────────────────────────
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 8,
-    shadowColor: '#5E50EE',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.45,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  ctaButtonText: {
-    fontFamily: F.semiBold,
-    color: '#FFFFFF',
-    fontSize: 13,
-    letterSpacing: 0.1,
-  },
-
-  // ── Live contest banner ─────────────────────────────────────────────────────
-  liveContest: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#EA5455',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 12,
-    shadowColor: '#EA5455',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  liveContestLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  liveContestDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#fff',
-  },
-  liveContestLabel: { fontFamily: F.bold, fontSize: 11, color: '#fff', letterSpacing: 0.5 },
-  liveContestTitle: { fontFamily: F.semiBold, fontSize: 14, color: '#fff', flex: 1 },
-
-  // ── Quick actions row ───────────────────────────────────────────────────────
-  quickRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 0,
-  },
-  quickBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    shadowColor: '#4B465C',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  quickIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickBtnLabel: { fontFamily: F.semiBold, fontSize: 12 },
-
-  // ── Stats (mobile 2×2 grid) ────────────────────────────────────────────────
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 0,
-  },
-  statGridCell: {
-    width: '47.5%',
-  },
-  statCard: {
-    borderRadius: 10,
-    padding: 12,
-  },
-  statIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  statValue: {
-    fontFamily: F.bold,
-    fontSize: 20,
-    lineHeight: 26,
-  },
-  statLabel: {
-    fontFamily: F.medium,
-    fontSize: 11,
-    marginTop: 1,
-    lineHeight: 15,
-  },
-
-  // ── Recent results strip ───────────────────────────────────────────────────
-  recentCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  recentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    gap: 8,
-  },
-  recentTitle: {
-    fontFamily: F.medium,
-    fontSize: 14,
-    flex: 1,
-  },
-  recentBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  recentBadgeText: {
-    fontFamily: F.bold,
-    fontSize: 13,
-  },
-
-  // ── Section header ─────────────────────────────────────────────────────────
-  sectionGap: {
-    marginTop: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sectionAccentBar: {
-    width: 3,
-    height: 18,
-    borderRadius: 2,
-  },
-  sectionTitle: {
-    fontFamily: F.bold,
-    fontSize: 18,
-  },
-  sectionViewAll: {
-    fontFamily: F.semiBold,
-    fontSize: 13,
-  },
-
-  // ── Daily Quiz card ────────────────────────────────────────────────────────
-  dailyCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  dailyAccent: {
-    height: 3,
-  },
-
-  // Daily card internals
-  dailyBody: {
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  dailyIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  dailyInfo: {
-    flex: 1,
-  },
-  dailyLabel: {
-    fontFamily: F.bold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    marginBottom: 2,
-  },
-  dailyTitle: {
-    fontFamily: F.bold,
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  dailyMeta: {
-    fontFamily: F.regular,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  dailyStartBtn: {
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    flexShrink: 0,
-  },
-  dailyStartText: {
-    fontFamily: F.semiBold,
-    color: '#FFFFFF',
-    fontSize: 13,
-  },
-
-  // ── Desktop layout ─────────────────────────────────────────────────────────
-  statsRowDesktop: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  statColDesktop: {
-    flex: 1,
-  },
-  desktopBodyRow: {
-    flexDirection: 'row',
-    gap: 20,
-    alignItems: 'flex-start',
-  },
-  desktopLeftCol: {
-    width: '36%',
-  },
-  desktopRightCol: {
-    flex: 1,
-  },
+  safeArea: { flex: 1 },
+  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 14 },
+  topStats: { flexDirection: 'row', gap: 10, marginBottom: 2 },
+  statPill: { flex: 1, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  statPillText: { fontFamily: F.bold, fontSize: 14 },
+  heroCard: { borderWidth: 1, borderRadius: 20, padding: 14, gap: 10 },
+  heroEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  heroTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.6 },
+  heroSubtitle: { fontFamily: F.regular, fontSize: 14, lineHeight: 21 },
+  heroStreakMessage: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -2 },
+  dailyQuizCard: { borderWidth: 1, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  dailyQuizCopy: { flex: 1, gap: 4 },
+  dailyQuizHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
+  dailyQuizStatusText: { fontFamily: F.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  dailyQuizTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24 },
+  dailyQuizSubtitle: { fontFamily: F.regular, fontSize: 13, lineHeight: 18 },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  actionStack: { gap: 12 },
+  actionCard: { width: '48%', borderWidth: 1, borderRadius: 16, padding: 12, minHeight: 130, gap: 8 },
+  actionIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  actionTitle: { fontFamily: F.bold, fontSize: 15 },
+  actionSubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 18 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
+  sectionTitle: { fontFamily: F.bold, fontSize: 17 },
+  sectionLink: { fontFamily: F.semiBold, fontSize: 14, textDecorationLine: 'underline' },
+  horizontalRow: { gap: 12, paddingRight: 16 },
+  courseCard: { width: 148, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  courseVisual: { height: 96, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  courseVisualIcon: { width: 30, height: 30 },
+  courseVisualLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase' },
+  courseBody: { padding: 10, gap: 8 },
+  courseProgressTrack: { height: 8, borderRadius: 999, overflow: 'hidden' },
+  courseProgressFill: { height: '100%', borderRadius: 999 },
+  courseTitle: { fontFamily: F.bold, fontSize: 14, lineHeight: 20 },
+  flashcardList: { gap: 10 },
+  flashcardRow: { borderWidth: 1, borderRadius: 14, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  flashcardBadge: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  flashcardBadgeText: { fontFamily: F.bold, fontSize: 13 },
+  flashcardIcon: { width: 24, height: 24 },
+  flashcardBody: { flex: 1, gap: 4 },
+  flashcardTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
+  flashcardSubtitle: { fontFamily: F.regular, fontSize: 12 },
+  growthCard: { borderWidth: 1, borderRadius: 18, padding: 12, gap: 12, marginTop: 2 },
+  growthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  growthTitle: { fontFamily: F.bold, fontSize: 17 },
+  growthChip: { fontFamily: F.semiBold, fontSize: 11 },
+  growthGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+  growthValue: { fontFamily: F.bold, fontSize: 20 },
+  growthLabel: { fontFamily: F.regular, fontSize: 11, marginTop: 3 },
 });
