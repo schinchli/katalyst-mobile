@@ -92,7 +92,7 @@ export default function LeaderboardScreen() {
   const recentResults = useProgressStore((s) => s.progress.recentResults);
   const systemFeatures = useSystemFeatureStore((s) => s.config);
 
-  const { data, isLoading } = useLeaderboard(period);
+  const { data, isLoading, isError } = useLeaderboard(period);
   const entries = data?.entries ?? [];
   const display = entries.slice(0, 12);
   const top3    = display.slice(0, 3);
@@ -135,6 +135,27 @@ export default function LeaderboardScreen() {
       {isLoading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : isError ? (
+        <View style={styles.loadingWrap}>
+          <Feather name="wifi-off" size={40} color={colors.textSecondary} />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            Could not load leaderboard.{'\n'}Check your connection and try again.
+          </Text>
+          <Pressable
+            onPress={() => setPeriod(period)}
+            accessibilityRole="button"
+            style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+          >
+            <Text style={[styles.retryBtnText, { color: colors.surface }]}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : entries.length === 0 ? (
+        <View style={styles.loadingWrap}>
+          <Feather name="award" size={40} color={colors.textSecondary} />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            No entries yet.{'\n'}Complete a quiz to appear on the leaderboard!
+          </Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -224,7 +245,10 @@ const styles = StyleSheet.create<Record<string, ViewStyle & TextStyle>>({
   tabText: { fontFamily: F.semiBold, fontSize: 14 },
 
   scroll:       { paddingBottom: 48 },
-  loadingWrap:  { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingWrap:  { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
+  emptyText:    { fontFamily: F.medium, fontSize: 15, textAlign: 'center', lineHeight: 22 },
+  retryBtn:     { borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10, marginTop: 4 },
+  retryBtnText: { fontFamily: F.bold, fontSize: 14 },
   dailyQuizBanner: {
     marginHorizontal: 16,
     marginTop: 16,

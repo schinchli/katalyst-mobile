@@ -151,7 +151,7 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <Pressable
-            onPress={() => Alert.alert('Share', 'Profile share action can be connected here.')}
+            onPress={handleShareReferral}
             accessibilityRole="button"
             accessibilityLabel="Share your profile"
             style={[styles.shareButton, { borderColor: colors.gradientAccent }]}
@@ -260,7 +260,7 @@ export default function ProfileScreen() {
 
         <View style={[styles.listCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           {[
-            { icon: 'bell',       label: 'Notifications',   badge: '1', route: null },
+            { icon: 'bell',       label: 'Notifications',   badge: undefined, route: null },
             { icon: 'award',      label: 'Leaderboard',                  route: '/leaderboard' as const },
             { icon: 'zap',        label: 'Coin History',                 route: '/coin-history' as const },
             { icon: 'book-open',  label: 'My library',                   route: '/(tabs)/bookmarks' as const },

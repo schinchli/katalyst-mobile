@@ -13,7 +13,7 @@
  *  - Spacing: 16px horizontal, 18px section gap
  */
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet, PanResponder, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Modal, StyleSheet, PanResponder, TextInput, KeyboardAvoidingView, Platform, Linking, AppState, type AppStateStatus } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -221,6 +221,23 @@ export default function QuizScreen() {
     const t = setTimeout(() => setBadgeReady(true), 1400);
     return () => clearTimeout(t);
   }, [phase]);
+
+  // Pause quiz timer when app goes to background, resume on foreground
+  useEffect(() => {
+    if (phase !== 'quiz' || isExamMode) return;
+    const handleAppState = (nextState: AppStateStatus) => {
+      if (nextState === 'background' || nextState === 'inactive') {
+        stopTimer();
+      } else if (nextState === 'active') {
+        if (!showFeedback && currentQuestion) {
+          timerRef.current = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
+        }
+      }
+    };
+    const sub = AppState.addEventListener('change', handleAppState);
+    return () => sub.remove();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, isExamMode, showFeedback, currentQuestion]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleSelectAnswer = (optionId: string) => { if (!showFeedback || phase === 'review') setPendingAnswerId(optionId); };

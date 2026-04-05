@@ -16,7 +16,7 @@ export const AppConfig = {
   supabase: {
     url:          process.env.EXPO_PUBLIC_SUPABASE_URL          ?? '',
     anonKey:      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY     ?? '',
-    functionsUrl: process.env.EXPO_PUBLIC_API_URL               ?? 'https://swydybtzyjxftzfzqqnv.supabase.co/functions/v1',
+    functionsUrl: process.env.EXPO_PUBLIC_API_URL               ?? '',
   },
 
   // ── AdMob ──────────────────────────────────────────────────────────────────

@@ -46,6 +46,7 @@ export default function CoinHistoryScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) { setLoading(false); return; }
@@ -54,6 +55,7 @@ export default function CoinHistoryScreen() {
       try {
         const res = await fetch(`${base}/api/coins`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
+          signal: controller.signal,
         });
         const body = await res.json() as {
           ok: boolean;
@@ -68,9 +70,11 @@ export default function CoinHistoryScreen() {
             note:         body.note ?? '',
           });
         }
-      } catch { /* non-fatal */ }
-      finally  { setLoading(false); }
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') { /* non-fatal network error */ }
+      } finally  { setLoading(false); }
     })();
+    return () => controller.abort();
   }, []);
 
   const renderItem = ({ item: tx }: ListRenderItemInfo<CoinTransaction>) => {

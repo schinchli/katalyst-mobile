@@ -83,14 +83,7 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
             Already subscribed? Pull down to refresh or sign out and back in to sync your access.
           </Text>
 
-          <View style={styles.ratingWrap}>
-            <Feather name="star" size={34} color={colors.warning} />
-            <Text style={[styles.ratingValue, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.rating}</Text>
-          </View>
-          <Text style={[styles.ratingMeta, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.reviews}</Text>
-
           <View style={[styles.testimonialCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[styles.testimonialStars, { color: colors.warning }]}>5.0 ★★★★★</Text>
             <Text style={[styles.testimonialTitle, { color: colors.text }]}>{EXPERIENCE_COPY.premium.testimonial.title}</Text>
             <Text style={[styles.testimonialBody, { color: colors.textSecondary }]}>{EXPERIENCE_COPY.premium.testimonial.body}</Text>
           </View>

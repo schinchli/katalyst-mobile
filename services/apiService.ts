@@ -108,6 +108,7 @@ async function apiFetch<T>(
     try {
       const res = await fetch(apiUrl(path), {
         ...options,
+        signal: options.signal ?? AbortSignal.timeout(10_000),
         headers: {
           'Content-Type': 'application/json',
           Authorization:  `Bearer ${token}`,

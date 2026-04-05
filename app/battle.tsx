@@ -107,8 +107,8 @@ export default function BattleScreen() {
         <View style={[styles.infoBanner, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '30' }]}>
           <Feather name="info" size={14} color={colors.primary} />
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            <Text style={{ color: colors.primary, fontFamily: F.semiBold }}>Foundation Layer: </Text>
-            Full battle game loop coming in a future update.
+            <Text style={{ color: colors.primary, fontFamily: F.semiBold }}>Tip: </Text>
+            Each battle uses a timed quiz format. Answer quickly and accurately to win!
           </Text>
         </View>
       </ScrollView>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, AppState, type AppStateStatus } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -40,11 +40,30 @@ export default function BattleLobbyScreen() {
 
   useEffect(() => {
     // Simulate waiting for opponent timeout for random battles
-    if (battleType === 'random') {
-      timerRef.current = setTimeout(() => setTimedOut(true), 30_000);
-    }
+    if (battleType !== 'random') return;
+    let remainingMs = 30_000;
+    let backgroundedAt: number | null = null;
+
+    const schedule = () => {
+      timerRef.current = setTimeout(() => setTimedOut(true), remainingMs);
+    };
+
+    const handleAppState = (nextState: AppStateStatus) => {
+      if (nextState === 'background' || nextState === 'inactive') {
+        if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+        backgroundedAt = Date.now();
+      } else if (nextState === 'active' && backgroundedAt !== null) {
+        remainingMs = Math.max(0, remainingMs - (Date.now() - backgroundedAt));
+        backgroundedAt = null;
+        if (remainingMs > 0) schedule(); else setTimedOut(true);
+      }
+    };
+
+    schedule();
+    const sub = AppState.addEventListener('change', handleAppState);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      sub.remove();
     };
   }, [battleType]);
 
@@ -167,7 +186,7 @@ export default function BattleLobbyScreen() {
         <View style={[styles.infoBanner, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '30' }]}>
           <Feather name="info" size={13} color={colors.primary} />
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Full battle game loop is coming in a future update.
+            Quiz battles run on a timed format. Stay focused and answer as fast as you can!
           </Text>
         </View>
       </View>
@@ -204,7 +223,6 @@ const styles = StyleSheet.create({
   quizCard: {
     borderRadius: 12,
     borderWidth: 1,
-    padding: '12px 14px' as unknown as number,
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: 3,
