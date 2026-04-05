@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, ListRenderItemInfo } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Pressable } from 'react-native';
@@ -136,7 +137,7 @@ export default function CoinHistoryScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={state.transactions}
           keyExtractor={(tx) => tx.id}
           renderItem={renderItem}
