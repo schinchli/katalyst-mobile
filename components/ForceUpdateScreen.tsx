@@ -33,7 +33,7 @@ export function ForceUpdateScreen({ minimumVersion, appStoreUrl, playStoreUrl }:
           Update Required
         </Text>
         <Text style={[styles.message, { color: colors.textSecondary, fontSize: t.body }]}>
-          This version of LearnKloud is no longer supported. Please update to version {minimumVersion} or later to continue.
+          This version of LearnKloud.Today is no longer supported. Please update to version {minimumVersion} or later to continue.
         </Text>
         <Pressable
           onPress={handleUpdate}

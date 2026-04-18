@@ -53,7 +53,7 @@ interface AuthState {
 
 const GUEST_USER: User = {
   id: 'guest',
-  email: 'guest@awslearn.app',
+  email: 'guest@learnkloud.today',
   name: 'Guest User',
   subscription: 'free',
   createdAt: new Date().toISOString(),

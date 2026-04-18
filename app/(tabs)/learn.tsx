@@ -131,7 +131,7 @@ export default function LearnScreen() {
                 </View>
                 <Text style={[styles.articleTitle, { color: colors.text, fontSize: t.sectionTitle }]}>{item.title}</Text>
                 <Text style={[styles.articleDescription, { color: colors.textSecondary, fontSize: t.body }]}>{item.description}</Text>
-                <Text style={[styles.articleMeta, { color: colors.textSecondary, fontSize: t.caption }]}>LearnKloud Team • January 2026</Text>
+                <Text style={[styles.articleMeta, { color: colors.textSecondary, fontSize: t.caption }]}>LearnKloud.Today Team • January 2026</Text>
                 <View style={[styles.chapterList, { borderTopColor: colors.surfaceBorder, borderTopWidth: 1, paddingTop: 14 }]}>
                   {item.chapters?.slice(0, 3).map((chapter) => {
                     const seconds = chapter.time.split(':').reduce((acc, t) => acc * 60 + parseInt(t, 10), 0);

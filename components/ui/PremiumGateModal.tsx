@@ -71,7 +71,7 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
             <Text style={[styles.webCardTitle, { color: colors.text }]}>Subscribe or unlock on the web</Text>
             <Text style={[styles.webCardBody, { color: colors.textSecondary }]}>
               Payments are processed securely on our website via Razorpay or Stripe.{'\n'}
-              Log in at <Text style={{ color: colors.primary }}>learnkloud.app</Text> and subscribe from your account.
+              Log in at <Text style={{ color: colors.primary }}>learnkloud.today</Text> and subscribe from your account.
             </Text>
             <Pressable onPress={openWebStore} style={[styles.webBtn, { backgroundColor: colors.primary }]}>
               <Feather name="external-link" size={16} color={colors.surface} />

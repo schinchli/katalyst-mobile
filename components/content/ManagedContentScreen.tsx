@@ -48,7 +48,7 @@ export function ManagedContentScreen({ contentKey }: { contentKey: ContentKey })
             </View>
           ) : (
             <>
-              <Text style={[styles.appName, { color: colors.primary }]}>{content?.appName ?? 'LearnKloud LMS'}</Text>
+              <Text style={[styles.appName, { color: colors.primary }]}>{content?.appName ?? 'LearnKloud.Today'}</Text>
               <Text style={[styles.body, { color: colors.text }]}>
                 {content?.[contentKey] ?? ''}
               </Text>
