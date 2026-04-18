@@ -59,8 +59,18 @@ const GUEST_USER: User = {
   createdAt: new Date().toISOString(),
 };
 
+/** Wraps a promise with a hard timeout; rejects with TimeoutError if exceeded. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 async function buildUserFromSession(): Promise<User | null> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await withTimeout(supabase.auth.getSession(), 8000);
   if (!session?.user) return null;
 
   const sbUser = session.user;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
+  cancelAnimation,
   Easing,
   interpolate,
   runOnJS,
@@ -82,7 +83,10 @@ export default function FlashcardsScreen() {
     const exitX  = dir === 'left' ? -SCREEN_W * 1.1 : SCREEN_W * 1.1;
     const enterX = dir === 'left' ?  SCREEN_W * 1.1 : -SCREEN_W * 1.1;
 
-    cardX.value = withTiming(exitX, { duration: 220, easing: Easing.in(Easing.quad) }, () => {
+    cardX.value = withTiming(exitX, { duration: 220, easing: Easing.in(Easing.quad) }, (finished) => {
+      // If animation was cancelled (e.g. filter changed mid-swipe) abort — don't
+      // move the card to enterX, which would leave it stuck off-screen.
+      if (!finished) return;
       cardX.value        = enterX;
       cardOpacity.value  = 0;
       flipProgress.value = 0;
@@ -122,7 +126,14 @@ export default function FlashcardsScreen() {
 
   // ── Reset on filter / category change ─────────────────────────────────────
   const changeFilter = useCallback((key: FlashcardCategory | 'all') => {
+    // Cancel any in-flight swipe/fade animation so their callbacks don't fire
+    // after we reset the values, which would leave the card stuck off-screen.
+    cancelAnimation(cardX);
+    cancelAnimation(cardOpacity);
+    cancelAnimation(cardScale);
+    cancelAnimation(flipProgress);
     cardX.value        = 0;
+    cardScale.value    = 1;
     flipProgress.value = 0;
     cardOpacity.value  = animationsEnabled ? 0 : 1;
     setFilter(key);
@@ -139,18 +150,28 @@ export default function FlashcardsScreen() {
     }
   }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── PanResponder — horizontal swipe to navigate ───────────────────────────
-  // animRef keeps PanResponder closure in sync with the latest animationsEnabled value
-  const animRef  = useRef(animationsEnabled);
-  useEffect(() => { animRef.current = animationsEnabled; }, [animationsEnabled]);
+  // ── PanResponder — handles both tap-to-flip and swipe-to-navigate ──────────
+  // Claiming from onStart means we own every touch on the card, so we can
+  // distinguish a short tap (flip) from a horizontal drag (navigate) ourselves.
+  // This avoids Pressable/PanResponder conflicts on Android New Architecture.
+  const animRef   = useRef(animationsEnabled);
+  const doFlipRef = useRef(doFlip);
+  const goNextRef = useRef(goNext);
+  const goPrevRef = useRef(goPrev);
+  useEffect(() => { animRef.current   = animationsEnabled; }, [animationsEnabled]);
+  useEffect(() => { doFlipRef.current = doFlip; },           [doFlip]);
+  useEffect(() => { goNextRef.current = goNext; },           [goNext]);
+  useEffect(() => { goPrevRef.current = goPrev; },           [goPrev]);
 
   const dragging = useRef(false);
   const pan = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gs) =>
-        !dragging.current &&
-        Math.abs(gs.dx) > 10 &&
-        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.4,
+      // Claim the responder on the very first touch so we see every event.
+      onStartShouldSetPanResponder:        () => true,
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponder:         () => true,
+      onMoveShouldSetPanResponderCapture:  () => false,
+
       onPanResponderGrant: () => {
         dragging.current = true;
         if (animRef.current) cardScale.value = withTiming(0.96, { duration: 120 });
@@ -160,12 +181,20 @@ export default function FlashcardsScreen() {
       },
       onPanResponderRelease: (_, gs) => {
         dragging.current = false;
-        if (animRef.current) cardScale.value = withSpring(1, { damping: 14, stiffness: 260 });
-        if (gs.dx < -SWIPE_THRESHOLD) {
-          goNext();
+        cardScale.value = withSpring(1, { damping: 14, stiffness: 260 });
+
+        const isTap = Math.abs(gs.dx) < 8 && Math.abs(gs.dy) < 8;
+
+        if (isTap) {
+          // Snap card back (it barely moved) then flip
+          cardX.value = withSpring(0, { damping: 16, stiffness: 280 });
+          doFlipRef.current();
+        } else if (gs.dx < -SWIPE_THRESHOLD) {
+          goNextRef.current();
         } else if (gs.dx > SWIPE_THRESHOLD) {
-          goPrev();
-        } else if (animRef.current) {
+          goPrevRef.current();
+        } else {
+          // Didn't reach threshold — snap back
           cardX.value = withSpring(0, { damping: 16, stiffness: 280 });
         }
       },
@@ -291,58 +320,58 @@ export default function FlashcardsScreen() {
 
         {active ? (
           <Animated.View style={[s.cardWrapper, wrapperStyle]} {...pan.panHandlers}>
-            <Pressable onPress={doFlip} style={s.cardPressable}>
 
-              {/* ── Front face ── */}
-              <Animated.View
-                style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }, frontFaceStyle]}
-              >
-                <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
-                <View style={s.cardHeader}>
-                  <Text style={[s.cardLabel, { color: colors.textSecondary }]}>QUESTION</Text>
-                  <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
-                    <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
-                  </View>
+            {/* ── Front face ── */}
+            <Animated.View
+              style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }, frontFaceStyle]}
+              pointerEvents="none"
+            >
+              <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
+              <View style={s.cardHeader}>
+                <Text style={[s.cardLabel, { color: colors.textSecondary }]}>QUESTION</Text>
+                <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+                  <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
                 </View>
-                <View style={s.cardBody}>
-                  {AWS_SERVICE_ICONS[active.front] ? (
-                    <>
-                      <View style={[s.serviceIconWrap, { backgroundColor: (AWS_SERVICE_ACCENT[active.front] ?? colors.primary) + '18' }]}>
-                        <Image source={AWS_SERVICE_ICONS[active.front]!} style={s.serviceIcon} />
-                      </View>
-                      <Text style={[s.cardMain, { color: colors.text, fontSize: 24 }]}>{active.front}</Text>
-                    </>
-                  ) : (
+              </View>
+              <View style={s.cardBody}>
+                {AWS_SERVICE_ICONS[active.front] ? (
+                  <>
+                    <View style={[s.serviceIconWrap, { backgroundColor: (AWS_SERVICE_ACCENT[active.front] ?? colors.primary) + '18' }]}>
+                      <Image source={AWS_SERVICE_ICONS[active.front]!} style={s.serviceIcon} />
+                    </View>
                     <Text style={[s.cardMain, { color: colors.text, fontSize: 24 }]}>{active.front}</Text>
-                  )}
-                </View>
-                <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
-                  <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
-                  <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to reveal the answer</Text>
-                </View>
-              </Animated.View>
+                  </>
+                ) : (
+                  <Text style={[s.cardMain, { color: colors.text, fontSize: 24 }]}>{active.front}</Text>
+                )}
+              </View>
+              <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
+                <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
+                <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to reveal the answer</Text>
+              </View>
+            </Animated.View>
 
-              {/* ── Back face ── */}
-              <Animated.View
-                style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.primary }, backFaceStyle]}
-              >
-                <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
-                <View style={s.cardHeader}>
-                  <Text style={[s.cardLabel, { color: colors.primary }]}>ANSWER</Text>
-                  <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
-                    <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
-                  </View>
+            {/* ── Back face ── */}
+            <Animated.View
+              style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.primary }, backFaceStyle]}
+              pointerEvents="none"
+            >
+              <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
+              <View style={s.cardHeader}>
+                <Text style={[s.cardLabel, { color: colors.primary }]}>ANSWER</Text>
+                <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+                  <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
                 </View>
-                <View style={s.cardBody}>
-                  <Text style={[s.cardMain, { color: colors.text, fontSize: 18 }]}>{active.back}</Text>
-                </View>
-                <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
-                  <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
-                  <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to see the question again</Text>
-                </View>
-              </Animated.View>
+              </View>
+              <View style={s.cardBody}>
+                <Text style={[s.cardMain, { color: colors.text, fontSize: 18 }]}>{active.back}</Text>
+              </View>
+              <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
+                <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
+                <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to see the question again</Text>
+              </View>
+            </Animated.View>
 
-            </Pressable>
           </Animated.View>
         ) : (
           <View style={[s.emptyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -410,7 +439,6 @@ const s = StyleSheet.create({
 
   // Card
   cardWrapper:   { flex: 1 },
-  cardPressable: { flex: 1 },
   cardFace:      {
     flex: 1,
     borderWidth: 1.2,

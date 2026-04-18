@@ -1,5 +1,5 @@
 /**
- * Vuexy typography system — maps to Public Sans font weights.
+ * Typography system — maps to Public Sans font weights.
  * Import and use `F.*` in StyleSheet fontFamily / fontWeight pairs.
  *
  * Usage:
@@ -14,7 +14,7 @@ export const F = {
   bold:      'PublicSans-Bold',       // 700
 } as const;
 
-/** Vuexy type scale (px → same in RN points on 1x) */
+/** Type scale (px → same in RN points on 1x) */
 export const TS = {
   xxl:   { fontFamily: F.bold,     fontSize: 28 },   // large stat numbers
   xl:    { fontFamily: F.bold,     fontSize: 22 },   // screen-level headings

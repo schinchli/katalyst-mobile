@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -16,6 +16,11 @@ import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 import { AWS_SERVICE_ICONS, AWS_SERVICE_ACCENT, AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
+import { useLearningPathStore } from '@/stores/learningPathStore';
+import { LEARNING_PATHS } from '@/data/learningPaths';
+import { getPersonalisedFeed, getGapSummary, type Recommendation } from '@/utils/recommendations';
+import { useEffect, useState } from 'react';
+import { fetchArticles, articleWebUrl, type ArticleSummary } from '@/services/articlesService';
 
 function getCategoryVisual(category: string, colors: ReturnType<typeof useThemeColors>) {
   const labels: Record<string, string> = {
@@ -54,6 +59,265 @@ function StatPill({ icon, value, colors }: { icon: keyof typeof Feather.glyphMap
     </View>
   );
 }
+
+// ── Articles Carousel ─────────────────────────────────────────────────────────
+
+const PROVIDER_ACCENT: Record<string, string> = {
+  AWS: '#FF9900', GCP: '#4285F4', Azure: '#0078D4',
+  Oracle: '#F80000', Databricks: '#FF3621', Snowflake: '#29B5E8',
+  'Data & AI': '#7C3AED', General: '#6B7280',
+};
+
+function ArticlesCarouselWidget({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
+  const t = useTypography();
+  const [articles, setArticles] = useState<ArticleSummary[]>([]);
+
+  useEffect(() => {
+    fetchArticles({ limit: 5 }).then(setArticles);
+  }, []);
+
+  if (articles.length === 0) return null;
+
+  return (
+    <View style={carousel.wrapper}>
+      <View style={carousel.headerRow}>
+        <Text style={[carousel.title, { color: colors.text }]}>Latest Reads</Text>
+        <Pressable onPress={() => router.push('/(tabs)/learn')}>
+          <Text style={[carousel.seeAll, { color: colors.primary }]}>See all</Text>
+        </Pressable>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={carousel.scroll}>
+        {articles.map((a) => {
+          const accent = PROVIDER_ACCENT[a.provider] ?? colors.primary;
+          return (
+            <Pressable
+              key={a._id}
+              onPress={() => Linking.openURL(articleWebUrl(a.slug))}
+              style={({ pressed }) => [carousel.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.85 : 1 }]}
+            >
+              <View style={[carousel.badge, { backgroundColor: accent + '22' }]}>
+                <Text style={[carousel.badgeText, { color: accent }]}>{a.provider}</Text>
+              </View>
+              <Text style={[carousel.cardTitle, { color: colors.text }]} numberOfLines={2}>{a.title}</Text>
+              <Text style={[carousel.cardMeta, { color: colors.textSecondary }]}>{a.organisation}{a.readTime ? ` • ${a.readTime}` : ''}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+const carousel = StyleSheet.create({
+  wrapper:    { gap: 10 },
+  headerRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 0 },
+  title:      { fontFamily: F.bold, fontSize: 16 },
+  seeAll:     { fontFamily: F.semiBold, fontSize: 13 },
+  scroll:     { gap: 10, paddingRight: 4 },
+  card:       { width: 200, borderWidth: 1, borderRadius: 14, padding: 12, gap: 8 },
+  badge:      { alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 },
+  badgeText:  { fontFamily: F.bold, fontSize: 10 },
+  cardTitle:  { fontFamily: F.bold, fontSize: 13, lineHeight: 18 },
+  cardMeta:   { fontFamily: F.medium, fontSize: 11 },
+});
+
+// ── Personalised Feed ─────────────────────────────────────────────────────────
+
+function PersonalisedFeedWidget({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
+  const recentResults = useProgressStore((s) => s.progress.recentResults);
+  const { activePathId, completedStepIds } = useLearningPathStore();
+
+  // Find the next uncompleted quiz step in the active path
+  const nextPathQuizId = (() => {
+    if (!activePathId) return undefined;
+    const path = LEARNING_PATHS.find((p) => p.id === activePathId);
+    if (!path) return undefined;
+    const completedQuizIds = new Set(recentResults.map((r) => r.quizId));
+    const nextStep = path.steps.find((s) => {
+      if (s.type === 'quiz') return !completedQuizIds.has(s.resourceId);
+      return !completedStepIds.includes(s.id);
+    });
+    return nextStep?.type === 'quiz' ? nextStep.resourceId : undefined;
+  })();
+
+  const feed = getPersonalisedFeed(recentResults, 4, nextPathQuizId);
+  const gap = getGapSummary(recentResults);
+
+  if (feed.length === 0) return null;
+
+  const priorityColor = (p: Recommendation['priority']) => {
+    if (p === 'weak')    return colors.error;
+    if (p === 'new')     return colors.primary;
+    if (p === 'review')  return '#FF9F43';
+    return colors.success;
+  };
+
+  const priorityLabel = (p: Recommendation['priority']) => {
+    if (p === 'weak')   return 'Needs work';
+    if (p === 'new')    return 'New topic';
+    if (p === 'review') return 'Review due';
+    return 'Level up';
+  };
+
+  return (
+    <View style={pfStyles.section}>
+      <View style={pfStyles.header}>
+        <View>
+          <Text style={[pfStyles.title, { color: colors.text }]}>For You</Text>
+          {gap.topGap ? (
+            <Text style={[pfStyles.sub, { color: colors.textSecondary }]}>
+              Focus on <Text style={{ color: colors.error }}>{gap.topGap}</Text> · {gap.overallScore}% avg across all topics
+            </Text>
+          ) : (
+            <Text style={[pfStyles.sub, { color: colors.textSecondary }]}>
+              Based on your {recentResults.length} quiz sessions
+            </Text>
+          )}
+        </View>
+        <Pressable onPress={() => router.push('/(tabs)/learn')} hitSlop={8}>
+          <Text style={[pfStyles.seeAll, { color: colors.primary }]}>See All</Text>
+        </Pressable>
+      </View>
+
+      {feed.map((rec) => (
+        <Pressable
+          key={rec.id}
+          onPress={() => {
+            if (rec.type === 'video' && rec.youtubeId) {
+              Linking.openURL(`https://youtu.be/${rec.youtubeId}`);
+            } else if (rec.type === 'quiz' && rec.quizId) {
+              router.push(`/quiz/${rec.quizId}` as never);
+            } else if (rec.type === 'flashcard' && rec.flashcardCategory) {
+              router.push({ pathname: '/flashcards', params: { category: rec.flashcardCategory } } as never);
+            }
+          }}
+          style={({ pressed }) => [
+            pfStyles.card,
+            { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.85 : 1 },
+          ]}
+        >
+          <View style={[pfStyles.typeIcon, { backgroundColor: priorityColor(rec.priority) + '18' }]}>
+            <Feather
+              name={rec.type === 'video' ? 'play-circle' : rec.type === 'quiz' ? 'edit-3' : 'layers'}
+              size={16}
+              color={priorityColor(rec.priority)}
+            />
+          </View>
+          <View style={pfStyles.cardBody}>
+            <View style={pfStyles.cardTop}>
+              <Text style={[pfStyles.cardTitle, { color: colors.text }]} numberOfLines={1}>{rec.title}</Text>
+              <View style={[pfStyles.badge, { backgroundColor: priorityColor(rec.priority) + '18' }]}>
+                <Text style={[pfStyles.badgeText, { color: priorityColor(rec.priority) }]}>{priorityLabel(rec.priority)}</Text>
+              </View>
+            </View>
+            <Text style={[pfStyles.reason, { color: colors.textSecondary }]} numberOfLines={2}>{rec.reason}</Text>
+          </View>
+          <Feather name="chevron-right" size={14} color={colors.textSecondary} />
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+const pfStyles = StyleSheet.create({
+  section: { gap: 10 },
+  header:  { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  title:   { fontFamily: F.bold, fontSize: 16 },
+  sub:     { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
+  seeAll:  { fontFamily: F.semiBold, fontSize: 13 },
+  card:    { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 14, padding: 12 },
+  typeIcon:{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  cardBody:{ flex: 1, gap: 4 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardTitle:{ fontFamily: F.semiBold, fontSize: 13, flex: 1 },
+  badge:   { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
+  badgeText:{ fontFamily: F.bold, fontSize: 10 },
+  reason:  { fontFamily: F.regular, fontSize: 12, lineHeight: 17 },
+});
+
+function LearningPathWidget({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
+  const { activePathId, completedStepIds, setShowSelector } = useLearningPathStore();
+  const recentResults = useProgressStore((s) => s.progress.recentResults);
+
+  const path = LEARNING_PATHS.find((p) => p.id === activePathId);
+
+  if (!path) {
+    // Prompt user to pick a track
+    return (
+      <Pressable
+        onPress={() => router.push('/learning-path')}
+        style={({ pressed }) => [lpStyles.pickCard, { backgroundColor: colors.surface, borderColor: colors.primary + '44', opacity: pressed ? 0.85 : 1 }]}
+      >
+        <View style={[lpStyles.pickIcon, { backgroundColor: colors.primary + '15' }]}>
+          <Feather name="map" size={20} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[lpStyles.pickTitle, { color: colors.text }]}>Choose a Learning Track</Text>
+          <Text style={[lpStyles.pickSub, { color: colors.textSecondary }]}>CLF-C02 · AIP-C01 · GenAI — step-by-step guidance</Text>
+        </View>
+        <Feather name="chevron-right" size={16} color={colors.primary} />
+      </Pressable>
+    );
+  }
+
+  const isQuizPassed = (quizId: string) => recentResults.some((r) => r.quizId === quizId && r.score > 0);
+  const isStepDone = (step: typeof path.steps[0]) =>
+    step.type === 'quiz' ? isQuizPassed(step.resourceId) : completedStepIds.includes(step.id);
+
+  const completedCount = path.steps.filter(isStepDone).length;
+  const pct = Math.round((completedCount / path.steps.length) * 100);
+  const nextStep = path.steps.find((s) => !isStepDone(s));
+
+  return (
+    <Pressable
+      onPress={() => router.push('/learning-path')}
+      style={({ pressed }) => [lpStyles.widget, { backgroundColor: colors.surface, borderColor: path.color + '55', opacity: pressed ? 0.85 : 1 }]}
+    >
+      <View style={lpStyles.widgetTop}>
+        <View style={[lpStyles.certBadge, { backgroundColor: path.color + '18' }]}>
+          <Text style={[lpStyles.certCode, { color: path.color }]}>{path.certCode}</Text>
+        </View>
+        <Text style={[lpStyles.widgetTitle, { color: colors.text }]}>{path.certName}</Text>
+        <Text style={[lpStyles.widgetPct, { color: path.color }]}>{pct}%</Text>
+      </View>
+
+      <View style={[lpStyles.bar, { backgroundColor: colors.backgroundAlt }]}>
+        <View style={[lpStyles.barFill, { width: `${pct}%` as any, backgroundColor: path.color }]} />
+      </View>
+
+      {nextStep ? (
+        <View style={lpStyles.nextRow}>
+          <Feather name="arrow-right-circle" size={14} color={path.color} />
+          <Text style={[lpStyles.nextText, { color: colors.textSecondary }]} numberOfLines={1}>
+            Next: <Text style={{ color: colors.text }}>{nextStep.title}</Text>
+          </Text>
+        </View>
+      ) : (
+        <View style={lpStyles.nextRow}>
+          <Feather name="award" size={14} color={colors.success} />
+          <Text style={[lpStyles.nextText, { color: colors.success }]}>All steps complete!</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+const lpStyles = StyleSheet.create({
+  pickCard:  { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderRadius: 16, padding: 14, borderStyle: 'dashed' },
+  pickIcon:  { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  pickTitle: { fontFamily: F.semiBold, fontSize: 14 },
+  pickSub:   { fontFamily: F.regular, fontSize: 12, marginTop: 2 },
+  widget:    { borderWidth: 1.5, borderRadius: 16, padding: 14, gap: 10 },
+  widgetTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  certBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  certCode:  { fontFamily: F.bold, fontSize: 11, letterSpacing: 0.5 },
+  widgetTitle: { fontFamily: F.semiBold, fontSize: 14, flex: 1 },
+  widgetPct: { fontFamily: F.bold, fontSize: 14 },
+  bar:       { height: 6, borderRadius: 999, overflow: 'hidden' },
+  barFill:   { height: 6, borderRadius: 999 },
+  nextRow:   { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  nextText:  { fontFamily: F.regular, fontSize: 12, flex: 1 },
+});
 
 function isSameLocalDay(isoDate: string, reference = new Date()) {
   return new Date(isoDate).toDateString() === reference.toDateString();
@@ -128,6 +392,9 @@ export default function HomeScreen() {
           <Text style={[styles.heroStreakMessage, { color: colors.textSecondary, fontSize: t.caption }]}>{streakMessage}</Text>
 
         </LinearGradient>
+
+        {/* ── Learning Path Widget ── */}
+        <LearningPathWidget colors={colors} />
 
         {platformConfig.widgets.showHomeActions ? (
           <View style={platformConfig.layout.homeActionsStyle === 'stack' ? styles.actionStack : styles.actionGrid}>
@@ -242,6 +509,13 @@ export default function HomeScreen() {
             </View>
           </LinearGradient>
         ) : null}
+
+        {/* ── Articles Carousel ── */}
+        <ArticlesCarouselWidget colors={colors} />
+
+        {/* ── Personalised "For You" Feed ── */}
+        <PersonalisedFeedWidget colors={colors} />
+
       </ScrollView>
     </SafeAreaView>
   );

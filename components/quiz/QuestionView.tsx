@@ -6,7 +6,7 @@
  *  - Options: plain text only, selected = primary color bold, no circles/bullets
  *  - Answered state: correct = success color, wrong = error color, explanation card below
  */
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Linking } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useFontScale } from '@/hooks/useFontScale';
@@ -125,6 +125,18 @@ export function QuestionView({
           <Text style={[s.explanationBody, { color: colors.text, fontSize: Math.round(14 * scale), lineHeight: Math.round(22 * scale) }]}>
             {question.explanation ?? 'No explanation available.'}
           </Text>
+          {question.docUrl && (
+            <Pressable
+              onPress={() => Linking.openURL(question.docUrl!)}
+              hitSlop={8}
+              style={s.docLink}
+            >
+              <Feather name="book-open" size={12} color={resultAccent} />
+              <Text style={[s.docLinkText, { color: resultAccent, fontSize: Math.round(12 * scale) }]}>
+                View on AWS Docs →
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
 
@@ -171,4 +183,6 @@ const s = StyleSheet.create({
   explanationBadge:  { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   explanationTitle:  { fontFamily: F.bold, fontSize: 14 },
   explanationBody:   { fontFamily: F.medium, fontSize: 14, lineHeight: 22 },
+  docLink:           { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 2 },
+  docLinkText:       { fontFamily: F.semiBold, fontSize: 12 },
 });

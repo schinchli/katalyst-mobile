@@ -121,7 +121,7 @@ function summarizeResults(results: QuizResult[]) {
     currentStreak,
     longestStreak,
     lastPlayedDate: latestDay,
-    recentResults: sorted.slice(0, 20),
+    recentResults: sorted.slice(0, 500), // full history for recommendation engine
     xp: computedXP,
     level: calculateLevel(computedXP),
   };
@@ -210,7 +210,9 @@ export const useProgressStore = create<ProgressState>()(
           const longestStreak = Math.max(prev.longestStreak, streak);
 
           // ── Core stats ──────────────────────────────────────────────────────
-          const results = [result, ...prev.recentResults].slice(0, 20);
+          // Keep full history locally (capped at 500 to avoid unbounded storage).
+          // The recommendation engine uses all of these for personalisation.
+          const results = [result, ...prev.recentResults].slice(0, 500);
           const completed = prev.completedQuizzes + 1;
           const totalScore =
             prev.averageScore * prev.completedQuizzes +

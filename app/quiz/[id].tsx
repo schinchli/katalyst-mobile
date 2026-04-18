@@ -41,6 +41,7 @@ import { CHALLENGE_SCORES } from '@/data/challenges';
 import { F } from '@/constants/Typography';
 import { supabase } from '@/config/supabase';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
+import { getRecommendations } from '@/utils/recommendations';
 
 const QUESTION_TIME = 30;
 
@@ -622,6 +623,60 @@ export default function QuizScreen() {
             );
           })}
 
+          {/* ── Recommended Resources (shown on FAIL) ── */}
+          {!passed && (() => {
+            const wrongQs = questions.filter((q) => selectedAnswers[q.id] !== q.correctOptionId);
+            const recs = getRecommendations(wrongQs, 3, recentResults);
+            if (recs.length === 0) return null;
+            return (
+              <View style={[s.recsSection, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <View style={s.recsHeader}>
+                  <View style={[s.recsIconWrap, { backgroundColor: colors.primary + '18' }]}>
+                    <Feather name="book-open" size={16} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.recsTitle, { color: colors.text }]}>Recommended Resources</Text>
+                    <Text style={[s.recsSub, { color: colors.textSecondary }]}>
+                      Based on your wrong answers · watch to close the gaps
+                    </Text>
+                  </View>
+                </View>
+                {recs.map(({ video, matchedTopics }) => (
+                  <Pressable
+                    key={video.id}
+                    onPress={() => Linking.openURL(`https://youtu.be/${video.youtubeId}`)}
+                    style={({ pressed }) => [
+                      s.recCard,
+                      { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+                    ]}
+                  >
+                    <View style={s.recCardLeft}>
+                      <View style={[s.recTagPill, { backgroundColor: colors.primary + '20' }]}>
+                        <Text style={[s.recTagText, { color: colors.primary }]}>{video.tag}</Text>
+                      </View>
+                      <Text style={[s.recCardTitle, { color: colors.text }]} numberOfLines={2}>{video.title}</Text>
+                      {matchedTopics.length > 0 && (
+                        <Text style={[s.recMatch, { color: colors.textSecondary }]}>
+                          Covers: {matchedTopics.slice(0, 2).join(' · ')}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={[s.recPlayBtn, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '33' }]}>
+                      <Feather name="play" size={14} color={colors.primary} />
+                    </View>
+                  </Pressable>
+                ))}
+                <Pressable
+                  onPress={() => { exitAndReset(); setTimeout(() => router.navigate('/(tabs)/learn'), 180); }}
+                  style={[s.recsViewAll, { borderColor: colors.primary }]}
+                >
+                  <Text style={[s.recsViewAllText, { color: colors.primary }]}>View All Resources</Text>
+                  <Feather name="arrow-right" size={14} color={colors.primary} />
+                </Pressable>
+              </View>
+            );
+          })()}
+
           <View style={s.resultsActions}>
             <View style={s.resultTopRow}>
               <Button title="Review Answers" variant="outline" size="lg" style={s.resultActionBtn}
@@ -1179,6 +1234,22 @@ const s = StyleSheet.create({
   resultsActions:   { gap: 10 },
   resultTopRow:     { flexDirection: 'row', gap: 10 },
   resultActionBtn:  { flex: 1 },
+
+  // Recommended resources (fail state)
+  recsSection:    { borderWidth: 1, borderRadius: 16, padding: 16, gap: 12 },
+  recsHeader:     { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  recsIconWrap:   { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  recsTitle:      { fontFamily: F.bold, fontSize: 14 },
+  recsSub:        { fontFamily: F.regular, fontSize: 12, marginTop: 2, lineHeight: 17 },
+  recCard:        { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 12, padding: 12 },
+  recCardLeft:    { flex: 1, gap: 4 },
+  recTagPill:     { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  recTagText:     { fontFamily: F.semiBold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 },
+  recCardTitle:   { fontFamily: F.semiBold, fontSize: 13, lineHeight: 18 },
+  recMatch:       { fontFamily: F.regular, fontSize: 11 },
+  recPlayBtn:     { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  recsViewAll:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 10, paddingVertical: 10 },
+  recsViewAllText: { fontFamily: F.semiBold, fontSize: 13 },
 
   // ── Flashcard ──
   flashBadge:        { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, minWidth: 60, justifyContent: 'flex-end' },

@@ -6,8 +6,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="description" content="Katalyst — AWS GenAI Certification Prep" />
-        <title>Katalyst</title>
+        <meta name="description" content="LearnKloud — AWS GenAI Certification Prep" />
+        <title>LearnKloud</title>
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: `html,body{height:100%;background:#050B18;color:#E5E7EB;}#root{display:flex;flex:1;height:100%;}` }} />
       </head>

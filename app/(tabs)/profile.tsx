@@ -107,7 +107,7 @@ export default function ProfileScreen() {
     const base = AppConfig.web.baseUrl.replace(/\/$/, '');
     const link = `${base}/signup?ref=${referral.code}`;
     await Share.share({
-      message: `Join me on Katalyst for AWS & GenAI cert prep! Use my referral code ${referral.code}: ${link}`,
+      message: `Join me on LearnKloud for AWS & GenAI cert prep! Use my referral code ${referral.code}: ${link}`,
       url: link,
     }).catch(() => {});
   };
@@ -125,7 +125,7 @@ export default function ProfileScreen() {
             </View>
           </View>
           <Text style={[styles.profileName, { color: colors.text, fontSize: t.screenTitle }]}>
-            {isGuest ? 'Guest' : (user?.name ?? 'Katalyst learner')}
+            {isGuest ? 'Guest' : (user?.name ?? 'LearnKloud learner')}
           </Text>
           <Text style={[styles.profileHandle, { color: colors.textSecondary, fontSize: t.body }]}>
             {isGuest ? 'Exploring as guest' : `@${(user?.email ?? '').split('@')[0]}`}
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
             <Pressable
               onPress={() => router.push('/(auth)/login' as any)}
               accessibilityRole="button"
-              accessibilityLabel="Log in to Katalyst"
+              accessibilityLabel="Log in to LearnKloud"
               style={[styles.guestLoginBtn, { backgroundColor: colors.primary }]}
             >
               <Text style={[styles.guestLoginBtnText, { color: colors.surface }]}>Log In</Text>
@@ -248,7 +248,7 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => Alert.alert(
               'Restore Purchases',
-              'Coming soon — contact support@katalyst.app to restore your subscription.',
+              'Coming soon — contact support@learnkloud.app to restore your subscription.',
               [{ text: 'OK', style: 'default' }],
             )}
             style={[styles.restoreBtn, { borderColor: colors.primary }]}

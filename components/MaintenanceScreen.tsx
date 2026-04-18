@@ -14,7 +14,7 @@ export function MaintenanceScreen({ message }: MaintenanceScreenProps) {
   const t = useTypography();
 
   const handleContactSupport = () => {
-    Linking.openURL('mailto:support@katalyst.app').catch(() => {});
+    Linking.openURL('mailto:support@learnkloud.app').catch(() => {});
   };
 
   return (

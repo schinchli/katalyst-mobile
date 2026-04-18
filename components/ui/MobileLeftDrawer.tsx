@@ -59,27 +59,29 @@ export function MobileLeftDrawer() {
 
   return (
     <>
-      {/* ── Hamburger trigger — always visible, top-left ── */}
-      <View
-        pointerEvents="box-none"
-        style={[styles.triggerWrap, { top: insets.top + 10, left: 14 }]}
-      >
-        <Pressable
-          onPress={isOpen ? close : open}
-          style={({ pressed }) => [
-            styles.triggerBtn,
-            {
-              backgroundColor: pressed ? colors.backgroundAlt : colors.surface,
-              borderColor: colors.surfaceBorder,
-              shadowColor: colors.text,
-            },
-          ]}
-          accessibilityLabel={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
-          accessibilityRole="button"
+      {/* ── Hamburger trigger — only visible when drawer is closed ── */}
+      {!isOpen && (
+        <View
+          pointerEvents="box-none"
+          style={[styles.triggerWrap, { top: insets.top + 10, left: 14 }]}
         >
-          <Feather name={isOpen ? 'x' : 'menu'} size={18} color={colors.text} />
-        </Pressable>
-      </View>
+          <Pressable
+            onPress={open}
+            style={({ pressed }) => [
+              styles.triggerBtn,
+              {
+                backgroundColor: pressed ? colors.backgroundAlt : colors.surface,
+                borderColor: colors.surfaceBorder,
+                shadowColor: colors.text,
+              },
+            ]}
+            accessibilityLabel="Open navigation menu"
+            accessibilityRole="button"
+          >
+            <Feather name="menu" size={18} color={colors.text} />
+          </Pressable>
+        </View>
+      )}
 
       {/* ── Backdrop ── */}
       {isOpen && (
@@ -118,7 +120,7 @@ export function MobileLeftDrawer() {
           >
             <Feather name="activity" size={18} color={colors.primaryText} />
           </LinearGradient>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={[styles.appName, { color: colors.text }]}>
               {EXPERIENCE_COPY.appName}
             </Text>
@@ -126,6 +128,17 @@ export function MobileLeftDrawer() {
               {EXPERIENCE_COPY.themeName}
             </Text>
           </View>
+          <Pressable
+            onPress={close}
+            style={({ pressed }) => [
+              styles.closeBtn,
+              { backgroundColor: pressed ? colors.backgroundAlt : 'transparent' },
+            ]}
+            accessibilityLabel="Close navigation menu"
+            accessibilityRole="button"
+          >
+            <Feather name="x" size={18} color={colors.textSecondary} />
+          </Pressable>
         </LinearGradient>
 
         {/* Nav items */}
@@ -281,5 +294,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

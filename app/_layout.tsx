@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { DefaultTheme, DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -18,6 +18,7 @@ import { syncQuizCatalogOverridesFromSupabase } from '@/services/quizCatalogServ
 import { syncSystemFeaturesFromSupabase } from '@/services/systemFeatureService';
 import { syncManagedQuizContentFromSupabase } from '@/services/managedQuizContentService';
 import { MaintenanceScreen } from '@/components/MaintenanceScreen';
+import { useLearningPathStore } from '@/stores/learningPathStore';
 import { ForceUpdateScreen } from '@/components/ForceUpdateScreen';
 import 'react-native-reanimated';
 
@@ -59,7 +60,8 @@ function AuthGuard() {
   const hydratedRef      = useRef(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    // Wait until auth is resolved AND segments are available before navigating.
+    if (isLoading || segments.length === 0) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -93,12 +95,6 @@ function ThemedApp() {
   const navTheme = darkMode
     ? { ...DarkTheme,    colors: { ...DarkTheme.colors,    background: dk.background, card: dk.surface,  text: dk.text,  border: dk.surfaceBorder } }
     : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: lk.background, card: lk.surface, text: lk.text, border: lk.surfaceBorder } };
-
-  // Don't mount the navigator until auth state is known — prevents Fabric from
-  // mounting (tabs) views only to immediately tear them down when AuthGuard
-  // fires router.replace('/(auth)/login'), which causes the "addViewAt: failed
-  // to insert view — child already has a parent" crash on New Architecture.
-  if (authIsLoading) return null;
 
   // ── Maintenance gate ────────────────────────────────────────────────────────
   if (systemFeatures.maintenanceMode) {
@@ -145,7 +141,8 @@ function ThemedApp() {
         <Stack.Screen name="privacy"        options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="terms"          options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="about"          options={{ headerShown: false, presentation: 'card' }} />
-        <Stack.Screen name="instructions"   options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="instructions"    options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="learning-path"  options={{ headerShown: false, presentation: 'card' }} />
       </Stack>
     </ThemeProvider>
   );
@@ -155,6 +152,13 @@ function ThemedApp() {
 
 export default function RootLayout() {
   const initAuth = useAuthStore((s) => s.initAuth);
+  const hydrateLearningPath = useLearningPathStore((s) => s.hydrate);
+
+  useEffect(() => { void hydrateLearningPath(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // fontsDone is true once fonts load OR after 3 s (guards against missing assets).
+  // We never block the navigator on fonts — SplashScreen provides the visual gate.
+  const [fontsDone, setFontsDone] = useState(false);
 
   const [loaded, error] = useFonts({
     SpaceMono:             require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -164,42 +168,61 @@ export default function RootLayout() {
     'PublicSans-Bold':     require('../assets/fonts/PublicSans-Bold.ttf'),
   });
 
-  useEffect(() => { if (error) throw error; }, [error]);
+  // Font timeout: give up waiting after 3 s so a missing asset never blocks the app.
+  useEffect(() => {
+    if (loaded || error) {
+      setFontsDone(true);
+      return;
+    }
+    const t = setTimeout(() => setFontsDone(true), 3_000);
+    return () => clearTimeout(t);
+  }, [loaded, error]);
 
   useEffect(() => {
-    if (loaded) {
-      // Keep splash blocked only for local auth/bootstrap. Remote config syncs can
-      // happen in the background so Expo Go and native dev startups stay fast.
-      initAuth()
-        .then(() => {
-          void SplashScreen.hideAsync();
+    if (!fontsDone) return;
 
-          void (async () => {
-            const syncTasks: Array<Promise<unknown>> = [
-              syncPlatformThemeFromSupabase(),
-              syncPlatformConfigFromSupabase(),
-              syncManagedQuizContentFromSupabase(),
-              syncQuizCatalogOverridesFromSupabase(),
-              syncSystemFeaturesFromSupabase(),
-            ];
+    // Hard fallback: if initAuth hangs beyond 10 s (e.g. no network),
+    // force isLoading=false and hide the splash so the user sees the UI.
+    const fallbackTimer = setTimeout(() => {
+      useAuthStore.getState().setLoading(false);
+      void SplashScreen.hideAsync();
+    }, 10_000);
 
-            const userId = useAuthStore.getState().user?.id;
-            if (userId) {
-              syncTasks.push(syncUserThemeFromSupabase(userId));
-            }
+    // Keep splash blocked only for local auth/bootstrap. Remote config syncs can
+    // happen in the background so Expo Go and native dev startups stay fast.
+    initAuth()
+      .then(() => {
+        clearTimeout(fallbackTimer);
+        void SplashScreen.hideAsync();
 
-            await Promise.allSettled(syncTasks);
-          })();
-        })
-        .catch((err: unknown) => {
-          if (__DEV__) console.error('[RootLayout] initAuth failed:', err);
-          void SplashScreen.hideAsync();
-        });
-    }
-  }, [loaded]);
+        void (async () => {
+          const syncTasks: Array<Promise<unknown>> = [
+            syncPlatformThemeFromSupabase(),
+            syncPlatformConfigFromSupabase(),
+            syncManagedQuizContentFromSupabase(),
+            syncQuizCatalogOverridesFromSupabase(),
+            syncSystemFeaturesFromSupabase(),
+          ];
 
-  if (!loaded) return null;
+          const userId = useAuthStore.getState().user?.id;
+          if (userId) {
+            syncTasks.push(syncUserThemeFromSupabase(userId));
+          }
 
+          await Promise.allSettled(syncTasks);
+        })();
+      })
+      .catch((err: unknown) => {
+        clearTimeout(fallbackTimer);
+        if (__DEV__) console.error('[RootLayout] initAuth failed:', err);
+        useAuthStore.getState().setLoading(false);
+        void SplashScreen.hideAsync();
+      });
+  }, [fontsDone]);
+
+  // Always render the navigator — expo-router requires a slot/navigator on every
+  // render. SplashScreen (preventAutoHideAsync) keeps the native splash visible
+  // while fonts + auth bootstrap. ThemedApp renders the Stack unconditionally.
   return (
     <QueryClientProvider client={queryClient}>
       <ThemedApp />

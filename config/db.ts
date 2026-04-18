@@ -11,9 +11,10 @@ import type { QuizResult } from '@/types';
 export async function getQuizResults(userId: string): Promise<QuizResult[]> {
   const { data, error } = await supabase
     .from('quiz_results')
-    .select('*')
+    .select('quiz_id, score, total_questions, time_taken, answers, completed_at')
     .eq('user_id', userId)
-    .order('completed_at', { ascending: false });
+    .order('completed_at', { ascending: false })
+    .limit(500); // full history for recommendation engine
 
   if (error || !data) return [];
   return (data as Record<string, unknown>[]).map((row) => ({
@@ -27,18 +28,36 @@ export async function getQuizResults(userId: string): Promise<QuizResult[]> {
 }
 
 export async function saveQuizResult(userId: string, result: QuizResult): Promise<void> {
-  await supabase.from('quiz_results').upsert(
-    {
-      user_id:         userId,
-      quiz_id:         result.quizId,
-      score:           result.score,
-      total_questions: result.totalQuestions,
-      time_taken:      result.timeTaken,
-      answers:         result.answers,
-      completed_at:    result.completedAt,
-    },
-    { onConflict: 'user_id,quiz_id' },
-  );
+  // INSERT a new row for every attempt so full history is preserved.
+  // If the table still has the old (user_id, quiz_id) unique constraint, fall
+  // back to upsert so we at least keep the most-recent attempt rather than
+  // throwing — a proper multi-attempt migration can add session_id later.
+  const { error } = await supabase.from('quiz_results').insert({
+    user_id:         userId,
+    quiz_id:         result.quizId,
+    score:           result.score,
+    total_questions: result.totalQuestions,
+    time_taken:      result.timeTaken,
+    answers:         result.answers,
+    completed_at:    result.completedAt,
+  });
+
+  if (error?.code === '23505') {
+    // Unique constraint violation → table doesn't support multi-attempt yet.
+    // Fall back to upsert so the latest score is at least recorded.
+    await supabase.from('quiz_results').upsert(
+      {
+        user_id:         userId,
+        quiz_id:         result.quizId,
+        score:           result.score,
+        total_questions: result.totalQuestions,
+        time_taken:      result.timeTaken,
+        answers:         result.answers,
+        completed_at:    result.completedAt,
+      },
+      { onConflict: 'user_id,quiz_id' },
+    );
+  }
 }
 
 export async function deleteAllQuizResults(userId: string): Promise<void> {

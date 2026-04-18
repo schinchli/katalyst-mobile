@@ -60,7 +60,7 @@ export function AdBanner(_props: { style?: object }) {
 
   return (
     <View style={[s.banner, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
-      <Text style={[s.title, { color: colors.surface }]}>Katalyst</Text>
+      <Text style={[s.title, { color: colors.surface }]}>LearnKloud</Text>
       <Text style={[s.subtitle, { color: colors.primaryLight }]}>Upgrade to Pro · Unlock all quizzes</Text>
     </View>
   );

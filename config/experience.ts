@@ -1,5 +1,5 @@
 export const EXPERIENCE_COPY = {
-  appName: 'Katalyst',
+  appName: 'LearnKloud',
   themeName: 'Signature',
   auth: {
     eyebrow: 'Focused daily learning',

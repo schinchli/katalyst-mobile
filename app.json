@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "Katalyst",
-    "slug": "katalyst",
+    "name": "LearnKloud",
+    "slug": "learnkloud",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "katalyst",
+    "scheme": "learnkloud",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
