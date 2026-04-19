@@ -271,7 +271,7 @@ export default function LearningPathScreen() {
                         hint.status === 'partial' ? '#FF9F43' : colors.textSecondary,
                     },
                   ]}>
-                    {hint.status === 'covered' ? 'skip' : hint.status === 'partial' ? 'delta' : 'new'}
+                    {hint.status === 'covered' ? 'skip' : hint.status === 'partial' ? 'review' : 'new'}
                   </Text>
                 </View>
               </View>
@@ -289,7 +289,7 @@ export default function LearningPathScreen() {
             ]}
           >
             <View style={s.nextStepLeft}>
-              <Text style={s.nextStepEyebrow}>UP NEXT</Text>
+              <Text style={s.nextStepEyebrow}>Up next</Text>
               <Text style={s.nextStepTitle} numberOfLines={1}>{nextStep.title}</Text>
               <Text style={s.nextStepSub}>{typeLabel(nextStep.type)} · {nextStep.estimatedMinutes} min</Text>
             </View>
@@ -307,7 +307,7 @@ export default function LearningPathScreen() {
         )}
 
         {/* Steps timeline */}
-        <Text style={[s.sectionLabel, { color: colors.textSecondary }]}>ALL STEPS</Text>
+        <Text style={[s.sectionLabel, { color: colors.textSecondary }]}>Steps</Text>
 
         {path.steps.map((step, idx) => {
           const done = isStepDone(step);
@@ -393,7 +393,7 @@ const s = StyleSheet.create({
   pathCardBody:   { flex: 1, padding: 16, gap: 6 },
   pathCardTop:    { flexDirection: 'row', gap: 8, alignItems: 'center' },
   certBadge:      { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  certCode:       { fontFamily: F.bold, fontSize: 12, letterSpacing: 0.5 },
+  certCode:       { fontFamily: F.bold, fontSize: 12, letterSpacing: 0 },
   diffBadge:      { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   diffText:       { fontFamily: F.medium, fontSize: 11 },
   pathName:       { fontFamily: F.bold, fontSize: 16 },
@@ -405,7 +405,7 @@ const s = StyleSheet.create({
   scroll:     { padding: 16, gap: 16 },
   hero:       { borderWidth: 1.5, borderRadius: 20, padding: 20, gap: 10 },
   certBadgeLg: { alignSelf: 'flex-start', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
-  certCodeLg: { fontFamily: F.bold, fontSize: 13, letterSpacing: 1 },
+  certCodeLg: { fontFamily: F.bold, fontSize: 13, letterSpacing: 0 },
   heroName:   { fontFamily: F.bold, fontSize: 20 },
   heroTagline: { fontFamily: F.regular, fontSize: 14, lineHeight: 20 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
@@ -416,7 +416,7 @@ const s = StyleSheet.create({
 
   nextStepBtn: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, padding: 18, gap: 12 },
   nextStepLeft: { flex: 1, gap: 3 },
-  nextStepEyebrow: { fontFamily: F.bold, fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: 1 },
+  nextStepEyebrow: { fontFamily: F.bold, fontSize: 11, color: 'rgba(255,255,255,0.72)', letterSpacing: 0 },
   nextStepTitle: { fontFamily: F.bold, fontSize: 16, color: '#fff' },
   nextStepSub: { fontFamily: F.medium, fontSize: 12, color: 'rgba(255,255,255,0.75)' },
 
@@ -445,9 +445,9 @@ const s = StyleSheet.create({
   overlapDomainName: { fontFamily: F.semiBold, fontSize: 12 },
   overlapDomainHint: { fontFamily: F.regular, fontSize: 11, lineHeight: 15 },
   overlapStatusBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  overlapStatusText:  { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.3 },
+  overlapStatusText:  { fontFamily: F.bold, fontSize: 10, letterSpacing: 0 },
 
-  sectionLabel: { fontFamily: F.bold, fontSize: 11, letterSpacing: 1.2, marginTop: 4 },
+  sectionLabel: { fontFamily: F.bold, fontSize: 13, letterSpacing: 0, marginTop: 4 },
 
   stepRow:   { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   stepLeft:  { alignItems: 'center', width: 28 },

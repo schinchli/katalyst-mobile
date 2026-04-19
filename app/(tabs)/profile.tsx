@@ -37,6 +37,8 @@ export default function ProfileScreen() {
   const progress = useProgressStore((s) => s.progress);
   const accent             = useThemeStore((s) => s.accent);
   const setAccent          = useThemeStore((s) => s.setAccent);
+  const darkMode           = useThemeStore((s) => s.darkMode);
+  const setDarkMode        = useThemeStore((s) => s.setDarkMode);
   const animationsEnabled    = useThemeStore((s) => s.animationsEnabled);
   const setAnimationsEnabled = useThemeStore((s) => s.setAnimationsEnabled);
   const fontSizePreset       = useThemeStore((s) => s.fontSizePreset);
@@ -302,6 +304,27 @@ export default function ProfileScreen() {
 
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Text style={[styles.panelTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Theme</Text>
+
+          <Pressable
+            onPress={() => setDarkMode(!darkMode)}
+            accessibilityRole="switch"
+            accessibilityLabel="Dark mode"
+            accessibilityState={{ checked: darkMode }}
+            style={[styles.prefRow, { borderColor: colors.surfaceBorder }]}
+          >
+            <View style={styles.prefRowLeft}>
+              <Feather name={darkMode ? 'moon' : 'sun'} size={20} color={colors.primary} />
+              <View>
+                <Text style={[styles.prefLabel, { color: colors.text, fontSize: t.body }]}>Dark Mode</Text>
+                <Text style={[styles.prefSub, { color: colors.textSecondary, fontSize: t.caption }]}>
+                  {darkMode ? 'Soft dark surfaces for night study' : 'Bright surfaces for daytime study'}
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.toggle, { backgroundColor: darkMode ? colors.primary : colors.surfaceBorder }]}>
+              <View style={[styles.toggleThumb, { backgroundColor: colors.surface, transform: [{ translateX: darkMode ? 14 : 2 }] }]} />
+            </View>
+          </Pressable>
 
           {/* Animations toggle */}
           <Pressable

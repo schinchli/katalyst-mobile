@@ -411,13 +411,13 @@ describe('completedQuizzes counter', () => {
   });
 });
 
-// ─── recentResults rolling window ────────────────────────────────────────────
-describe('recentResults rolling window', () => {
-  it('keeps most recent 20 results', () => {
-    for (let i = 0; i < 25; i++) {
+// ─── recentResults history cap ──────────────────────────────────────────────
+describe('recentResults history cap', () => {
+  it('keeps recent history capped at 500 results', () => {
+    for (let i = 0; i < 505; i++) {
       useProgressStore.getState().addResult(makeResult());
     }
-    expect(useProgressStore.getState().progress.recentResults.length).toBe(20);
+    expect(useProgressStore.getState().progress.recentResults.length).toBe(500);
   });
 
   it('newest result appears at index 0', () => {

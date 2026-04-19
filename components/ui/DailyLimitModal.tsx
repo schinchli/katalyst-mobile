@@ -1,6 +1,5 @@
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 
@@ -30,14 +29,11 @@ export function DailyLimitModal({ visible, onClose, onUpgrade }: DailyLimitModal
             <Feather name="x" size={20} color={colors.textSecondary} />
           </Pressable>
 
-          {/* Emoji + headline */}
-          <Text style={styles.emoji}>🔥</Text>
           <Text style={[styles.headline, { color: colors.text }]}>
-            You've crushed your{'\n'}5 free sessions today.
+            You reached today's free practice limit.
           </Text>
           <Text style={[styles.sub, { color: colors.textSecondary }]}>
-            That's the spirit — you're clearly serious about this exam.{'\n'}
-            Unlock unlimited practice and keep that momentum going.
+            Take a break and return tomorrow, or unlock unlimited practice when you are ready.
           </Text>
 
           {/* Divider */}
@@ -56,16 +52,9 @@ export function DailyLimitModal({ visible, onClose, onUpgrade }: DailyLimitModal
           </View>
 
           {/* CTA */}
-          <Pressable onPress={onUpgrade} style={styles.ctaWrap}>
-            <LinearGradient
-              colors={[colors.gradientFrom, colors.gradientTo]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.cta}
-            >
-              <Text style={[styles.ctaText, { color: colors.primaryText }]}>Unlock Unlimited Practice</Text>
-              <Feather name="arrow-right" size={18} color={colors.primaryText} />
-            </LinearGradient>
+          <Pressable onPress={onUpgrade} style={[styles.cta, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.ctaText, { color: colors.surface }]}>Unlock Unlimited Practice</Text>
+            <Feather name="arrow-right" size={18} color={colors.surface} />
           </Pressable>
 
           {/* Soft dismiss */}
@@ -83,18 +72,16 @@ export function DailyLimitModal({ visible, onClose, onUpgrade }: DailyLimitModal
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 36 },
+  sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 },
   closeBtn: { alignSelf: 'flex-end', padding: 4, marginBottom: 8 },
-  emoji: { fontSize: 48, textAlign: 'center', marginBottom: 14 },
-  headline: { fontFamily: F.bold, fontSize: 30, lineHeight: 38, letterSpacing: -0.8, textAlign: 'center' },
+  headline: { fontFamily: F.bold, fontSize: 24, lineHeight: 32, letterSpacing: 0, textAlign: 'center' },
   sub: { fontFamily: F.regular, fontSize: 15, lineHeight: 24, textAlign: 'center', marginTop: 12 },
   divider: { height: 1, marginVertical: 22 },
   perks: { gap: 14, marginBottom: 28 },
   perkRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   checkCircle: { width: 26, height: 26, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   perkText: { fontFamily: F.semiBold, fontSize: 15, flex: 1, lineHeight: 22 },
-  ctaWrap: { borderRadius: 20, overflow: 'hidden' },
-  cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 18, paddingHorizontal: 24 },
+  cta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, paddingHorizontal: 20, borderRadius: 12 },
   ctaText: { fontFamily: F.bold, fontSize: 17 },
   dismissBtn: { alignItems: 'center', marginTop: 18 },
   dismissText: { fontFamily: F.medium, fontSize: 14 },

@@ -143,7 +143,7 @@ export function MobileLeftDrawer() {
 
         {/* Nav items */}
         <View style={styles.navList}>
-          <Text style={[styles.navLabel, { color: colors.textMuted }]}>Navigation</Text>
+          <Text style={[styles.navLabel, { color: colors.textMuted }]}>Navigate</Text>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.name);
             return (
@@ -264,8 +264,7 @@ const styles = StyleSheet.create({
   navLabel: {
     fontFamily: F.semiBold,
     fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 1.1,
+    letterSpacing: 0,
     marginBottom: 8,
     paddingHorizontal: 10,
   },

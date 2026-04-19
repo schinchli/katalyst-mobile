@@ -12,15 +12,15 @@ export function Card({ children, onPress, style, padding = 16, ...props }: CardP
 
   const base: ViewStyle = {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     padding,
     shadowColor: colors.text,
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
   };
 
   if (onPress) {

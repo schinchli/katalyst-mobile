@@ -332,8 +332,7 @@ export default function HomeScreen() {
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const systemFeatures = useSystemFeatureStore((s) => s.config);
   const visibleQuizzes = quizzes.filter((quiz) => quiz.enabled !== false);
-  const popularCourses = visibleQuizzes.slice(0, 6);
-  const flashcardItems = flashcards.slice(0, 4);
+  const nextQuizzes = visibleQuizzes.slice(0, 3);
   const streak = progress.currentStreak;
   const xp = progress.xp ?? 0;
   const level = calculateLevel(xp);
@@ -342,41 +341,46 @@ export default function HomeScreen() {
   const dailyQuizCompleted = dailyQuiz
     ? progress.recentResults.some((result) => result.quizId === dailyQuiz.id && isSameLocalDay(result.completedAt))
     : false;
-  const streakMessage =
-    streak === 0 ? '🚀 Start your learning streak today!'
-    : streak === 1 ? '🔥 1 day streak! Come back tomorrow to keep it going!'
-    : streak >= 7 ? `⚡ ${streak} day streak! You're unstoppable!`
-    : streak >= 3 ? `🔥 ${streak} day streak! You're on fire!`
-    : `🔥 ${streak} day streak! Keep it going!`;
   const actionCards = [
-    { icon: 'layers', title: 'Flashcards', subtitle: 'Review your progress', route: '/flashcards' as const, tone: colors.gradientAccent },
-    { icon: 'activity', title: 'Practice', subtitle: 'Explore every quiz and start a session', route: '/(tabs)/quizzes' as const, tone: colors.warning },
-    { icon: 'globe', title: 'Resources', subtitle: 'Cheat sheets, guides, and updates', route: '/(tabs)/learn' as const, tone: colors.primary },
-    { icon: 'star', title: 'Premium', subtitle: 'Unlock all content and projects', route: '/(tabs)/profile' as const, tone: colors.primary },
+    { icon: 'activity', title: 'Practice', route: '/(tabs)/quizzes' as const, tone: colors.warning },
+    { icon: 'layers', title: 'Flashcards', route: '/flashcards' as const, tone: colors.gradientAccent },
+    { icon: 'book-open', title: 'Learn', route: '/(tabs)/learn' as const, tone: colors.primary },
   ];
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.homeHeader}>
+          <Text style={[styles.heroEyebrow, { color: colors.primary, fontSize: t.micro }]}>
+            {EXPERIENCE_COPY.home.heroEyebrow}
+          </Text>
+          <Text style={[styles.heroTitle, { color: colors.text, fontSize: t.screenTitle }]}>
+            Hi {firstName}
+          </Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary, fontSize: t.body }]}>
+            Pick up one focused cloud certification task and keep moving.
+          </Text>
+        </View>
+
         {platformConfig.widgets.showHomeStats ? (
           <View style={styles.topStats}>
             <StatPill icon="zap" value={`${xp} XP · Lv.${level} ${levelName}`} colors={colors} />
-            <StatPill icon="activity" value={streak > 0 ? `🔥 ${streak} day streak` : '🚀 Start streak'} colors={colors} />
+            <StatPill icon="calendar" value={streak > 0 ? `${streak} day streak` : 'Start streak'} colors={colors} />
           </View>
         ) : null}
 
         {dailyQuiz ? (
-          <Pressable onPress={() => router.push(`/quiz/${dailyQuiz.id}`)} style={[styles.dailyQuizCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <Pressable onPress={() => router.push(`/quiz/${dailyQuiz.id}`)} style={[styles.dailyQuizCard, { backgroundColor: colors.surface, borderColor: colors.primary + '55' }]}>
             <View style={styles.dailyQuizCopy}>
               <View style={styles.dailyQuizHeaderRow}>
-                <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>{systemFeatures.dailyQuizLabel}</Text>
+                <Text style={[styles.dailyQuizEyebrow, { color: colors.primary }]}>Start here</Text>
                 <View style={[styles.dailyQuizStatus, { backgroundColor: dailyQuizCompleted ? colors.success + '18' : colors.warning + '18' }]}>
                   <Text style={[styles.dailyQuizStatusText, { color: dailyQuizCompleted ? colors.success : colors.warning }]}>
                     {dailyQuizCompleted ? 'Completed' : 'Ready'}
                   </Text>
                 </View>
               </View>
-              <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{dailyQuiz.title}</Text>
+              <Text style={[styles.dailyQuizTitle, { color: colors.text }]}>{systemFeatures.dailyQuizLabel}: {dailyQuiz.title}</Text>
               <Text style={[styles.dailyQuizSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>
                 {dailyQuizCompleted ? 'Today\'s daily quiz is complete. Open it again to review or improve your score.' : dailyQuiz.description}
               </Text>
@@ -385,27 +389,17 @@ export default function HomeScreen() {
           </Pressable>
         ) : null}
 
-        <LinearGradient colors={[colors.backgroundAlt, colors.surface, colors.surfaceElevated]} style={[styles.heroCard, { borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.heroEyebrow, { color: colors.primary, fontSize: t.micro }]}>{EXPERIENCE_COPY.home.heroEyebrow}</Text>
-          <Text style={[styles.heroTitle, { color: colors.text, fontSize: t.screenTitle }]}>Hi {firstName}, {platformConfig.copy.homeHeroTitle}</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.textSecondary, fontSize: t.body }]}>{platformConfig.copy.homeHeroSubtitle}</Text>
-          <Text style={[styles.heroStreakMessage, { color: colors.textSecondary, fontSize: t.caption }]}>{streakMessage}</Text>
-
-        </LinearGradient>
-
-        {/* ── Learning Path Widget ── */}
         <LearningPathWidget colors={colors} />
 
         {platformConfig.widgets.showHomeActions ? (
-          <View style={platformConfig.layout.homeActionsStyle === 'stack' ? styles.actionStack : styles.actionGrid}>
+          <View style={styles.actionRow}>
             {actionCards.map((item) => (
-            <Pressable key={item.title} onPress={() => router.push(item.route as any)} style={[styles.actionCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              <View style={[styles.actionIcon, { backgroundColor: item.tone + '20' }]}>
-                <Feather name={item.icon as any} size={18} color={item.tone} />
-              </View>
-              <Text style={[styles.actionTitle, { color: colors.text, fontSize: t.cardTitle }]}>{item.title}</Text>
-              <Text style={[styles.actionSubtitle, { color: colors.textSecondary, fontSize: t.caption }]}>{item.subtitle}</Text>
-            </Pressable>
+              <Pressable key={item.title} onPress={() => router.push(item.route as any)} style={[styles.actionChip, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <View style={[styles.actionIcon, { backgroundColor: item.tone + '18' }]}>
+                  <Feather name={item.icon as any} size={16} color={item.tone} />
+                </View>
+                <Text style={[styles.actionTitle, { color: colors.text, fontSize: t.caption }]} numberOfLines={1}>{item.title}</Text>
+              </Pressable>
             ))}
           </View>
         ) : null}
@@ -413,108 +407,40 @@ export default function HomeScreen() {
         {platformConfig.widgets.showPopularCourses ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Popular Courses</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Next quizzes</Text>
               <Pressable onPress={() => router.push('/(tabs)/quizzes')}>
-                <Text style={[styles.sectionLink, { color: colors.text }]}>{'See All'}</Text>
+                <Text style={[styles.sectionLink, { color: colors.primary }]}>{'See all'}</Text>
               </Pressable>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalRow}>
-              {popularCourses.map((quiz, index) => (
-                <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <View style={styles.quizList}>
+              {nextQuizzes.map((quiz, index) => (
+                <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.quizRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
                   {(() => {
                     const cv = getCategoryVisual(quiz.category, colors);
                     const catIcon = AWS_CATEGORY_ICONS[quiz.category];
                     return (
-                      <LinearGradient colors={[cv.from, cv.to]} style={styles.courseVisual}>
+                      <LinearGradient colors={[cv.from, cv.to]} style={styles.quizVisual}>
                         {catIcon ? (
-                          <Image source={catIcon} style={styles.courseVisualIcon} />
+                          <Image source={catIcon} style={styles.quizVisualIcon} />
                         ) : (
-                          <Feather name="book" size={30} color={colors.surface} />
+                          <Feather name="book" size={22} color={colors.surface} />
                         )}
-                        <Text style={[styles.courseVisualLabel, { color: colors.surface }]}>{cv.label}</Text>
                       </LinearGradient>
                     );
                   })()}
-                  <View style={styles.courseBody}>
-                    <View style={[styles.courseProgressTrack, { backgroundColor: colors.backgroundAlt }]}>
-                      <View style={[styles.courseProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 1) * 14)}%` }]} />
-                    </View>
-                    <Text style={[styles.courseTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{quiz.title}</Text>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </>
-        ) : null}
-
-        {platformConfig.widgets.showFlashcards ? (
-          <>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Flashcard Packs</Text>
-            </View>
-
-            <View style={styles.flashcardList}>
-              {flashcardItems.map((item, index) => (
-                <Pressable
-                  key={item.id}
-                  onPress={() => router.push({ pathname: '/flashcards', params: { category: item.category } })}
-                  style={[styles.flashcardRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
-                >
-                  {(() => {
-                    const svcIcon = AWS_SERVICE_ICONS[item.front];
-                    const accent = AWS_SERVICE_ACCENT[item.front] ?? (index % 2 === 0 ? colors.primary : colors.error);
-                    return (
-                      <View style={[styles.flashcardBadge, { backgroundColor: accent + '18' }]}>
-                        {svcIcon ? (
-                          <Image source={svcIcon} style={styles.flashcardIcon} />
-                        ) : (
-                          <Feather name="cpu" size={22} color={accent} />
-                        )}
-                      </View>
-                    );
-                  })()}
-                  <View style={styles.flashcardBody}>
-                    <Text style={[styles.flashcardTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{item.front}</Text>
-                    <Text style={[styles.flashcardSubtitle, { color: colors.textSecondary, fontSize: t.caption }]} numberOfLines={1}>
-                      {item.tag ?? 'Core concept'} · tap to review
+                  <View style={styles.quizBody}>
+                    <Text style={[styles.quizTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={1}>{quiz.title}</Text>
+                    <Text style={[styles.quizMeta, { color: colors.textSecondary, fontSize: t.caption }]} numberOfLines={1}>
+                      {quiz.questionCount} questions · {quiz.duration} min
                     </Text>
                   </View>
-                  <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+                  <Feather name={index === 0 ? 'play-circle' : 'chevron-right'} size={18} color={index === 0 ? colors.primary : colors.textSecondary} />
                 </Pressable>
               ))}
             </View>
           </>
         ) : null}
-
-        {platformConfig.widgets.showGrowthWidget ? (
-          <LinearGradient colors={[colors.surface, colors.surfaceElevated]} style={[styles.growthCard, { borderColor: colors.surfaceBorder }]}>
-            <View style={styles.growthHeader}>
-              <Text style={[styles.growthTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Growth snapshot</Text>
-              <Text style={[styles.growthChip, { color: colors.primary }]}>{progress.currentStreak} day streak</Text>
-            </View>
-            <View style={styles.growthGrid}>
-              <View>
-                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.completedQuizzes}</Text>
-                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Completed</Text>
-              </View>
-              <View>
-                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.averageScore}%</Text>
-                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Average score</Text>
-              </View>
-              <View>
-                <Text style={[styles.growthValue, { color: colors.text, fontSize: t.cardTitle }]}>{progress.badges.length}</Text>
-                <Text style={[styles.growthLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Badges</Text>
-              </View>
-            </View>
-          </LinearGradient>
-        ) : null}
-
-        {/* ── Articles Carousel ── */}
-        <ArticlesCarouselWidget colors={colors} />
-
-        {/* ── Personalised "For You" Feed ── */}
-        <PersonalisedFeedWidget colors={colors} />
 
       </ScrollView>
     </SafeAreaView>
@@ -523,41 +449,51 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 14 },
+  scroll: { paddingHorizontal: 16, paddingTop: 58, paddingBottom: 36, gap: 14 },
+  homeHeader: { gap: 7 },
   topStats: { flexDirection: 'row', gap: 10, marginBottom: 2 },
   statPill: { flex: 1, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   statPillText: { fontFamily: F.bold, fontSize: 14 },
   heroCard: { borderWidth: 1, borderRadius: 20, padding: 14, gap: 10 },
-  heroEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
-  heroTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.6 },
+  heroEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0 },
+  heroTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: 0 },
   heroSubtitle: { fontFamily: F.regular, fontSize: 14, lineHeight: 21 },
   heroStreakMessage: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -2 },
   dailyQuizCard: { borderWidth: 1, borderRadius: 18, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   dailyQuizCopy: { flex: 1, gap: 4 },
   dailyQuizHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0 },
   dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
-  dailyQuizStatusText: { fontFamily: F.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  dailyQuizStatusText: { fontFamily: F.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0 },
   dailyQuizTitle: { fontFamily: F.bold, fontSize: 18, lineHeight: 24 },
   dailyQuizSubtitle: { fontFamily: F.regular, fontSize: 13, lineHeight: 18 },
   actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   actionStack: { gap: 12 },
   actionCard: { width: '48%', borderWidth: 1, borderRadius: 16, padding: 12, minHeight: 130, gap: 8 },
-  actionIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  actionRow: { flexDirection: 'row', gap: 10 },
+  actionChip: { flex: 1, minHeight: 74, borderWidth: 1, borderRadius: 14, padding: 10, alignItems: 'center', justifyContent: 'center', gap: 7 },
+  actionIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   actionTitle: { fontFamily: F.bold, fontSize: 15 },
   actionSubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 18 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
   sectionTitle: { fontFamily: F.bold, fontSize: 17 },
-  sectionLink: { fontFamily: F.semiBold, fontSize: 14, textDecorationLine: 'underline' },
+  sectionLink: { fontFamily: F.semiBold, fontSize: 14 },
   horizontalRow: { gap: 12, paddingRight: 16 },
   courseCard: { width: 148, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   courseVisual: { height: 96, alignItems: 'center', justifyContent: 'center', gap: 4 },
   courseVisualIcon: { width: 30, height: 30 },
-  courseVisualLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.8, textTransform: 'uppercase' },
+  courseVisualLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0, textTransform: 'uppercase' },
   courseBody: { padding: 10, gap: 8 },
   courseProgressTrack: { height: 8, borderRadius: 999, overflow: 'hidden' },
   courseProgressFill: { height: '100%', borderRadius: 999 },
   courseTitle: { fontFamily: F.bold, fontSize: 14, lineHeight: 20 },
+  quizList: { gap: 10 },
+  quizRow: { borderWidth: 1, borderRadius: 14, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  quizVisual: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  quizVisualIcon: { width: 24, height: 24 },
+  quizBody: { flex: 1, gap: 3 },
+  quizTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
+  quizMeta: { fontFamily: F.regular, fontSize: 12 },
   flashcardList: { gap: 10 },
   flashcardRow: { borderWidth: 1, borderRadius: 14, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 10 },
   flashcardBadge: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

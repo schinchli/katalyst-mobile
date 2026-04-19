@@ -67,7 +67,7 @@ function RankRow({ entry, colors }: { entry: LeaderboardEntry; colors: ReturnTyp
           {entry.name}{isHighlighted ? ' (You)' : ''}
         </Text>
         <Text style={[styles.rankSub, { color: colors.textSecondary }]}>
-          {entry.quizzesCompleted} quizzes · {entry.streak}🔥
+          {entry.quizzesCompleted} quizzes · {entry.streak} day streak
         </Text>
       </View>
       <View style={styles.rankScoreWrap}>

@@ -1,19 +1,15 @@
 import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
-import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColor';
-import { useThemeStore } from '@/stores/themeStore';
 import { useTypography } from '@/hooks/useTypography';
 import { useProgressStore } from '@/stores/progressStore';
 import { quizzes } from '@/data/quizzes';
 import type { QuizCategory } from '@/types';
 import { F } from '@/constants/Typography';
-import { usePlatformConfigStore } from '@/stores/platformConfigStore';
 import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
-import { AWS_CATEGORY_ICONS } from '@/constants/awsIcons';
 import { getPlayableQuestionCount } from '@/utils/quizMetadata';
 import { resolveDailyQuiz } from '@/config/systemFeatures';
 
@@ -34,12 +30,10 @@ function isSameLocalDay(isoDate: string, reference = new Date()) {
 export default function QuizzesScreen() {
   const colors = useThemeColors();
   const t = useTypography();
-  const darkMode = useThemeStore((s) => s.darkMode);
   const progress = useProgressStore((s) => s.progress);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<QuizCategory | 'all'>('all');
   const completedIds = new Set(progress.recentResults.map((item) => item.quizId));
-  const platformConfig = usePlatformConfigStore((s) => s.config);
   const systemFeatures = useSystemFeatureStore((s) => s.config);
   const dailyQuiz = resolveDailyQuiz(systemFeatures, quizzes.filter((quiz) => quiz.enabled !== false));
   const dailyQuizCompleted = dailyQuiz
@@ -60,7 +54,12 @@ export default function QuizzesScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Explore</Text>
+        <View style={styles.headerCopy}>
+          <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Practice</Text>
+          <Text style={[styles.screenSub, { color: colors.textSecondary, fontSize: t.body }]}>
+            Choose one quiz. Review calmly. Repeat when ready.
+          </Text>
+        </View>
 
         <View style={[styles.searchShell, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Feather name="search" size={18} color={colors.textSecondary} />
@@ -88,40 +87,8 @@ export default function QuizzesScreen() {
           })}
         </ScrollView>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trackRow}>
-          {quizzes.filter((quiz) => quiz.enabled !== false).slice(0, 4).map((quiz, index) => (
-            <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.trackCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              {(() => {
-                const catIcon = AWS_CATEGORY_ICONS[quiz.category];
-                const isDailyQuiz = dailyQuiz?.id === quiz.id;
-                return (
-                  <View style={[styles.trackVisual, { backgroundColor: colors.backgroundAlt, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }]}>
-                    <View style={[styles.trackBadge, { backgroundColor: colors.primary + '22', borderWidth: 1, borderColor: colors.primary + '44' }]}>
-                      <Text style={[styles.trackBadgeText, { color: colors.primary }]}>{isDailyQuiz ? (dailyQuizCompleted ? 'Review' : 'Daily') : quiz.isPremium ? 'Track' : 'Start'}</Text>
-                    </View>
-                    {catIcon ? (
-                      <Image source={catIcon} style={styles.trackIcon} />
-                    ) : (
-                      <Feather name={quiz.icon as any} size={44} color={darkMode ? '#FFFFFF' : colors.primary} />
-                    )}
-                  </View>
-                );
-              })()}
-              <View style={styles.trackBody}>
-                <View style={styles.trackProgressRow}>
-                  <View style={[styles.trackProgressBar, { backgroundColor: colors.backgroundAlt }]}>
-                    <View style={[styles.trackProgressFill, { backgroundColor: colors.primary, width: `${Math.min(100, (index + 2) * 16)}%` }]} />
-                  </View>
-                  <Text style={[styles.trackPercent, { color: colors.text }]}>{Math.min(100, (index + 2) * 16)}%</Text>
-                </View>
-                <Text style={[styles.trackTitle, { color: colors.text, fontSize: t.body }]} numberOfLines={2}>{quiz.title}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
-
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Available courses</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: t.sectionTitle }]}>Available quizzes</Text>
           <Text style={[styles.sectionMeta, { color: colors.textSecondary }]}>{visibleCourses.length} total</Text>
         </View>
 
@@ -146,25 +113,16 @@ export default function QuizzesScreen() {
           </Pressable>
         ) : null}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.courseRow}>
+        <View style={styles.courseList}>
           {visibleCourses.map((quiz) => {
             const playableQuestionCount = getPlayableQuestionCount(quiz);
             const isDailyQuiz = dailyQuiz?.id === quiz.id;
             const dailyQuizActionLabel = isDailyQuiz ? (dailyQuizCompleted ? 'Review Daily Quiz' : 'Play Daily Quiz') : null;
             return (
-            <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={[styles.courseCard, platformConfig.layout.courseCardColumns === 1 ? styles.courseCardSingleWide : null, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-              {(() => {
-                const catIcon = AWS_CATEGORY_ICONS[quiz.category];
-                return (
-                  <View style={[styles.courseImage, { backgroundColor: colors.backgroundAlt, borderBottomWidth: 1, borderBottomColor: colors.surfaceBorder }]}>
-                    {catIcon ? (
-                      <Image source={catIcon} style={styles.courseIcon} />
-                    ) : (
-                      <Feather name={quiz.icon as any} size={40} color={darkMode ? '#FFFFFF' : colors.primary} />
-                    )}
-                  </View>
-                );
-              })()}
+            <Pressable key={quiz.id} onPress={() => router.push(`/quiz/${quiz.id}`)} style={({ pressed }) => [styles.courseCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.9 : 1 }]}>
+              <View style={[styles.courseIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Feather name={quiz.icon as any} size={20} color={colors.primary} />
+              </View>
               <View style={styles.courseBody}>
                 <View style={styles.metaRow}>
                   <View style={styles.metaLabelRow}>
@@ -192,10 +150,11 @@ export default function QuizzesScreen() {
                   )}
                 </View>
               </View>
+              <Feather name="chevron-right" size={18} color={colors.textSecondary} />
             </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -203,26 +162,15 @@ export default function QuizzesScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 16 },
-  screenTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
+  scroll: { paddingHorizontal: 16, paddingTop: 58, paddingBottom: 36, gap: 16 },
+  headerCopy: { gap: 6 },
+  screenTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: 0 },
+  screenSub: { fontFamily: F.regular, fontSize: 14, lineHeight: 21 },
   searchShell: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 8 },
   searchInput: { flex: 1, fontFamily: F.medium, fontSize: 14 },
   filterRow: { gap: 8, paddingRight: 16 },
   filterChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
   filterChipText: { fontFamily: F.semiBold, fontSize: 11 },
-  trackRow: { gap: 10, paddingRight: 16 },
-  trackCard: { width: 144, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
-  trackVisual: { height: 100, justifyContent: 'center', alignItems: 'center' },
-  trackIconWrap: { width: 52, height: 52, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-  trackIcon: { width: 44, height: 44 },
-  trackBadge: { position: 'absolute', left: 8, top: 8, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4 },
-  trackBadgeText: { fontFamily: F.bold, fontSize: 10 },
-  trackBody: { padding: 8, gap: 6 },
-  trackProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  trackProgressBar: { flex: 1, height: 6, borderRadius: 999, overflow: 'hidden' },
-  trackProgressFill: { height: '100%', borderRadius: 999 },
-  trackPercent: { fontFamily: F.semiBold, fontSize: 10 },
-  trackTitle: { fontFamily: F.bold, fontSize: 12, lineHeight: 16 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
   sectionTitle: { fontFamily: F.bold, fontSize: 17 },
   sectionMeta: { fontFamily: F.medium, fontSize: 12 },
@@ -237,20 +185,17 @@ const styles = StyleSheet.create({
   },
   pinnedDailyCopy: { flex: 1, gap: 4 },
   pinnedDailyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
-  pinnedDailyEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  pinnedDailyEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0 },
   pinnedDailyState: { fontFamily: F.bold, fontSize: 11 },
   pinnedDailyTitle: { fontFamily: F.bold, fontSize: 15, lineHeight: 21 },
   pinnedDailySubtitle: { fontFamily: F.regular, fontSize: 12, lineHeight: 18 },
-  courseRow: { gap: 10, paddingRight: 16 },
-  courseCard: { width: 140, borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
-  courseCardSingleWide: { width: 180 },
-  courseImage: { height: 96, alignItems: 'center', justifyContent: 'center' },
-  courseIconWrap: { width: 56, height: 56, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-  courseIcon: { width: 44, height: 44 },
-  courseBody: { padding: 9, gap: 6, minHeight: 110 },
+  courseList: { gap: 10 },
+  courseCard: { borderWidth: 1, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  courseIconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  courseBody: { flex: 1, gap: 5 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   metaLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  metaLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0.6 },
+  metaLabel: { fontFamily: F.bold, fontSize: 10, letterSpacing: 0 },
   dailyBadge: { borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3 },
   dailyBadgeText: { fontFamily: F.bold, fontSize: 9, textTransform: 'uppercase' },
   courseTitle: { fontFamily: F.bold, fontSize: 14, lineHeight: 20 },

@@ -117,9 +117,9 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
       accent:            'indigo',
-      darkMode:          true,
+      darkMode:          false,
       usePlatform:       true,
-      animationsEnabled: true,
+      animationsEnabled: false,
       fontSizePreset:    'medium',
       setAccent:           (accent)            => set({ accent }),
       toggleDark:          ()                  => set((s) => ({ darkMode: !s.darkMode })),
@@ -134,10 +134,10 @@ export const useThemeStore = create<ThemeState>()(
       version: 3,
       migrate: async (persisted) => {
         const state = persisted as ThemeState | undefined;
-        if (!state) return { accent: 'indigo', darkMode: true, usePlatform: true, animationsEnabled: true, fontSizePreset: 'medium' } as ThemeState;
+        if (!state) return { accent: 'indigo', darkMode: false, usePlatform: true, animationsEnabled: false, fontSizePreset: 'medium' } as ThemeState;
         const legacyMap: Record<string, AccentPreset> = { purple: 'aurora', teal: 'ocean', datacamp: 'indigo' };
         const nextAccent = legacyMap[state.accent as string] ?? state.accent ?? 'indigo';
-        return { ...state, accent: nextAccent, darkMode: state.darkMode ?? true, usePlatform: state.usePlatform ?? true, animationsEnabled: state.animationsEnabled ?? true, fontSizePreset: state.fontSizePreset ?? 'medium' };
+        return { ...state, accent: nextAccent, darkMode: state.darkMode ?? false, usePlatform: state.usePlatform ?? true, animationsEnabled: state.animationsEnabled ?? false, fontSizePreset: state.fontSizePreset ?? 'medium' };
       },
     },
   ),

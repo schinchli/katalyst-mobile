@@ -69,13 +69,12 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
               color: colors.textMuted,
               fontFamily: F.semiBold,
               fontSize: 11,
-              textTransform: 'uppercase',
-              letterSpacing: 1.1,
+              letterSpacing: 0,
               marginBottom: 10,
               paddingHorizontal: 10,
             }}
           >
-            Navigation
+            Navigate
           </Text>
           {visibleRoutes.map((route) => {
             const isFocused = state.routes[state.index]?.name === route.name;

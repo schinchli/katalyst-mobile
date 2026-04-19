@@ -41,7 +41,7 @@ export function QuestionView({
     <View style={s.root}>
 
       {/* ── Question ── */}
-      <Text style={[s.questionText, { color: colors.text, fontSize: Math.round(28 * scale), lineHeight: Math.round(40 * scale) }]}>{question.text}</Text>
+      <Text style={[s.questionText, { color: colors.text, fontSize: Math.round(22 * scale), lineHeight: Math.round(32 * scale) }]}>{question.text}</Text>
 
       {/* ── Report link ── */}
       {onReport && (
@@ -118,8 +118,8 @@ export function QuestionView({
             <View style={[s.explanationBadge, { backgroundColor: resultAccent + '22' }]}>
               <Feather name={isCorrectTone ? 'check' : 'x'} size={12} color={resultAccent} />
             </View>
-            <Text style={[s.explanationTitle, { color: resultAccent, fontSize: Math.round(14 * scale) }]}>
-              {isCorrectTone ? 'Correct!' : 'Incorrect'}
+          <Text style={[s.explanationTitle, { color: resultAccent, fontSize: Math.round(14 * scale) }]}>
+              {isCorrectTone ? 'Correct' : 'Review this'}
             </Text>
           </View>
           <Text style={[s.explanationBody, { color: colors.text, fontSize: Math.round(14 * scale), lineHeight: Math.round(22 * scale) }]}>
@@ -145,10 +145,10 @@ export function QuestionView({
 }
 
 const s = StyleSheet.create({
-  root: { gap: 22 },
+  root: { gap: 18 },
 
   // Question
-  questionText: { fontFamily: F.bold, fontSize: 28, lineHeight: 40, letterSpacing: -0.4 },
+  questionText: { fontFamily: F.semiBold, fontSize: 22, lineHeight: 32, letterSpacing: 0 },
 
   // Report
   reportBtn:  { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: -8 },
@@ -162,9 +162,9 @@ const s = StyleSheet.create({
 
   // Single option — card style, no circles
   option: {
-    paddingVertical:   16,
-    paddingHorizontal: 18,
-    borderRadius:      14,
+    paddingVertical:   14,
+    paddingHorizontal: 16,
+    borderRadius:      12,
     borderWidth:       1,
   },
 
@@ -182,7 +182,7 @@ const s = StyleSheet.create({
   explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   explanationBadge:  { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   explanationTitle:  { fontFamily: F.bold, fontSize: 14 },
-  explanationBody:   { fontFamily: F.medium, fontSize: 14, lineHeight: 22 },
+  explanationBody:   { fontFamily: F.regular, fontSize: 14, lineHeight: 22 },
   docLink:           { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 2 },
   docLinkText:       { fontFamily: F.semiBold, fontSize: 12 },
 });

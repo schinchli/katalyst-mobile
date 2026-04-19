@@ -28,7 +28,7 @@ import { BadgeCelebrationModal } from '@/components/ui/BadgeCelebrationModal';
 import { PremiumGateModal } from '@/components/ui/PremiumGateModal';
 import { DailyLimitModal } from '@/components/ui/DailyLimitModal';
 import { useInterstitialAd, INTERSTITIAL_AD_INTERVAL } from '@/hooks/useInterstitialAd';
-import { useDarkThemeColors } from '@/hooks/useThemeColor';
+import { useThemeColors } from '@/hooks/useThemeColor';
 import { useFontScale } from '@/hooks/useFontScale';
 import { useQuizStore } from '@/stores/quizStore';
 import { useProgressStore } from '@/stores/progressStore';
@@ -49,7 +49,7 @@ type Phase = 'intro' | 'quiz' | 'review' | 'results' | 'flashcard';
 
 export default function QuizScreen() {
   const { id }   = useLocalSearchParams<{ id: string }>();
-  const colors   = useDarkThemeColors();
+  const colors   = useThemeColors();
   const insets   = useSafeAreaInsets();
   const fScale   = useFontScale();
 
@@ -100,12 +100,12 @@ export default function QuizScreen() {
   const [matchSelectedLeft, setMatchSelectedLeft] = useState<string | null>(null);
   const [matchCorrect, setMatchCorrect]           = useState<Set<string>>(new Set());
   const [matchWrong, setMatchWrong]               = useState<string | null>(null);
-  const introChrome = colors.text + 'E6';
-  const introChromeMuted = colors.text + 'CC';
-  const introSurfaceSoft = colors.surface + '2E';
-  const introSurfaceGhost = colors.surface + '1F';
-  const introSurfaceBorder = colors.surface + '47';
-  const introContrast = colors.surface;
+  const introChrome = colors.text;
+  const introChromeMuted = colors.textSecondary;
+  const introSurfaceSoft = colors.surface;
+  const introSurfaceGhost = colors.backgroundAlt;
+  const introSurfaceBorder = colors.surfaceBorder;
+  const introContrast = colors.text;
   const introWarningBg = colors.error + '24';
   const introWarningText = colors.text + 'D9';
 
@@ -368,9 +368,9 @@ export default function QuizScreen() {
           onUpgrade={() => { setShowDailyLimit(false); setShowPremiumGate(true); }} />
         <PremiumGateModal visible={showPremiumGate} quiz={quiz} onClose={() => setShowPremiumGate(false)} />
 
-        {/* Full-screen vivid gradient */}
+        {/* Full-screen calm study background */}
         <LinearGradient
-          colors={[colors.gradientFrom, colors.gradientTo]}
+          colors={[colors.background, colors.backgroundAlt]}
           start={{ x: 0, y: 0 }} end={{ x: 0.35, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
@@ -386,7 +386,7 @@ export default function QuizScreen() {
 
           {/* Top branding label */}
           <View style={s.introTopBrand}>
-            <Feather name="zap" size={24} color={introChromeMuted} />
+            <Feather name="edit-3" size={22} color={introChromeMuted} />
             <Text style={[s.introTopBrandText, { color: introChromeMuted }]}>Practice Quiz</Text>
           </View>
 
@@ -407,27 +407,27 @@ export default function QuizScreen() {
             ) : null}
             {isFunAndLearnMode ? (
               <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
-                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>📖 Fun and Learn</Text>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>Fun and Learn</Text>
               </View>
             ) : null}
             {isGuessTheWordMode ? (
               <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
-                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>✏️ Guess the Word</Text>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>Guess the Word</Text>
               </View>
             ) : null}
             {isMathsQuizMode ? (
               <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
-                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>🔢 Maths Quiz</Text>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>Maths Quiz</Text>
               </View>
             ) : null}
             {isMultiMatchMode ? (
               <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
-                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>🔗 Multi Match</Text>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>Multi Match</Text>
               </View>
             ) : null}
             {isAudioMode ? (
               <View style={[s.introDailyBadge, { backgroundColor: introSurfaceSoft }]}>
-                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>🎧 Audio Quiz</Text>
+                <Text style={[s.introDailyBadgeText, { color: introContrast }]}>Audio Quiz</Text>
               </View>
             ) : null}
             <Text style={[s.introCourseLabel, { color: introChromeMuted }]}>Course</Text>
@@ -450,13 +450,13 @@ export default function QuizScreen() {
           {/* ── Bottom CTA buttons ── */}
           <View style={[s.introFooter, { paddingBottom: bottomSpacer + 8 }]}>
             {isPremiumLocked ? (
-              <Pressable onPress={() => setShowPremiumGate(true)} style={[s.introMainBtn, { backgroundColor: introSurfaceSoft }]}>
-                <Feather name="lock" size={16} color={introContrast} />
-                <Text style={[s.introMainBtnText, { color: introContrast }]}>Unlock — Rs {quiz.price ?? 149}</Text>
+              <Pressable onPress={() => setShowPremiumGate(true)} style={[s.introMainBtn, { backgroundColor: colors.primary }]}>
+                <Feather name="lock" size={16} color={colors.surface} />
+                <Text style={[s.introMainBtnText, { color: colors.surface }]}>Unlock — Rs {quiz.price ?? 149}</Text>
               </Pressable>
             ) : (
-              <Pressable onPress={handleStart} style={[s.introMainBtn, { backgroundColor: introSurfaceSoft }]}>
-                <Text style={[s.introMainBtnText, { color: introContrast }]}>Start Practice</Text>
+              <Pressable onPress={handleStart} style={[s.introMainBtn, { backgroundColor: colors.primary }]}>
+                <Text style={[s.introMainBtnText, { color: colors.surface }]}>Start Practice</Text>
               </Pressable>
             )}
             <Pressable
@@ -517,7 +517,7 @@ export default function QuizScreen() {
             <View style={[s.scoreOuter, { backgroundColor: resultColor + '15', borderColor: resultColor + '30' }]}>
               <View style={[s.scoreInner, { backgroundColor: resultColor + '20', borderColor: resultColor, shadowColor: resultColor }]}>
                 <Text style={[s.scorePct,   { color: resultColor }]}>{pct}%</Text>
-                <Text style={[s.scorePass,  { color: resultColor }]}>{passed ? 'PASS' : 'FAIL'}</Text>
+                <Text style={[s.scorePass,  { color: resultColor }]}>{passed ? 'Passed' : 'Review'}</Text>
               </View>
             </View>
             <Text style={[s.scoreHeading,  { color: colors.text }]}>{passed ? 'Great job!' : 'Keep Practicing'}</Text>
@@ -554,7 +554,7 @@ export default function QuizScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[s.bannerTitle, { color: bannerColor }]}>
-                    {improved ? 'New Personal Best! 🏆' : tied ? 'Matched Your Best' : 'Self Challenge'}
+                    {improved ? 'New personal best' : tied ? 'Matched your best' : 'Self challenge'}
                   </Text>
                   <Text style={[s.bannerSub, { color: colors.textSecondary }]}>
                     {`Your best: ${prior}%  →  This attempt: ${pct}%`}
@@ -572,7 +572,7 @@ export default function QuizScreen() {
                 <Feather name="award" size={18} color={colors.success} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[s.bannerTitle, { color: colors.success }]}>Challenge Beaten! 🏆</Text>
+                <Text style={[s.bannerTitle, { color: colors.success }]}>Challenge complete</Text>
                 <Text style={[s.bannerSub,   { color: colors.textSecondary }]}>You beat the target score</Text>
               </View>
             </View>
@@ -840,7 +840,7 @@ export default function QuizScreen() {
               {/* Fun and Learn: learning card before options */}
               {isFunAndLearnMode && !funLearnRevealed && currentQuestion.explanation && (
                 <View style={[modeStyles.learnCard, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '44' }]}>
-                  <Text style={[modeStyles.learnLabel, { color: colors.primary }]}>📖 Learn first:</Text>
+                  <Text style={[modeStyles.learnLabel, { color: colors.primary }]}>Learn first</Text>
                   <Text style={[modeStyles.learnText, { color: colors.text }]}>{currentQuestion.explanation}</Text>
                   <Pressable
                     onPress={() => setFunLearnRevealed(true)}
@@ -871,11 +871,11 @@ export default function QuizScreen() {
                   {currentQuestion.hint && (
                     showHint ? (
                       <View style={[modeStyles.hintBox, { backgroundColor: colors.warning + '14', borderColor: colors.warning + '44' }]}>
-                        <Text style={[modeStyles.hintText, { color: colors.warning }]}>💡 {currentQuestion.hint}</Text>
+                        <Text style={[modeStyles.hintText, { color: colors.warning }]}>{currentQuestion.hint}</Text>
                       </View>
                     ) : (
                       <Pressable onPress={() => setShowHint(true)} style={[modeStyles.hintBtn, { borderColor: colors.surfaceBorder }]}>
-                        <Text style={[modeStyles.hintBtnText, { color: colors.textSecondary }]}>Show Hint 💡</Text>
+                        <Text style={[modeStyles.hintBtnText, { color: colors.textSecondary }]}>Show hint</Text>
                       </Pressable>
                     )
                   )}
@@ -1208,7 +1208,7 @@ const s = StyleSheet.create({
   scoreOuter:   { width: 152, height: 152, borderRadius: 76, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   scoreInner:   { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', borderWidth: 4, shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
   scorePct:     { fontFamily: F.bold,     fontSize: 34 },
-  scorePass:    { fontFamily: F.semiBold, fontSize: 11, letterSpacing: 1, marginTop: -2 },
+  scorePass:    { fontFamily: F.semiBold, fontSize: 12, letterSpacing: 0, marginTop: -2 },
   scoreHeading: { fontFamily: F.bold,     fontSize: 22 },
   scoreSubtitle:{ fontFamily: F.regular,  fontSize: 14 },
 
@@ -1244,7 +1244,7 @@ const s = StyleSheet.create({
   recCard:        { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 12, padding: 12 },
   recCardLeft:    { flex: 1, gap: 4 },
   recTagPill:     { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  recTagText:     { fontFamily: F.semiBold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 },
+  recTagText:     { fontFamily: F.semiBold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0 },
   recCardTitle:   { fontFamily: F.semiBold, fontSize: 13, lineHeight: 18 },
   recMatch:       { fontFamily: F.regular, fontSize: 11 },
   recPlayBtn:     { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
@@ -1262,20 +1262,20 @@ const s = StyleSheet.create({
   introHdr:           { paddingHorizontal: 12, paddingTop: 4 },
   introBackBtn:       { padding: 6 },
   introTopBrand:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 6 },
-  introTopBrandText:  { fontFamily: F.bold, fontSize: 14, letterSpacing: 0.5 },
+  introTopBrandText:  { fontFamily: F.bold, fontSize: 14, letterSpacing: 0 },
   introCenterBlock:   { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 28 },
   introCourseCircle:  { width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center' },
   introDailyBadge:    { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
-  introDailyBadgeText:{ fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  introDailyBadgeText:{ fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0 },
   introCourseLabel:   { fontFamily: F.medium, fontSize: 14, marginTop: 4 },
-  introCourseTitle:   { fontFamily: F.bold, fontSize: 26, textAlign: 'center', lineHeight: 36, letterSpacing: -0.3 },
+  introCourseTitle:   { fontFamily: F.bold, fontSize: 24, textAlign: 'center', lineHeight: 34, letterSpacing: 0 },
   introMetaChip:      { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 24, marginTop: 2 },
   introMetaChipText:  { fontFamily: F.semiBold, fontSize: 14 },
   introDailyHint:     { fontFamily: F.medium, fontSize: 13, lineHeight: 19, textAlign: 'center', maxWidth: 280, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8 },
   introFooter:        { paddingHorizontal: 20, gap: 12 },
-  introMainBtn:       { height: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  introMainBtnText:   { fontFamily: F.bold, fontSize: 17, letterSpacing: 0.1 },
-  introGhostBtn:      { height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  introMainBtn:       { height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  introMainBtnText:   { fontFamily: F.bold, fontSize: 16, letterSpacing: 0 },
+  introGhostBtn:      { height: 50, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
   introGhostBtnText:  { fontFamily: F.semiBold, fontSize: 16 },
 
   // ── Quiz / Review header ──

@@ -11,7 +11,7 @@ import { useThemeStore } from '@/stores/themeStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { useSystemFeatureStore } from '@/stores/systemFeatureStore';
-import { Colors } from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColor';
 import { syncPlatformThemeFromSupabase, syncUserThemeFromSupabase } from '@/services/themeSyncService';
 import { syncPlatformConfigFromSupabase } from '@/services/platformConfigService';
 import { syncQuizCatalogOverridesFromSupabase } from '@/services/quizCatalogService';
@@ -88,13 +88,11 @@ function AuthGuard() {
 function ThemedApp() {
   const darkMode      = useThemeStore((s) => s.darkMode);
   const systemFeatures = useSystemFeatureStore((s) => s.config);
-  const authIsLoading  = useAuthStore((s) => s.isLoading);
-  const dk            = Colors.dark;
-  const lk            = Colors.light;
+  const themeColors = useThemeColors();
 
   const navTheme = darkMode
-    ? { ...DarkTheme,    colors: { ...DarkTheme.colors,    background: dk.background, card: dk.surface,  text: dk.text,  border: dk.surfaceBorder } }
-    : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: lk.background, card: lk.surface, text: lk.text, border: lk.surfaceBorder } };
+    ? { ...DarkTheme,    colors: { ...DarkTheme.colors,    background: themeColors.background, card: themeColors.surface,  text: themeColors.text,  border: themeColors.surfaceBorder, primary: themeColors.primary } }
+    : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: themeColors.background, card: themeColors.surface, text: themeColors.text, border: themeColors.surfaceBorder, primary: themeColors.primary } };
 
   // ── Maintenance gate ────────────────────────────────────────────────────────
   if (systemFeatures.maintenanceMode) {

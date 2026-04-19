@@ -6,26 +6,16 @@
   },
   "storeLocales": {
     "en-US": {
-      "title": "LearnKloud.Today – Cloud Cert Prep",
-      "shortDescription": "AWS, GCP & Azure cert prep: quizzes, flashcards & learning paths",
-      "fullDescription": "LearnKloud.Today is the fastest way to prepare for AWS, Google Cloud (GCP), and Microsoft Azure cloud certification exams — all on one app.\n\n🎯 WHAT YOU GET\n• 400+ practice questions covering AWS, GCP, and Azure fundamentals\n• Instant answer explanations with AWS documentation links\n• Flashcards for rapid service recall\n• Smart learning paths tailored to your exam target\n• Leaderboard and streak system to keep you motivated\n• Offline-ready quizzes — study on the go\n\n📋 CERTIFICATION TRACKS\n• AWS Certified Cloud Practitioner (CLF-C02)\n• AWS Certified AI Practitioner (AIP-C01)\n• AWS Solutions Architect Associate (SAA-C03)\n• AWS Developer Associate (DVA-C02)\n• AWS SysOps Administrator (SOA-C02)\n• Google Cloud Digital Leader\n• Microsoft Azure Fundamentals (AZ-900)\n\n🧠 HOW IT WORKS\nTake a domain-specific quiz, review each answer with elimination reasoning, tap the AWS/GCP/Azure docs link to go deeper, then track your progress on the leaderboard. Repeat until you pass.\n\n🌩 CLOUD SERVICES COVERED\nAmazon EC2, S3, Lambda, RDS, DynamoDB, VPC, IAM, CloudFront, ECS, EKS, SageMaker, Bedrock, Google Kubernetes Engine, Cloud Run, BigQuery, Vertex AI, Azure Virtual Machines, Azure Blob Storage, Azure Active Directory, and many more.\n\n💡 EXAM TIPS\n• Study one domain at a time using the curated learning paths\n• Use flashcards to memorize service names and use cases\n• Read the elimination reasoning on every wrong answer\n• Target a 90%+ score in practice before booking your real exam\n\n🔒 Your progress, streaks, and quiz history sync securely across devices via your LearnKloud.Today account.\n\nStart free. Upgrade for unlimited quizzes and all certification tracks.",
+      "title": "LearnKloud.Today",
+      "shortDescription": "AWS cloud & AI cert prep: quizzes, flashcards and learning paths",
+      "fullDescription": "LearnKloud.Today is a focused way to prepare for AWS cloud and AI certification exams on Android.\n\nWHAT YOU GET\n• 400+ AWS and AI practice questions\n• Answer explanations with reasoning for every question\n• Flashcards for rapid cloud service recall\n• Smart learning paths tailored to your exam target\n• Leaderboard and streak system to keep you motivated\n• Offline-ready quiz sessions for study on the go\n\nCERTIFICATION TRACKS\n• AWS Certified Cloud Practitioner (CLF-C02)\n• AWS AI Practitioner / GenAI practice (AIP-C01 content track)\n\nHOW IT WORKS\nChoose a certification track, take a focused domain quiz, review every answer, use flashcards to reinforce service names and use cases, then track your progress with streaks, XP, and leaderboard ranking.\n\nCLOUD SERVICES COVERED\nAmazon EC2, S3, Lambda, RDS, DynamoDB, VPC, IAM, CloudFront, ECS, EKS, SageMaker, Bedrock, GuardDuty, KMS, Route 53, API Gateway, SQS, SNS, and more.\n\nEXAM TIPS\n• Study one domain at a time using curated learning paths\n• Use flashcards to memorize service names and use cases\n• Read the explanation on every wrong answer\n• Review weak areas before attempting a full practice exam\n\nYour progress, streaks, and quiz history can sync securely across devices with your LearnKloud.Today account.\n\nStart free. Upgrade for unlimited quizzes and premium certification practice.\n\nLearnKloud.Today is an independent study resource and is not affiliated with, endorsed by, or sponsored by Amazon Web Services or any certification provider.",
       "category": "EDUCATION",
       "tags": [
         "AWS",
         "cloud computing",
-        "GCP",
-        "Azure",
         "certification",
         "quiz",
-        "exam prep",
-        "cloud practitioner",
-        "solutions architect",
-        "DevOps",
-        "Kubernetes",
-        "machine learning",
-        "AI",
-        "serverless",
-        "cloud engineer"
+        "exam prep"
       ]
     }
   }

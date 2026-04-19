@@ -2,6 +2,7 @@
 .expo/
 .turbo/
 dist/
+dist-screenshots/
 web-build/
 expo-env.d.ts
 coverage/

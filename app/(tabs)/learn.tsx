@@ -87,8 +87,8 @@ export default function LearnScreen() {
               onPress={() => setActiveTab(tab)}
               style={[styles.tab, active && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
             >
-              <Text style={[styles.tabText, { color: active ? colors.primary : colors.textSecondary, fontFamily: active ? F.bold : F.medium }]}>
-                {tab}
+          <Text style={[styles.tabText, { color: active ? colors.primary : colors.textSecondary, fontFamily: active ? F.bold : F.medium }]}>
+                {tab === 'VIDEOS' ? 'Videos' : 'Articles'}
               </Text>
             </Pressable>
           );
@@ -263,16 +263,16 @@ function ArticleCard({
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14, borderBottomWidth: 1 },
-  headerTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5, textAlign: 'center' },
+  header: { paddingHorizontal: 16, paddingTop: 58, paddingBottom: 14, borderBottomWidth: 1 },
+  headerTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: 0, textAlign: 'left' },
 
   tabBar: { flexDirection: 'row', borderBottomWidth: 1 },
   tab: { flex: 1, alignItems: 'center', paddingVertical: 12 },
-  tabText: { fontSize: 13, letterSpacing: 0.4 },
+  tabText: { fontSize: 13, letterSpacing: 0 },
 
   filterBar: { paddingVertical: 10, gap: 8 },
   filterHeader: { paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  filterTitle: { fontFamily: F.bold, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' },
+  filterTitle: { fontFamily: F.bold, fontSize: 11, letterSpacing: 0, textTransform: 'uppercase' },
   filterSecondary: { fontFamily: F.medium, fontSize: 11 },
   filterChips: { paddingHorizontal: 16, gap: 8 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },

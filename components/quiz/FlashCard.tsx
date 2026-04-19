@@ -39,8 +39,8 @@ export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: Fla
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={[styles.labelDot, { backgroundColor: colors.gradientAccent }]} />
-            <Text style={[styles.sideLabel, { color: colors.gradientAccent }]}>
-              {isFlipped ? 'ANSWER' : 'QUESTION'}
+            <Text style={[styles.sideLabel, { color: colors.primary }]}>
+              {isFlipped ? 'Answer' : 'Question'}
             </Text>
           </View>
           <View style={[styles.counterPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
@@ -71,7 +71,7 @@ export function FlashCard({ question, isFlipped, onFlip, cardIndex, total }: Fla
               }]}>
                 <View style={styles.explanationHeader}>
                   <Feather name="info" size={14} color={colors.gradientAccent} />
-                  <Text style={[styles.explanationTitle, { color: colors.gradientAccent }]}>
+                  <Text style={[styles.explanationTitle, { color: colors.primary }]}>
                     Explanation
                   </Text>
                 </View>
@@ -112,13 +112,13 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: 24,
+    borderRadius: 16,
     borderWidth: 1.2,
     overflow: 'hidden',
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   strip: { height: 4 },
 
@@ -142,8 +142,8 @@ const styles = StyleSheet.create({
   },
   sideLabel: {
     fontFamily: F.bold,
-    fontSize: 11,
-    letterSpacing: 1.4,
+    fontSize: 12,
+    letterSpacing: 0,
   },
   counterPill: {
     flexDirection: 'row',
@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
 
   questionText: {
     fontFamily: F.semiBold,
-    fontSize: 24,
-    lineHeight: 38,
+    fontSize: 21,
+    lineHeight: 32,
     textAlign: 'center',
   },
 
@@ -187,8 +187,8 @@ const styles = StyleSheet.create({
   },
   answerText: {
     fontFamily: F.bold,
-    fontSize: 20,
-    lineHeight: 30,
+    fontSize: 18,
+    lineHeight: 28,
     textAlign: 'center',
   },
 
@@ -206,8 +206,7 @@ const styles = StyleSheet.create({
   explanationTitle: {
     fontFamily: F.bold,
     fontSize: 12,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    letterSpacing: 0,
   },
   explanationText: {
     fontFamily: F.medium,

@@ -36,30 +36,11 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Growth</Text>
-
-        <View style={[styles.menuCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          {[
-            { icon: 'bell',      title: 'Notifications', badge: '1', route: null },
-            { icon: 'award',     title: 'Leaderboard',              route: '/leaderboard' as const },
-            { icon: 'book-open', title: 'My library',               route: '/(tabs)/bookmarks' as const },
-          ].map((item, index) => (
-            <View key={item.title}>
-              <Pressable onPress={() => item.route && router.push(item.route as any)} style={styles.menuRow}>
-                <View style={[styles.menuIcon, { backgroundColor: colors.backgroundAlt }]}>
-                  <Feather name={item.icon as any} size={18} color={colors.text} />
-                </View>
-                <Text style={[styles.menuTitle, { color: colors.text, fontSize: t.cardTitle }]}>{item.title}</Text>
-                {item.badge ? (
-                  <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.badgeText, { color: colors.surface }]}>{item.badge}</Text>
-                  </View>
-                ) : null}
-                <Feather name="chevron-right" size={18} color={colors.textSecondary} />
-              </Pressable>
-              {index < 2 && <View style={[styles.divider, { backgroundColor: colors.surfaceBorder }]} />}
-            </View>
-          ))}
+        <View style={styles.headerCopy}>
+          <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Progress</Text>
+          <Text style={[styles.screenSub, { color: colors.textSecondary, fontSize: t.body }]}>
+            A simple view of consistency, practice, and recent scores.
+          </Text>
         </View>
 
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
@@ -129,17 +110,15 @@ export default function ProgressScreen() {
               <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: t.caption }]}>Today</Text>
             </View>
           </View>
-          <View style={styles.chartArea}>
-            {Array.from({ length: 5 }).map((_, row) => (
-              <View key={row} style={styles.chartRow}>
-                <Text style={[styles.chartAxisLabel, { color: colors.textSecondary }]}>1</Text>
-                <View style={[styles.chartLine, { borderColor: colors.surfaceBorder }]} />
-              </View>
-            ))}
-          </View>
-          <View style={styles.chartFooter}>
-            <Text style={[styles.chartFooterText, { color: colors.textSecondary }]}>09 February</Text>
-            <Text style={[styles.chartFooterText, { color: colors.textSecondary }]}>Today</Text>
+          <View style={styles.quickLinks}>
+            <Pressable onPress={() => router.push('/leaderboard' as any)} style={[styles.quickLink, { borderColor: colors.surfaceBorder }]}>
+              <Feather name="award" size={16} color={colors.primary} />
+              <Text style={[styles.quickLinkText, { color: colors.text }]}>Leaderboard</Text>
+            </Pressable>
+            <Pressable onPress={() => router.push('/(tabs)/bookmarks' as any)} style={[styles.quickLink, { borderColor: colors.surfaceBorder }]}>
+              <Feather name="book-open" size={16} color={colors.primary} />
+              <Text style={[styles.quickLinkText, { color: colors.text }]}>Bookmarks</Text>
+            </Pressable>
           </View>
         </View>
 
@@ -186,8 +165,10 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll: { paddingHorizontal: 16, paddingBottom: 36, gap: 14 },
-  screenTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
+  scroll: { paddingHorizontal: 16, paddingTop: 58, paddingBottom: 36, gap: 14 },
+  headerCopy: { gap: 6 },
+  screenTitle: { fontFamily: F.bold, fontSize: 24, lineHeight: 30, letterSpacing: 0 },
+  screenSub: { fontFamily: F.regular, fontSize: 14, lineHeight: 21 },
   menuCard: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
   menuIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
@@ -200,7 +181,7 @@ const styles = StyleSheet.create({
   panelHint: { fontFamily: F.medium, fontSize: 12, lineHeight: 18, marginTop: -4 },
   dailyQuizCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 8 },
   dailyQuizRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8 },
+  dailyQuizEyebrow: { fontFamily: F.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0 },
   dailyQuizTitle: { fontFamily: F.semiBold, fontSize: 15, marginTop: 4 },
   dailyQuizSubtitle: { fontFamily: F.regular, lineHeight: 18 },
   dailyQuizStatus: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
@@ -232,10 +213,7 @@ const styles = StyleSheet.create({
   weekCell: { alignItems: 'center', gap: 6 },
   weekLabel: { fontFamily: F.medium, fontSize: 11 },
   weekBolt: { width: 38, height: 38, borderRadius: 19, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
-  chartArea: { gap: 12, marginTop: 2 },
-  chartRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  chartAxisLabel: { width: 12, fontFamily: F.regular, fontSize: 11 },
-  chartLine: { flex: 1, borderBottomWidth: 1, borderStyle: 'dotted' },
-  chartFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  chartFooterText: { fontFamily: F.regular, fontSize: 11 },
+  quickLinks: { flexDirection: 'row', gap: 10 },
+  quickLink: { flex: 1, minHeight: 42, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  quickLinkText: { fontFamily: F.semiBold, fontSize: 12 },
 });

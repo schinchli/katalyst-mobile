@@ -53,11 +53,11 @@ describe('FlashCard — question side (not flipped)', () => {
     expect(getByText('What is Amazon Bedrock primarily used for?')).toBeTruthy();
   });
 
-  it('shows "QUESTION" label when not flipped', () => {
+  it('shows "Question" label when not flipped', () => {
     const { getByText } = render(
       <FlashCard question={MOCK_QUESTION} isFlipped={false} onFlip={jest.fn()} cardIndex={0} total={5} />
     );
-    expect(getByText('QUESTION')).toBeTruthy();
+    expect(getByText('Question')).toBeTruthy();
   });
 
   it('shows counter "1 / 5"', () => {
@@ -78,11 +78,11 @@ describe('FlashCard — question side (not flipped)', () => {
 });
 
 describe('FlashCard — answer side (flipped)', () => {
-  it('shows "ANSWER" label when flipped', () => {
+  it('shows "Answer" label when flipped', () => {
     const { getByText } = render(
       <FlashCard question={MOCK_QUESTION} isFlipped={true} onFlip={jest.fn()} cardIndex={0} total={5} />
     );
-    expect(getByText('ANSWER')).toBeTruthy();
+    expect(getByText('Answer')).toBeTruthy();
   });
 
   it('shows the correct option text when flipped', () => {

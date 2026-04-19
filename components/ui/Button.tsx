@@ -1,5 +1,4 @@
 import { Pressable, Text, ActivityIndicator, StyleSheet, type ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 
@@ -32,11 +31,8 @@ export function Button({
     switch (variant) {
       case 'secondary': return { backgroundColor: colors.primaryLight };
       case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primaryText };
-      case 'success':   return { backgroundColor: colors.success, shadowColor: colors.success, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 4 };
-      default:          return {
-        shadowColor: colors.gradientFrom, shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.4, shadowRadius: 6, elevation: 4,
-      };
+      case 'success':   return { backgroundColor: colors.success };
+      default:          return { backgroundColor: colors.primary };
     }
   })();
 
@@ -55,14 +51,6 @@ export function Button({
         style,
       ]}
     >
-      {(variant === 'primary' || variant === undefined) ? (
-        <LinearGradient
-          colors={[colors.gradientFrom, colors.gradientTo]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFillObject, { borderRadius: 12 }]}
-        />
-      ) : null}
       {loading && <ActivityIndicator color={variant === 'primary' || variant === 'success' ? solidTextColor : colors.primaryText} size="small" />}
       <Text style={[s.label, { fontSize: FONT_SIZE[size], color: textColor }]} numberOfLines={1}>{title}</Text>
     </Pressable>
@@ -71,7 +59,7 @@ export function Button({
 
 const s = StyleSheet.create({
   base: {
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -83,5 +71,5 @@ const s = StyleSheet.create({
     letterSpacing: 0.1,
   },
   disabled: { opacity: 0.5 },
-  pressed:  { opacity: 0.88 },
+  pressed:  { opacity: 0.92 },
 });
