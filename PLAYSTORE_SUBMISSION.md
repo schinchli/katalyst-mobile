@@ -172,7 +172,7 @@ Or use the preview build already on your device and take screenshots manually.
 
 Your privacy policy is already live at the web app. Confirm the URL:
 ```
-https://lms-amber-two.vercel.app/privacy
+https://learnkloud.today/privacy
 ```
 Or better — set up `learnkloud.today/privacy` once your domain is live.
 
@@ -414,5 +414,5 @@ Version 1.0.0
 | EAS Dashboard | https://expo.dev/accounts/schinchli/projects/katalyst |
 | EAS Updates | https://expo.dev/accounts/schinchli/projects/katalyst/updates |
 | Support email | support@learnkloud.today |
-| Privacy policy | https://lms-amber-two.vercel.app/privacy |
-| Delete account | https://lms-amber-two.vercel.app/delete-account |
+| Privacy policy | https://learnkloud.today/privacy |
+| Delete account | https://learnkloud.today/delete-account |

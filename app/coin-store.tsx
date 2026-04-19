@@ -27,7 +27,7 @@ export default function CoinStoreScreen() {
   }, []);
 
   const handleBuy = (_pack: CoinPack) => {
-    const base = AppConfig.web.baseUrl.replace(/\/$/, '') || 'https://lms-amber-two.vercel.app';
+    const base = AppConfig.web.baseUrl.replace(/\/$/, '') || 'https://learnkloud.today';
     void Linking.openURL(`${base}/dashboard/store`);
   };
 

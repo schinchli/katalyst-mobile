@@ -192,7 +192,7 @@ export default function ContestScreen() {
   const [loadingContests, setLoadingContests] = useState(true);
 
   useEffect(() => {
-    const baseUrl = AppConfig.web.baseUrl || 'https://lms-amber-two.vercel.app';
+    const baseUrl = AppConfig.web.baseUrl || 'https://learnkloud.today';
     fetch(`${baseUrl}/api/contests`)
       .then((r) => r.json())
       .then((d: { ok: boolean; contests?: Contest[] }) => {

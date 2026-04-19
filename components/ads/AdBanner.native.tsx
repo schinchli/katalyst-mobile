@@ -7,7 +7,7 @@ import { useThemeColors } from '@/hooks/useThemeColor';
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
-const WEB_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://lms-amber-two.vercel.app';
+const WEB_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://learnkloud.today';
 
 /**
  * AdBanner.native — mobile ad banner placeholder.

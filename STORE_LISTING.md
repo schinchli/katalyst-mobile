@@ -16,9 +16,9 @@
 | Architecture | New Architecture ON, Hermes ON, 16KB page-size compliant |
 | Category | Education |
 | Support email | support@learnkloud.today |
-| Privacy policy | https://lms-amber-two.vercel.app/privacy |
-| Terms of service | https://lms-amber-two.vercel.app/terms |
-| Delete account (web) | https://lms-amber-two.vercel.app/delete-account |
+| Privacy policy | https://learnkloud.today/privacy |
+| Terms of service | https://learnkloud.today/terms |
+| Delete account (web) | https://learnkloud.today/delete-account |
 | Delete account (in-app) | Profile → Danger Zone → Delete Account (requires typing DELETE) |
 
 ---

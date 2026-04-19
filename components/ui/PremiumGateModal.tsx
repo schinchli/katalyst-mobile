@@ -27,7 +27,7 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
     colors.success + '16',
   ];
 
-  const webUrl = (AppConfig.web.baseUrl ?? '').replace(/\/$/, '') || 'https://lms-amber-two.vercel.app';
+  const webUrl = (AppConfig.web.baseUrl ?? '').replace(/\/$/, '') || 'https://learnkloud.today';
 
   const openWebStore = () => {
     void Linking.openURL(`${webUrl}/dashboard/store`);

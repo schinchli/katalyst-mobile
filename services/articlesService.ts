@@ -26,7 +26,7 @@ export interface FetchArticlesParams {
   limit?: number;
 }
 
-const FALLBACK_URL = 'https://lms-amber-two.vercel.app';
+const FALLBACK_URL = 'https://learnkloud.today';
 
 function articlesUrl(params: FetchArticlesParams): string {
   const base = (AppConfig.web.baseUrl || FALLBACK_URL).replace(/\/$/, '');
