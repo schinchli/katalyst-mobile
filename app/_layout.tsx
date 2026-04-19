@@ -61,7 +61,7 @@ function AuthGuard() {
 
   useEffect(() => {
     // Wait until auth is resolved AND segments are available before navigating.
-    if (isLoading || segments.length === 0) return;
+    if (isLoading || (segments as string[]).length === 0) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 

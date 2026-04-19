@@ -245,7 +245,7 @@ function LearningPathWidget({ colors }: { colors: ReturnType<typeof useThemeColo
     // Prompt user to pick a track
     return (
       <Pressable
-        onPress={() => router.push('/learning-path')}
+        onPress={() => router.push('/learning-path' as any)}
         style={({ pressed }) => [lpStyles.pickCard, { backgroundColor: colors.surface, borderColor: colors.primary + '44', opacity: pressed ? 0.85 : 1 }]}
       >
         <View style={[lpStyles.pickIcon, { backgroundColor: colors.primary + '15' }]}>
@@ -270,7 +270,7 @@ function LearningPathWidget({ colors }: { colors: ReturnType<typeof useThemeColo
 
   return (
     <Pressable
-      onPress={() => router.push('/learning-path')}
+      onPress={() => router.push('/learning-path' as any)}
       style={({ pressed }) => [lpStyles.widget, { backgroundColor: colors.surface, borderColor: path.color + '55', opacity: pressed ? 0.85 : 1 }]}
     >
       <View style={lpStyles.widgetTop}>

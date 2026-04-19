@@ -641,10 +641,10 @@ export default function QuizScreen() {
                     </Text>
                   </View>
                 </View>
-                {recs.map(({ video, matchedTopics }) => (
+                {recs.map((rec) => (
                   <Pressable
-                    key={video.id}
-                    onPress={() => Linking.openURL(`https://youtu.be/${video.youtubeId}`)}
+                    key={rec.id}
+                    onPress={() => rec.youtubeId ? Linking.openURL(`https://youtu.be/${rec.youtubeId}`) : undefined}
                     style={({ pressed }) => [
                       s.recCard,
                       { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
@@ -652,12 +652,12 @@ export default function QuizScreen() {
                   >
                     <View style={s.recCardLeft}>
                       <View style={[s.recTagPill, { backgroundColor: colors.primary + '20' }]}>
-                        <Text style={[s.recTagText, { color: colors.primary }]}>{video.tag}</Text>
+                        <Text style={[s.recTagText, { color: colors.primary }]}>{rec.tag}</Text>
                       </View>
-                      <Text style={[s.recCardTitle, { color: colors.text }]} numberOfLines={2}>{video.title}</Text>
-                      {matchedTopics.length > 0 && (
+                      <Text style={[s.recCardTitle, { color: colors.text }]} numberOfLines={2}>{rec.title}</Text>
+                      {rec.domainLabel && (
                         <Text style={[s.recMatch, { color: colors.textSecondary }]}>
-                          Covers: {matchedTopics.slice(0, 2).join(' · ')}
+                          {rec.domainLabel}
                         </Text>
                       )}
                     </View>
