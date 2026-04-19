@@ -72,25 +72,25 @@ jest.mock('react-native-safe-area-context', () => {
 // Mock themeStore to avoid Zustand/AsyncStorage initialization issues in tests
 jest.mock('@/stores/themeStore', () => {
   const ACCENT_PRESETS = {
-    ocean:   { primary: '#0EA5E9', primaryLight: '#E0F7FF', label: 'Ocean Glass',   emoji: '🌊' },
-    aurora:  { primary: '#0EA5E9', primaryLight: '#E6F4FF', label: 'Neon Aurora',   emoji: '🌈' },
-    forest:  { primary: '#10B981', primaryLight: '#DCFCE7', label: 'Forest Mint',   emoji: '🌿' },
-    sunset:  { primary: '#F97316', primaryLight: '#FFEDD5', label: 'Sunset Coral',  emoji: '🌇' },
-    midnight:{ primary: '#22D3EE', primaryLight: '#123043', label: 'Midnight Focus',emoji: '🌌' },
-    sand:    { primary: '#0EA5E9', primaryLight: '#E6F8FF', label: 'Sandstone Calm',emoji: '🏜️' },
-    slate:   { primary: '#475569', primaryLight: '#F1F5F9', label: 'Slate Minimal', emoji: '🪨' },
-    emerald: { primary: '#28C76F', primaryLight: '#D1F7E2', label: 'Emerald',      emoji: '🟢' },
-    amber:   { primary: '#F59E0B', primaryLight: '#FEF3C7', label: 'Amber',        emoji: '🟡' },
-    rose:    { primary: '#EF4444', primaryLight: '#FCEAEA', label: 'Rose Quartz',  emoji: '🌸' },
-    indigo:  { primary: '#4B5EFA', primaryLight: '#E8EAFF', label: 'Deep Indigo',  emoji: '🔵' },
-    nocturnal: { primary: '#FFC801', primaryLight: '#FFF4BF', label: 'Nocturnal Luxe', emoji: '🌙', darkOverrides: { background: '#0E1F29' }, lightOverrides: { background: '#F1F6F4' } },
-    cerulean: { primary: '#2274A5', primaryLight: '#DCEAF4', label: 'Cerulean Ink', emoji: '🧿', darkOverrides: { background: '#10171E' }, lightOverrides: { background: '#E7DFC6' } },
-    violet: { primary: '#D8E63C', primaryLight: '#F2F8B8', label: 'Duranta Violet', emoji: '🪻', darkOverrides: { background: '#11133A' }, lightOverrides: { background: '#F0EEE9' } },
-    ember: { primary: '#FF6037', primaryLight: '#FFD7CB', label: 'Ember Mist', emoji: '🔥', darkOverrides: { background: '#241715' }, lightOverrides: { background: '#F5F4ED' } },
-    royal: { primary: '#FFA102', primaryLight: '#FFE2B0', label: 'Royal Ember', emoji: '👑', darkOverrides: { background: '#331017' }, lightOverrides: { background: '#F5F9CE' } },
-    spring: { primary: '#DBE64C', primaryLight: '#F3F8B8', label: 'Spring Mirage', emoji: '🌱', darkOverrides: { background: '#061933' }, lightOverrides: { background: '#F6F7ED' } },
+    ocean:   { primary: '#76C8D6', primaryLight: '#E6F8FB', label: 'Sea Glass',       emoji: '🌊' },
+    aurora:  { primary: '#7DB7F7', primaryLight: '#EAF4FF', label: 'Sky Lilac',       emoji: '🌈' },
+    forest:  { primary: '#8BCFAF', primaryLight: '#ECF9F2', label: 'Soft Mint',       emoji: '🌿' },
+    sunset:  { primary: '#F2A48F', primaryLight: '#FFF0EA', label: 'Peach Bloom',     emoji: '🌇' },
+    midnight:{ primary: '#8FCBEA', primaryLight: '#1E3246', label: 'Velvet Night',    emoji: '🌌' },
+    sand:    { primary: '#CDAE84', primaryLight: '#FAF1E7', label: 'Apricot Sand',    emoji: '🏜️' },
+    slate:   { primary: '#9B9EB9', primaryLight: '#F1F2F8', label: 'Misted Slate',    emoji: '🪨' },
+    emerald: { primary: '#7ECFAE', primaryLight: '#E5F8EF', label: 'Mint Meadow',     emoji: '🟢' },
+    amber:   { primary: '#F0BE7A', primaryLight: '#FFF5E6', label: 'Honey Glow',      emoji: '🟡' },
+    rose:    { primary: '#E9A1BF', primaryLight: '#FDECF4', label: 'Rose Petal',      emoji: '🌸' },
+    indigo:  { primary: '#7C83FF', primaryLight: '#ECEBFF', label: 'Pastel Indigo',   emoji: '🔵' },
+    nocturnal: { primary: '#D5A8E8', primaryLight: '#F6EAFB', label: 'Twilight Mauve', emoji: '🌙', darkOverrides: { background: '#1D1830' }, lightOverrides: { background: '#FCF7FE' } },
+    cerulean: { primary: '#7FAFD8', primaryLight: '#E8F0F8', label: 'Cerulean Mist',   emoji: '🧿', darkOverrides: { background: '#171B25' }, lightOverrides: { background: '#FBF7F1' } },
+    violet: { primary: '#B99AF6', primaryLight: '#F2ECFF', label: 'Lavender Bloom',   emoji: '🪻', darkOverrides: { background: '#1E1831' }, lightOverrides: { background: '#FBF7FE' } },
+    ember: { primary: '#E79A87', primaryLight: '#FDEAE5', label: 'Blush Ember',        emoji: '🔥', darkOverrides: { background: '#271B1A' }, lightOverrides: { background: '#FCF8F4' } },
+    royal: { primary: '#E3B06F', primaryLight: '#FCEFD9', label: 'Royal Blush',        emoji: '👑', darkOverrides: { background: '#2F1D28' }, lightOverrides: { background: '#FFF9EF' } },
+    spring: { primary: '#BFD879', primaryLight: '#F4F9E4', label: 'Spring Haze',       emoji: '🌱', darkOverrides: { background: '#1B252B' }, lightOverrides: { background: '#F9FBF1' } },
   };
-  const THEME_PRESET_ORDER = ['indigo', 'aurora', 'ocean', 'forest', 'sunset', 'midnight', 'sand', 'slate', 'emerald', 'amber', 'rose', 'nocturnal', 'cerulean', 'violet', 'ember', 'royal', 'spring'];
+  const THEME_PRESET_ORDER = ['indigo', 'forest', 'aurora', 'sunset', 'violet', 'nocturnal', 'ocean', 'midnight', 'sand', 'slate', 'emerald', 'amber', 'rose', 'cerulean', 'ember', 'royal', 'spring'];
   const FONT_SCALE = { small: 0.875, medium: 1, large: 1.125 };
   const state = {
     accent: 'indigo',

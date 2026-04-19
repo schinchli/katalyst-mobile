@@ -29,8 +29,8 @@ export function Button({
 
   const containerStyle = (() => {
     switch (variant) {
-      case 'secondary': return { backgroundColor: colors.primaryLight };
-      case 'outline':   return { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primaryText };
+      case 'secondary': return { backgroundColor: colors.primaryLight, borderWidth: 1, borderColor: colors.surfaceBorder };
+      case 'outline':   return { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.primary + '66' };
       case 'success':   return { backgroundColor: colors.success };
       default:          return { backgroundColor: colors.primary };
     }
@@ -59,7 +59,7 @@ export function Button({
 
 const s = StyleSheet.create({
   base: {
-    borderRadius: 10,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',

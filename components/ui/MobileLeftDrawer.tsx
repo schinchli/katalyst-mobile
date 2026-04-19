@@ -63,16 +63,16 @@ export function MobileLeftDrawer() {
       {!isOpen && (
         <View
           pointerEvents="box-none"
-          style={[styles.triggerWrap, { top: insets.top + 10, left: 14 }]}
+          style={[styles.triggerWrap, { top: insets.top + 88, left: 0 }]}
         >
           <Pressable
             onPress={open}
             style={({ pressed }) => [
               styles.triggerBtn,
               {
-                backgroundColor: pressed ? colors.backgroundAlt : colors.surface,
+                backgroundColor: pressed ? colors.primaryLight : colors.surface,
                 borderColor: colors.surfaceBorder,
-                shadowColor: colors.text,
+                shadowColor: colors.primary,
               },
             ]}
             accessibilityLabel="Open navigation menu"
@@ -205,16 +205,18 @@ const styles = StyleSheet.create({
     zIndex: 1001,
   },
   triggerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 46,
+    height: 52,
+    borderTopRightRadius: 14,
+    borderBottomRightRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    borderLeftWidth: 0,
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   },
   backdrop: {
     backgroundColor: '#000',

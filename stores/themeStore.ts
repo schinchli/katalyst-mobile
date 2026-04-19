@@ -41,49 +41,49 @@ export interface AccentConfig {
 }
 
 export const THEME_PRESET_ORDER: AccentPreset[] = [
-  'indigo',    // Deep Indigo — default
-  'aurora',    // Neon Aurora
-  'forest',    // Forest Mint
-  'sunset',    // Sunset Coral
-  'nocturnal', // Nocturnal Luxe
-  'violet',    // Duranta Violet
+  'indigo',    // Pastel Indigo — default
+  'forest',    // Soft Mint
+  'aurora',    // Sky Lilac
+  'sunset',    // Peach Bloom
+  'violet',    // Lavender Bloom
+  'nocturnal', // Twilight Mauve
 ];
 
 export const ACCENT_PRESETS: Record<AccentPreset, AccentConfig> = {
-  aurora:   { primary: '#0EA5E9', primaryLight: '#E6F4FF', primaryText: '#0369A1', primaryTextDark: '#7DD3FC', gradientFrom: '#C084FC', gradientTo: '#0EA5E9', gradientAccent: '#22D3EE', label: 'Neon Aurora',    emoji: '🌈' },
-  ocean:    { primary: '#0EA5E9', primaryLight: '#E0F7FF', primaryText: '#026AA2', primaryTextDark: '#38BDF8', gradientFrom: '#0EA5E9', gradientTo: '#2DD4BF', gradientAccent: '#60A5FA', label: 'Ocean Glass',    emoji: '🌊' },
-  forest:   { primary: '#10B981', primaryLight: '#DCFCE7', primaryText: '#047857', primaryTextDark: '#6EE7B7', gradientFrom: '#10B981', gradientTo: '#84CC16', gradientAccent: '#14B8A6', label: 'Forest Mint',    emoji: '🌿' },
-  sunset:   { primary: '#F97316', primaryLight: '#FFEDD5', primaryText: '#C2410C', primaryTextDark: '#FDBA74', gradientFrom: '#F97316', gradientTo: '#FB7185', gradientAccent: '#F59E0B', label: 'Sunset Coral',   emoji: '🌇' },
-  midnight: { primary: '#22D3EE', primaryLight: '#123043', primaryText: '#0E7490', primaryTextDark: '#67E8F9', gradientFrom: '#0F172A', gradientTo: '#1E293B', gradientAccent: '#22D3EE', label: 'Midnight Focus', emoji: '🌌' },
-  sand:     { primary: '#0EA5E9', primaryLight: '#E6F8FF', primaryText: '#075985', primaryTextDark: '#67E8F9', gradientFrom: '#F5E6D3', gradientTo: '#E6D2BF', gradientAccent: '#0EA5E9', label: 'Sandstone Calm', emoji: '🏜️' },
-  slate:    { primary: '#475569', primaryLight: '#F1F5F9', primaryText: '#334155', primaryTextDark: '#CBD5E1', gradientFrom: '#94A3B8', gradientTo: '#CBD5E1', gradientAccent: '#64748B', label: 'Slate Minimal',  emoji: '🪨' },
-  emerald:  { primary: '#10B981', primaryLight: '#D1F7E2', primaryText: '#065F46', primaryTextDark: '#6EE7A2', gradientFrom: '#10B981', gradientTo: '#84CC16', gradientAccent: '#14B8A6', label: 'Emerald',        emoji: '🟢' },
-  amber:    { primary: '#F59E0B', primaryLight: '#FEF3C7', primaryText: '#92400E', primaryTextDark: '#FCD34D', gradientFrom: '#F59E0B', gradientTo: '#F97316', gradientAccent: '#FB7185', label: 'Amber',          emoji: '🟡' },
-  rose:     { primary: '#EF4444', primaryLight: '#FCEAEA', primaryText: '#991B1B', primaryTextDark: '#FCA5A5', gradientFrom: '#EC4899', gradientTo: '#A78BFA', gradientAccent: '#F43F5E', label: 'Rose Quartz',   emoji: '🌸' },
-  indigo:   { primary: '#4B5EFA', primaryLight: '#E8EAFF', primaryText: '#2B3ECC', primaryTextDark: '#A5B4FC', gradientFrom: '#4B5EFA', gradientTo: '#0EA5E9', gradientAccent: '#22D3EE', label: 'Deep Indigo',    emoji: '🔵' },
-  nocturnal:{ primary: '#FFC801', primaryLight: '#FFF4BF', primaryText: '#7D5D00', primaryTextDark: '#FFE06B', gradientFrom: '#FF9932', gradientTo: '#114C5A', gradientAccent: '#D9E8E2', label: 'Nocturnal Luxe', emoji: '🌙',
-    lightOverrides: { text: '#172B36', textSecondary: '#47626C', textMuted: '#6E8891', background: '#F1F6F4', backgroundAlt: '#D9E8E2', surface: '#FFFFFF', surfaceElevated: '#F7FBF9', surfaceBorder: '#C7D8D2', tabIconDefault: '#6E8891' },
-    darkOverrides:  { text: '#F1F6F4', textSecondary: '#C7DDD5', textMuted: '#7EA4AA', background: '#0E1F29', backgroundAlt: '#132A35', surface: '#172B36', surfaceElevated: '#1E3741', surfaceBorder: '#2B4A54', tabIconDefault: '#6D8A92' },
+  aurora:   { primary: '#7DB7F7', primaryLight: '#EAF4FF', primaryText: '#4578B8', primaryTextDark: '#B6DAFF', gradientFrom: '#D7B8FF', gradientTo: '#92D7F8', gradientAccent: '#F2B5E2', label: 'Sky Lilac',      emoji: '🌈' },
+  ocean:    { primary: '#76C8D6', primaryLight: '#E6F8FB', primaryText: '#3E8895', primaryTextDark: '#A9E6EF', gradientFrom: '#93D6E4', gradientTo: '#9BE2CF', gradientAccent: '#A6B8FF', label: 'Sea Glass',      emoji: '🌊' },
+  forest:   { primary: '#8BCFAF', primaryLight: '#ECF9F2', primaryText: '#4F8E73', primaryTextDark: '#BFEAD6', gradientFrom: '#B7E6C8', gradientTo: '#A8D8B4', gradientAccent: '#A9DCCF', label: 'Soft Mint',      emoji: '🌿' },
+  sunset:   { primary: '#F2A48F', primaryLight: '#FFF0EA', primaryText: '#B86C59', primaryTextDark: '#FFC2B1', gradientFrom: '#F8C2AF', gradientTo: '#F6D8A8', gradientAccent: '#F2B7C6', label: 'Peach Bloom',    emoji: '🌇' },
+  midnight: { primary: '#8FCBEA', primaryLight: '#1E3246', primaryText: '#467DA1', primaryTextDark: '#B6E2F7', gradientFrom: '#27344A', gradientTo: '#433A63', gradientAccent: '#A7A8FF', label: 'Velvet Night',   emoji: '🌌' },
+  sand:     { primary: '#CDAE84', primaryLight: '#FAF1E7', primaryText: '#8A6A46', primaryTextDark: '#EACDA7', gradientFrom: '#F3E2CA', gradientTo: '#EFD5BB', gradientAccent: '#D8C5F3', label: 'Apricot Sand',   emoji: '🏜️' },
+  slate:    { primary: '#9B9EB9', primaryLight: '#F1F2F8', primaryText: '#636982', primaryTextDark: '#CFD3E7', gradientFrom: '#CACEE0', gradientTo: '#E4E7F0', gradientAccent: '#B9C4F5', label: 'Misted Slate',   emoji: '🪨' },
+  emerald:  { primary: '#7ECFAE', primaryLight: '#E5F8EF', primaryText: '#47866B', primaryTextDark: '#B9EBD7', gradientFrom: '#A9E3C8', gradientTo: '#CBEAB2', gradientAccent: '#A4D6C5', label: 'Mint Meadow',    emoji: '🟢' },
+  amber:    { primary: '#F0BE7A', primaryLight: '#FFF5E6', primaryText: '#AD7A34', primaryTextDark: '#F8D8A4', gradientFrom: '#F8D3A2', gradientTo: '#F6B98D', gradientAccent: '#F4CDC0', label: 'Honey Glow',     emoji: '🟡' },
+  rose:     { primary: '#E9A1BF', primaryLight: '#FDECF4', primaryText: '#AE6884', primaryTextDark: '#F7C7D9', gradientFrom: '#F2BDD0', gradientTo: '#D7C0FA', gradientAccent: '#F3B2C3', label: 'Rose Petal',     emoji: '🌸' },
+  indigo:   { primary: '#7C83FF', primaryLight: '#ECEBFF', primaryText: '#565BD7', primaryTextDark: '#CFCCFF', gradientFrom: '#B0A6FF', gradientTo: '#93D5F6', gradientAccent: '#F0A6D2', label: 'Pastel Indigo',  emoji: '🔵' },
+  nocturnal:{ primary: '#D5A8E8', primaryLight: '#F6EAFB', primaryText: '#8C5EA5', primaryTextDark: '#E9C8F5', gradientFrom: '#F0C2D8', gradientTo: '#8B88C9', gradientAccent: '#D6C4F1', label: 'Twilight Mauve', emoji: '🌙',
+    lightOverrides: { text: '#3A3050', textSecondary: '#7E7097', textMuted: '#A092BA', background: '#FCF7FE', backgroundAlt: '#F2E9F7', surface: '#FFFFFF', surfaceElevated: '#FFFDFE', surfaceBorder: '#E9DDF2', tabIconDefault: '#A092BA' },
+    darkOverrides:  { text: '#F7EEFF', textSecondary: '#D0C0E0', textMuted: '#A391BA', background: '#1D1830', backgroundAlt: '#292141', surface: '#33294D', surfaceElevated: '#3D325A', surfaceBorder: '#544370', tabIconDefault: '#A391BA' },
   },
-  cerulean: { primary: '#2274A5', primaryLight: '#DCEAF4', primaryText: '#174D6D', primaryTextDark: '#9FD1F4', gradientFrom: '#E7DFC6', gradientTo: '#2274A5', gradientAccent: '#131B23', label: 'Cerulean Ink',   emoji: '🧿',
-    lightOverrides: { text: '#131B23', textSecondary: '#5A6671', textMuted: '#748391', background: '#E7DFC6', backgroundAlt: '#E9F1F7', surface: '#F9F6EA', surfaceElevated: '#FFFFFF', surfaceBorder: '#D6D7D9', tabIconDefault: '#748391' },
-    darkOverrides:  { text: '#F5F1E4', textSecondary: '#C9D7E3', textMuted: '#7B8D9E', background: '#10171E', backgroundAlt: '#131B23', surface: '#192632', surfaceElevated: '#1F2F3D', surfaceBorder: '#31485C', tabIconDefault: '#7B8D9E' },
+  cerulean: { primary: '#7FAFD8', primaryLight: '#E8F0F8', primaryText: '#507799', primaryTextDark: '#BDD7EE', gradientFrom: '#F1E6D8', gradientTo: '#A9CBE7', gradientAccent: '#CFD4EA', label: 'Cerulean Mist',  emoji: '🧿',
+    lightOverrides: { text: '#2F3243', textSecondary: '#747B92', textMuted: '#9AA2B5', background: '#FBF7F1', backgroundAlt: '#EEF3F9', surface: '#FFFFFF', surfaceElevated: '#FFFDFC', surfaceBorder: '#E3E2E6', tabIconDefault: '#9AA2B5' },
+    darkOverrides:  { text: '#F4EFF6', textSecondary: '#C9D1E0', textMuted: '#9AA8BE', background: '#171B25', backgroundAlt: '#202736', surface: '#2A3346', surfaceElevated: '#334058', surfaceBorder: '#485674', tabIconDefault: '#9AA8BE' },
   },
-  violet:   { primary: '#D8E63C', primaryLight: '#F2F8B8', primaryText: '#6D7600', primaryTextDark: '#EAF391', gradientFrom: '#17184B', gradientTo: '#D6B4FC', gradientAccent: '#D3DDE7', label: 'Duranta Violet', emoji: '🪻',
-    lightOverrides: { text: '#17184B', textSecondary: '#5A608F', textMuted: '#8F97B9', background: '#F0EEE9', backgroundAlt: '#D3DDE7', surface: '#FFFFFF', surfaceElevated: '#F7F4FB', surfaceBorder: '#D6DCE7', tabIconDefault: '#8F97B9' },
-    darkOverrides:  { text: '#F0EEE9', textSecondary: '#CFC6F4', textMuted: '#8D90C3', background: '#11133A', backgroundAlt: '#17184B', surface: '#21205E', surfaceElevated: '#2B2A72', surfaceBorder: '#4C4AA0', tabIconDefault: '#8D90C3' },
+  violet:   { primary: '#B99AF6', primaryLight: '#F2ECFF', primaryText: '#7A62B6', primaryTextDark: '#DCCAFB', gradientFrom: '#DCC6FB', gradientTo: '#F2B9D8', gradientAccent: '#C7D7F5', label: 'Lavender Bloom', emoji: '🪻',
+    lightOverrides: { text: '#352E4E', textSecondary: '#7C7095', textMuted: '#A196B8', background: '#FBF7FE', backgroundAlt: '#EFE7FA', surface: '#FFFFFF', surfaceElevated: '#FEFBFF', surfaceBorder: '#E5DCF2', tabIconDefault: '#A196B8' },
+    darkOverrides:  { text: '#F8F0FF', textSecondary: '#D6C8EB', textMuted: '#AA99C4', background: '#1E1831', backgroundAlt: '#2A2141', surface: '#342750', surfaceElevated: '#403061', surfaceBorder: '#584475', tabIconDefault: '#AA99C4' },
   },
-  ember:    { primary: '#FF6037', primaryLight: '#FFD7CB', primaryText: '#9C2F12', primaryTextDark: '#FFAA91', gradientFrom: '#A0C9CB', gradientTo: '#733635', gradientAccent: '#ECECDC', label: 'Ember Mist',     emoji: '🔥',
-    lightOverrides: { text: '#351E1C', textSecondary: '#775351', textMuted: '#96706D', background: '#F5F4ED', backgroundAlt: '#ECECDC', surface: '#FFFFFF', surfaceElevated: '#F9F7F3', surfaceBorder: '#DDD5CC', tabIconDefault: '#96706D' },
-    darkOverrides:  { text: '#F5F4ED', textSecondary: '#D2C4C1', textMuted: '#A78683', background: '#241715', backgroundAlt: '#351E1C', surface: '#4A2724', surfaceElevated: '#5A302B', surfaceBorder: '#733635', tabIconDefault: '#A78683' },
+  ember:    { primary: '#E79A87', primaryLight: '#FDEAE5', primaryText: '#A66250', primaryTextDark: '#F5C2B4', gradientFrom: '#C6E1E4', gradientTo: '#B98685', gradientAccent: '#EFEBDD', label: 'Blush Ember',    emoji: '🔥',
+    lightOverrides: { text: '#46302D', textSecondary: '#866965', textMuted: '#A48A85', background: '#FCF8F4', backgroundAlt: '#F5EDE8', surface: '#FFFFFF', surfaceElevated: '#FFFDFC', surfaceBorder: '#E8DDD6', tabIconDefault: '#A48A85' },
+    darkOverrides:  { text: '#FCF4F1', textSecondary: '#D8C6C1', textMuted: '#B19793', background: '#271B1A', backgroundAlt: '#352423', surface: '#47302E', surfaceElevated: '#553836', surfaceBorder: '#6E4C48', tabIconDefault: '#B19793' },
   },
-  royal:    { primary: '#FFA102', primaryLight: '#FFE2B0', primaryText: '#8B5600', primaryTextDark: '#FFC75A', gradientFrom: '#432E6F', gradientTo: '#BC2D29', gradientAccent: '#DD5533', label: 'Royal Ember',    emoji: '👑',
-    lightOverrides: { text: '#450E16', textSecondary: '#7E434C', textMuted: '#A56D75', background: '#F5F9CE', backgroundAlt: '#F6EFE0', surface: '#FFF8EE', surfaceElevated: '#FFFFFF', surfaceBorder: '#E6D6C3', tabIconDefault: '#A56D75' },
-    darkOverrides:  { text: '#F8F1E8', textSecondary: '#D8BFC0', textMuted: '#A77D83', background: '#331017', backgroundAlt: '#450E16', surface: '#5B1A22', surfaceElevated: '#6D212A', surfaceBorder: '#8E352C', tabIconDefault: '#A77D83' },
+  royal:    { primary: '#E3B06F', primaryLight: '#FCEFD9', primaryText: '#9E6D34', primaryTextDark: '#F2D1A3', gradientFrom: '#AA9CD8', gradientTo: '#E79D97', gradientAccent: '#E7B78B', label: 'Royal Blush',    emoji: '👑',
+    lightOverrides: { text: '#48313F', textSecondary: '#856876', textMuted: '#A18996', background: '#FFF9EF', backgroundAlt: '#F9EEE7', surface: '#FFFFFF', surfaceElevated: '#FFFDFA', surfaceBorder: '#EBDCCE', tabIconDefault: '#A18996' },
+    darkOverrides:  { text: '#FCF3EC', textSecondary: '#D8C3C7', textMuted: '#AE9198', background: '#2F1D28', backgroundAlt: '#3D2532', surface: '#52303F', surfaceElevated: '#613847', surfaceBorder: '#7B4C58', tabIconDefault: '#AE9198' },
   },
-  spring:   { primary: '#DBE64C', primaryLight: '#F3F8B8', primaryText: '#6C7500', primaryTextDark: '#E7F07D', gradientFrom: '#00804C', gradientTo: '#1E488F', gradientAccent: '#74C365', label: 'Spring Mirage',  emoji: '🌱',
-    lightOverrides: { text: '#001F3F', textSecondary: '#365D79', textMuted: '#6A8AA4', background: '#F6F7ED', backgroundAlt: '#E2EBD8', surface: '#FFFFFF', surfaceElevated: '#F8FCF6', surfaceBorder: '#D5E2CC', tabIconDefault: '#6A8AA4' },
-    darkOverrides:  { text: '#F6F7ED', textSecondary: '#C9D7E6', textMuted: '#86A3BF', background: '#061933', backgroundAlt: '#001F3F', surface: '#0B2A4B', surfaceElevated: '#123764', surfaceBorder: '#1E488F', tabIconDefault: '#86A3BF' },
+  spring:   { primary: '#BFD879', primaryLight: '#F4F9E4', primaryText: '#7D9550', primaryTextDark: '#DDEAAD', gradientFrom: '#BFE5B7', gradientTo: '#A8C7F0', gradientAccent: '#D4E6A4', label: 'Spring Haze',    emoji: '🌱',
+    lightOverrides: { text: '#304149', textSecondary: '#6E828B', textMuted: '#96A7AD', background: '#F9FBF1', backgroundAlt: '#EDF4E4', surface: '#FFFFFF', surfaceElevated: '#FCFFFA', surfaceBorder: '#DFE8D5', tabIconDefault: '#96A7AD' },
+    darkOverrides:  { text: '#F6F8EF', textSecondary: '#C9D4D5', textMuted: '#98A9AD', background: '#1B252B', backgroundAlt: '#243139', surface: '#304148', surfaceElevated: '#3A4D55', surfaceBorder: '#536A73', tabIconDefault: '#98A9AD' },
   },
 };
 

@@ -33,7 +33,7 @@ describe('ACCENT_PRESETS — structure', () => {
   });
 
   it('default indigo preset has correct primary', () => {
-    expect(ACCENT_PRESETS.indigo.primary).toBe('#4B5EFA');
+    expect(ACCENT_PRESETS.indigo.primary).toBe('#7C83FF');
   });
 
   it('primary and primaryLight are different colors', () => {
