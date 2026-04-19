@@ -13,7 +13,6 @@ interface PremiumGateModalProps {
   visible: boolean;
   quiz: Quiz;
   onClose: () => void;
-  onUpgrade?: (type: 'subscription' | 'course') => Promise<void>;
 }
 
 export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalProps) {
@@ -29,8 +28,8 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
 
   const webUrl = (AppConfig.web.baseUrl ?? '').replace(/\/$/, '') || 'https://learnkloud.today';
 
-  const openWebStore = () => {
-    void Linking.openURL(`${webUrl}/dashboard/store`);
+  const openWebsite = () => {
+    void Linking.openURL(webUrl);
   };
 
   const courseFeatures = [
@@ -60,7 +59,7 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
             ))}
           </View>
 
-          {/* Web payment card */}
+          {/* Website upgrade card */}
           <LinearGradient
             colors={[colors.surfaceElevated, colors.surface]}
             style={[styles.webCard, { borderColor: colors.primary }]}
@@ -68,14 +67,14 @@ export function PremiumGateModal({ visible, quiz, onClose }: PremiumGateModalPro
             <View style={[styles.webCardIcon, { backgroundColor: colors.primaryLight }]}>
               <Feather name="globe" size={28} color={colors.primary} />
             </View>
-            <Text style={[styles.webCardTitle, { color: colors.text }]}>Subscribe or unlock on the web</Text>
+            <Text style={[styles.webCardTitle, { color: colors.text }]}>Visit learnkloud.today to upgrade</Text>
             <Text style={[styles.webCardBody, { color: colors.textSecondary }]}>
-              Payments are processed securely on our website via Razorpay or Stripe.{'\n'}
-              Log in at <Text style={{ color: colors.primary }}>learnkloud.today</Text> and subscribe from your account.
+              Premium upgrades are available on our website.{'\n'}
+              Sign in at <Text style={{ color: colors.primary }}>learnkloud.today</Text> to upgrade your account and unlock premium practice.
             </Text>
-            <Pressable onPress={openWebStore} style={[styles.webBtn, { backgroundColor: colors.primary }]}>
+            <Pressable onPress={openWebsite} style={[styles.webBtn, { backgroundColor: colors.primary }]}>
               <Feather name="external-link" size={16} color={colors.surface} />
-              <Text style={[styles.webBtnText, { color: colors.surface }]}>Open Web App to Subscribe</Text>
+              <Text style={[styles.webBtnText, { color: colors.surface }]}>Open learnkloud.today</Text>
             </Pressable>
           </LinearGradient>
 
