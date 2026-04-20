@@ -348,7 +348,7 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.homeHeader}>
           <Text style={[styles.heroEyebrow, { color: colors.primary, fontSize: t.micro }]}>

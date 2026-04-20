@@ -115,7 +115,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.profileTop}>
           <View style={[styles.avatarWrap, { borderColor: colors.surfaceBorder }]}>

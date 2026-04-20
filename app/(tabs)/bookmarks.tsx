@@ -150,7 +150,7 @@ export default function BookmarksScreen() {
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: colors.background }]}
-      edges={isDesktop ? [] : ['top']}
+      edges={isDesktop ? [] : ['bottom']}
     >
       <ScrollView
         contentContainerStyle={[styles.scroll, contentContainerWeb as any]}

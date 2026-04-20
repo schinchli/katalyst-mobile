@@ -34,7 +34,7 @@ export default function ProgressScreen() {
   const recentAttempts = progress.recentResults.slice(0, 3);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.headerCopy}>
           <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Progress</Text>

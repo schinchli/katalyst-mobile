@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { useThemeColors } from '@/hooks/useThemeColor';
+import { useDrawerStore } from '@/stores/drawerStore';
 
 const DRAWER_WIDTH = 260;
 
@@ -24,31 +25,31 @@ const NAV_ITEMS: Array<{
 ];
 
 export function MobileLeftDrawer() {
-  const [isOpen, setIsOpen] = useState(false);
-  const translateX     = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-  const backdropAlpha  = useRef(new Animated.Value(0)).current;
+  const isOpen  = useDrawerStore((s) => s.isOpen);
+  const close   = useDrawerStore((s) => s.close);
   const colors  = useThemeColors();
   const insets  = useSafeAreaInsets();
   const pathname = usePathname();
 
-  const open = () => {
-    setIsOpen(true);
-    Animated.parallel([
-      Animated.spring(translateX, { toValue: 0, bounciness: 0, useNativeDriver: true }),
-      Animated.timing(backdropAlpha, { toValue: 0.5, duration: 220, useNativeDriver: true }),
-    ]).start();
-  };
+  const translateX    = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const backdropAlpha = useRef(new Animated.Value(0)).current;
 
-  const close = () => {
-    Animated.parallel([
-      Animated.spring(translateX, { toValue: -DRAWER_WIDTH, bounciness: 0, useNativeDriver: true }),
-      Animated.timing(backdropAlpha, { toValue: 0, duration: 180, useNativeDriver: true }),
-    ]).start(() => setIsOpen(false));
-  };
+  useEffect(() => {
+    if (isOpen) {
+      Animated.parallel([
+        Animated.spring(translateX, { toValue: 0, bounciness: 0, useNativeDriver: true }),
+        Animated.timing(backdropAlpha, { toValue: 0.5, duration: 220, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(translateX, { toValue: -DRAWER_WIDTH, bounciness: 0, useNativeDriver: true }),
+        Animated.timing(backdropAlpha, { toValue: 0, duration: 180, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [isOpen]);
 
   const navigate = (path: string) => {
     close();
-    // Small delay lets the drawer close animation start before navigation
     setTimeout(() => router.navigate(path as Parameters<typeof router.navigate>[0]), 120);
   };
 
@@ -59,40 +60,15 @@ export function MobileLeftDrawer() {
 
   return (
     <>
-      {/* ── Hamburger trigger — only visible when drawer is closed ── */}
-      {!isOpen && (
-        <View
-          pointerEvents="box-none"
-          style={[styles.triggerWrap, { top: insets.top + 88, left: 0 }]}
-        >
-          <Pressable
-            onPress={open}
-            style={({ pressed }) => [
-              styles.triggerBtn,
-              {
-                backgroundColor: pressed ? colors.primaryLight : colors.surface,
-                borderColor: colors.surfaceBorder,
-                shadowColor: colors.primary,
-              },
-            ]}
-            accessibilityLabel="Open navigation menu"
-            accessibilityRole="button"
-          >
-            <Feather name="menu" size={18} color={colors.text} />
-          </Pressable>
-        </View>
-      )}
+      {/* Backdrop */}
+      <Animated.View
+        pointerEvents={isOpen ? 'auto' : 'none'}
+        style={[StyleSheet.absoluteFillObject, styles.backdrop, { opacity: backdropAlpha }]}
+      >
+        <Pressable style={StyleSheet.absoluteFillObject} onPress={close} />
+      </Animated.View>
 
-      {/* ── Backdrop ── */}
-      {isOpen && (
-        <Animated.View
-          style={[StyleSheet.absoluteFillObject, styles.backdrop, { opacity: backdropAlpha }]}
-        >
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={close} />
-        </Animated.View>
-      )}
-
-      {/* ── Drawer panel ── */}
+      {/* Drawer panel */}
       <Animated.View
         style={[
           styles.drawer,
@@ -200,24 +176,6 @@ export function MobileLeftDrawer() {
 }
 
 const styles = StyleSheet.create({
-  triggerWrap: {
-    position: 'absolute',
-    zIndex: 1001,
-  },
-  triggerBtn: {
-    width: 46,
-    height: 52,
-    borderTopRightRadius: 14,
-    borderBottomRightRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderLeftWidth: 0,
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
-  },
   backdrop: {
     backgroundColor: '#000',
     zIndex: 999,

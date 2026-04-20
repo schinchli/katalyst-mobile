@@ -2,6 +2,7 @@ import { Platform, View, useWindowDimensions } from 'react-native';
 import { Tabs } from 'expo-router';
 import { AppTabBar } from '@/components/ui/AppTabBar';
 import { MobileLeftDrawer } from '@/components/ui/MobileLeftDrawer';
+import { AppHeader } from '@/components/ui/AppHeader';
 
 export default function TabLayout() {
   const { width } = useWindowDimensions();
@@ -27,11 +28,11 @@ export default function TabLayout() {
     );
   }
 
-  // Mobile / native: left-side drawer replaces bottom tab bar
+  // Mobile / native: AppHeader owns the hamburger, drawer overlays content
   return (
     <View style={{ flex: 1 }}>
+      <AppHeader />
       <Tabs
-        // Hide the bottom tab bar — navigation is handled by MobileLeftDrawer
         tabBar={() => null}
         screenOptions={{ headerShown: false }}
       >

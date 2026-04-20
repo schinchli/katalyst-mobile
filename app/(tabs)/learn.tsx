@@ -69,7 +69,7 @@ export default function LearnScreen() {
   }, [activeTab, loadArticles]);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['bottom']}>
       {/* ── Header ── */}
       <View style={[styles.header, { borderBottomColor: colors.surfaceBorder }]}>
         <Text style={[styles.headerTitle, { color: colors.text, fontSize: t.screenTitle }]}>

@@ -52,7 +52,7 @@ export default function QuizzesScreen() {
   const dailyQuizFilteredOut = Boolean(dailyQuiz && !visibleCourses.some((quiz) => quiz.id === dailyQuiz.id));
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.headerCopy}>
           <Text style={[styles.screenTitle, { color: colors.text, fontSize: t.screenTitle }]}>Practice</Text>
