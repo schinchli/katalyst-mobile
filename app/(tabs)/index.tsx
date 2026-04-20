@@ -328,9 +328,8 @@ export default function HomeScreen() {
   const t = useTypography();
   const user = useAuthStore((s) => s.user);
   const step = useAuthStore((s) => s.step);
-  const isGuest = step === 'guest';
   const progress = useProgressStore((s) => s.progress);
-  const firstName = isGuest ? 'Guest' : (user?.name?.split(' ')[0] ?? 'Learner');
+  const firstName = step === 'guest' ? 'Guest' : (user?.name?.split(' ')[0] ?? 'Learner');
   const platformConfig = usePlatformConfigStore((s) => s.config);
   const systemFeatures = useSystemFeatureStore((s) => s.config);
   const visibleQuizzes = quizzes.filter((quiz) => quiz.enabled !== false);
@@ -363,22 +362,6 @@ export default function HomeScreen() {
             Pick up one focused cloud certification task and keep moving.
           </Text>
         </View>
-
-        {isGuest ? (
-          <Pressable
-            onPress={() => router.push('/(auth)/login' as any)}
-            style={[styles.guestBanner, { backgroundColor: colors.primaryLight, borderColor: colors.primary + '44' }]}
-          >
-            <Feather name="log-in" size={18} color={colors.primary} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[styles.guestBannerTitle, { color: colors.text }]}>Save your progress</Text>
-              <Text style={[styles.guestBannerSub, { color: colors.textSecondary }]}>Sign in to track XP, streaks and history.</Text>
-            </View>
-            <View style={[styles.guestLoginBtn, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.guestLoginBtnText, { color: '#fff' }]}>Log In</Text>
-            </View>
-          </Pressable>
-        ) : null}
 
         {platformConfig.widgets.showHomeStats ? (
           <View style={styles.topStats}>
@@ -520,11 +503,6 @@ const styles = StyleSheet.create({
   flashcardBody: { flex: 1, gap: 4 },
   flashcardTitle: { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
   flashcardSubtitle: { fontFamily: F.regular, fontSize: 12 },
-  guestBanner: { borderWidth: 1, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  guestBannerTitle: { fontFamily: F.bold, fontSize: 14 },
-  guestBannerSub: { fontFamily: F.regular, fontSize: 12, lineHeight: 17 },
-  guestLoginBtn: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
-  guestLoginBtnText: { fontFamily: F.bold, fontSize: 13 },
   growthCard: { borderWidth: 1, borderRadius: 18, padding: 12, gap: 12, marginTop: 2 },
   growthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   growthTitle: { fontFamily: F.bold, fontSize: 17 },

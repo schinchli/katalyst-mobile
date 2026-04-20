@@ -8,6 +8,7 @@ import { F } from '@/constants/Typography';
 import { EXPERIENCE_COPY } from '@/config/experience';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { useDrawerStore } from '@/stores/drawerStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const DRAWER_WIDTH = 260;
 
@@ -25,11 +26,15 @@ const NAV_ITEMS: Array<{
 ];
 
 export function MobileLeftDrawer() {
-  const isOpen  = useDrawerStore((s) => s.isOpen);
-  const close   = useDrawerStore((s) => s.close);
-  const colors  = useThemeColors();
-  const insets  = useSafeAreaInsets();
+  const isOpen   = useDrawerStore((s) => s.isOpen);
+  const close    = useDrawerStore((s) => s.close);
+  const colors   = useThemeColors();
+  const insets   = useSafeAreaInsets();
   const pathname = usePathname();
+  const step     = useAuthStore((s) => s.step);
+  const signOut  = useAuthStore((s) => s.signOut);
+  const isGuest  = step === 'guest';
+  const isAuthed = step === 'authenticated';
 
   const translateX    = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const backdropAlpha = useRef(new Animated.Value(0)).current;
@@ -169,6 +174,35 @@ export function MobileLeftDrawer() {
               </Pressable>
             );
           })}
+
+          {/* Login / Logout at the bottom */}
+          <View style={[styles.authDivider, { borderTopColor: colors.surfaceBorder }]} />
+
+          {isAuthed ? (
+            <Pressable
+              onPress={() => { close(); signOut(); }}
+              style={({ pressed }) => [styles.navItem, { backgroundColor: pressed ? colors.backgroundAlt : 'transparent', borderColor: 'transparent' }]}
+              accessibilityRole="button"
+            >
+              <View style={[styles.iconBox, { backgroundColor: colors.error + '18' }]}>
+                <Feather name="log-out" size={17} color={colors.error} />
+              </View>
+              <Text style={[styles.navItemText, { color: colors.error, fontFamily: F.medium }]}>Log Out</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => { close(); setTimeout(() => router.push('/(auth)/login' as any), 120); }}
+              style={({ pressed }) => [styles.navItem, { backgroundColor: pressed ? colors.backgroundAlt : 'transparent', borderColor: 'transparent' }]}
+              accessibilityRole="button"
+            >
+              <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
+                <Feather name="log-in" size={17} color={colors.primary} />
+              </View>
+              <Text style={[styles.navItemText, { color: colors.primary, fontFamily: F.semiBold }]}>
+                {isGuest ? 'Log In' : 'Log In'}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </Animated.View>
     </>
@@ -260,5 +294,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  authDivider: {
+    borderTopWidth: 1,
+    marginVertical: 8,
+    marginHorizontal: 10,
   },
 });
