@@ -67,7 +67,8 @@ function AuthGuard() {
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (isAuthenticated && step !== 'guest' && inAuthGroup) {
+      // Guest users are allowed to navigate to auth screens so they can log in
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments]);

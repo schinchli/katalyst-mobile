@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -35,6 +36,22 @@ const FILTERS: { key: FlashcardCategory | 'all'; label: string }[] = [
   { key: 'aip-c01',            label: 'AIP-C01'   },
 ];
 
+const KNOWN_KEY = (filter: string) => `flashcards-known-${filter}`;
+
+async function loadKnown(filter: string): Promise<Set<string>> {
+  try {
+    const raw = await AsyncStorage.getItem(KNOWN_KEY(filter));
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch { return new Set(); }
+}
+
+async function saveKnown(filter: string, known: Set<string>) {
+  try {
+    if (known.size === 0) { await AsyncStorage.removeItem(KNOWN_KEY(filter)); }
+    else { await AsyncStorage.setItem(KNOWN_KEY(filter), JSON.stringify([...known])); }
+  } catch { /* storage unavailable */ }
+}
+
 export default function FlashcardsScreen() {
   const colors            = useThemeColors();
   const animationsEnabled = useThemeStore((s) => s.animationsEnabled);
@@ -43,6 +60,7 @@ export default function FlashcardsScreen() {
   const [filter,  setFilter]  = useState<FlashcardCategory | 'all'>('all');
   const [index,   setIndex]   = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [known,   setKnown]   = useState<Set<string>>(new Set());
 
   // ── Shared animation values ────────────────────────────────────────────────
   const cardX        = useSharedValue(0);   // horizontal drag / exit
@@ -56,14 +74,27 @@ export default function FlashcardsScreen() {
   useEffect(() => { indexRef.current = index; },   [index]);
   useEffect(() => { flippedRef.current = flipped; }, [flipped]);
 
-  const items = useMemo(
+  const allItems = useMemo(
     () => filter === 'all' ? flashcards : flashcards.filter((c) => c.category === filter),
     [filter],
   );
+
+  // Queue = cards not yet known in this session
+  const items = useMemo(
+    () => allItems.filter((c) => !known.has(c.id)),
+    [allItems, known],
+  );
+
   const itemsRef = useRef(items);
   useEffect(() => { itemsRef.current = items; }, [items]);
 
   const active = items[Math.min(index, Math.max(0, items.length - 1))];
+  const allKnown = allItems.length > 0 && known.size >= allItems.length;
+
+  // Load known set when filter changes
+  useEffect(() => {
+    loadKnown(filter).then(setKnown);
+  }, [filter]);
 
   // ── Navigate to card with slide-out / slide-in animation ──────────────────
   const goTo = useCallback((nextIdx: number, dir: 'left' | 'right') => {
@@ -107,6 +138,31 @@ export default function FlashcardsScreen() {
     const curr = indexRef.current;
     if (curr > 0) goTo(curr - 1, 'right');
   }, [goTo]);
+
+  const markKnown = useCallback(() => {
+    if (!active) return;
+    const updated = new Set([...known, active.id]);
+    setKnown(updated);
+    void saveKnown(filter, updated);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Advance or stay at same index (next card slides in)
+    const nextIdx = Math.min(indexRef.current, itemsRef.current.length - 2);
+    if (nextIdx >= 0) goTo(nextIdx, 'left');
+    else { setIndex(0); setFlipped(false); }
+  }, [active, known, filter, goTo]);
+
+  const markStillLearning = useCallback(() => {
+    if (!active) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    goNext();
+  }, [active, goNext]);
+
+  const resetKnown = useCallback(() => {
+    setKnown(new Set());
+    setIndex(0);
+    setFlipped(false);
+    void saveKnown(filter, new Set());
+  }, [filter]);
 
   // ── 3-D flip (Y-axis rotation) ─────────────────────────────────────────────
   const doFlip = useCallback(() => {
@@ -296,9 +352,16 @@ export default function FlashcardsScreen() {
 
         <View style={[s.progressShell, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <ProgressBar progress={items.length ? (index + 1) / items.length : 0} height={6} />
-          <Text style={[s.progressText, { color: colors.textSecondary }]}>
-            {items.length ? `${index + 1} / ${items.length}` : '0 / 0'}
-          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={[s.progressText, { color: colors.textSecondary }]}>
+              {items.length ? `${index + 1} / ${items.length}` : '0 / 0'}
+            </Text>
+            {known.size > 0 && (
+              <Text style={[s.progressText, { color: '#28C76F' }]}>
+                ✓ {known.size} known
+              </Text>
+            )}
+          </View>
         </View>
       </View>
 
@@ -381,30 +444,67 @@ export default function FlashcardsScreen() {
       </View>
 
       {/* ── Bottom nav ── */}
-      <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
-        <Pressable
-          onPress={goPrev}
-          disabled={index === 0}
-          style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: index === 0 ? 0.35 : 1 }]}
-        >
-          <Feather name="chevrons-left" size={18} color={colors.text} />
-          <Text style={[s.navBtnText, { color: colors.text }]}>Previous</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => index < items.length - 1 ? goNext() : router.back()}
-          style={[s.navBtn, { borderColor: colors.surfaceBorder }]}
-        >
-          <Text style={[s.navBtnText, { color: colors.text }]}>
-            {index < items.length - 1 ? 'Next' : 'Done'}
+      {allKnown ? (
+        /* Completion state */
+        <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder, flexDirection: 'column', gap: 10 }]}>
+          <Text style={[s.navBtnText, { color: colors.textSecondary, textAlign: 'center' }]}>
+            🎉 You've mastered all {allItems.length} cards!
           </Text>
-          <Feather
-            name={index < items.length - 1 ? 'chevrons-right' : 'check'}
-            size={18}
-            color={colors.text}
-          />
-        </Pressable>
-      </View>
+          <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
+            <Pressable onPress={resetKnown} style={[s.navBtn, { flex: 1, justifyContent: 'center', backgroundColor: colors.primary, borderColor: colors.primary }]}>
+              <Feather name="refresh-cw" size={16} color="#fff" />
+              <Text style={[s.navBtnText, { color: '#fff' }]}>Practice Again</Text>
+            </Pressable>
+            <Pressable onPress={() => router.back()} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: colors.surfaceBorder }]}>
+              <Text style={[s.navBtnText, { color: colors.text }]}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : flipped ? (
+        /* Flipped — show memory buttons */
+        <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+          <Pressable
+            onPress={markStillLearning}
+            style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#FF9F43', backgroundColor: '#FF9F4318' }]}
+          >
+            <Feather name="refresh-cw" size={16} color="#FF9F43" />
+            <Text style={[s.navBtnText, { color: '#FF9F43' }]}>Still learning</Text>
+          </Pressable>
+          <Pressable
+            onPress={markKnown}
+            style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}
+          >
+            <Feather name="check-circle" size={16} color="#28C76F" />
+            <Text style={[s.navBtnText, { color: '#28C76F' }]}>I knew it</Text>
+          </Pressable>
+        </View>
+      ) : (
+        /* Normal — prev / next */
+        <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+          <Pressable
+            onPress={goPrev}
+            disabled={index === 0}
+            style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: index === 0 ? 0.35 : 1 }]}
+          >
+            <Feather name="chevrons-left" size={18} color={colors.text} />
+            <Text style={[s.navBtnText, { color: colors.text }]}>Previous</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => index < items.length - 1 ? goNext() : router.back()}
+            style={[s.navBtn, { borderColor: colors.surfaceBorder }]}
+          >
+            <Text style={[s.navBtnText, { color: colors.text }]}>
+              {index < items.length - 1 ? 'Next' : 'Done'}
+            </Text>
+            <Feather
+              name={index < items.length - 1 ? 'chevrons-right' : 'check'}
+              size={18}
+              color={colors.text}
+            />
+          </Pressable>
+        </View>
+      )}
 
     </SafeAreaView>
   );

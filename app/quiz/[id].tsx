@@ -1300,8 +1300,8 @@ const s = StyleSheet.create({
 
   // Quiz bottom bar — bordered nav buttons
   quizBottom: { paddingHorizontal: 16, paddingTop: 14 },
-  navRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  navBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 11 },
+  navRow:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  navBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 11 },
   navBtnText: { fontFamily: F.bold, fontSize: 15 },
 
   // Report modal
