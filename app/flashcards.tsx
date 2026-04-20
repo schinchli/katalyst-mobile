@@ -61,6 +61,7 @@ export default function FlashcardsScreen() {
   const [index,   setIndex]   = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [known,   setKnown]   = useState<Set<string>>(new Set());
+  const [phase,   setPhase]   = useState<'practice' | 'review' | 'complete'>('practice');
 
   // ── Shared animation values ────────────────────────────────────────────────
   const cardX        = useSharedValue(0);   // horizontal drag / exit
@@ -88,12 +89,18 @@ export default function FlashcardsScreen() {
   const itemsRef = useRef(items);
   useEffect(() => { itemsRef.current = items; }, [items]);
 
-  const active = items[Math.min(index, Math.max(0, items.length - 1))];
-  const allKnown = allItems.length > 0 && known.size >= allItems.length;
+  const active   = items[Math.min(index, Math.max(0, items.length - 1))];
+  const stillLearning = allItems.filter((c) => !known.has(c.id));
+  const knewItCards   = allItems.filter((c) =>  known.has(c.id));
 
-  // Load known set when filter changes
+  // Load known set when filter changes and reset to practice
   useEffect(() => {
-    loadKnown(filter).then(setKnown);
+    loadKnown(filter).then((k) => {
+      setKnown(k);
+      setPhase('practice');
+      setIndex(0);
+      setFlipped(false);
+    });
   }, [filter]);
 
   // ── Navigate to card with slide-out / slide-in animation ──────────────────
@@ -145,11 +152,27 @@ export default function FlashcardsScreen() {
     setKnown(updated);
     void saveKnown(filter, updated);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Advance or stay at same index (next card slides in)
+    if (updated.size >= allItems.length) { setPhase('complete'); return; }
     const nextIdx = Math.min(indexRef.current, itemsRef.current.length - 2);
     if (nextIdx >= 0) goTo(nextIdx, 'left');
     else { setIndex(0); setFlipped(false); }
-  }, [active, known, filter, goTo]);
+  }, [active, known, filter, allItems.length, goTo]);
+
+  const markKnownById = useCallback((id: string) => {
+    const updated = new Set([...known, id]);
+    setKnown(updated);
+    void saveKnown(filter, updated);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (updated.size >= allItems.length) setPhase('complete');
+  }, [known, filter, allItems.length]);
+
+  const markAllKnown = useCallback(() => {
+    const updated = new Set(allItems.map((c) => c.id));
+    setKnown(updated);
+    void saveKnown(filter, updated);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setPhase('complete');
+  }, [allItems, filter]);
 
   const markStillLearning = useCallback(() => {
     if (!active) return;
@@ -161,8 +184,18 @@ export default function FlashcardsScreen() {
     setKnown(new Set());
     setIndex(0);
     setFlipped(false);
+    setPhase('practice');
     void saveKnown(filter, new Set());
   }, [filter]);
+
+  const practiceStillLearning = useCallback(() => {
+    setIndex(0);
+    setFlipped(false);
+    flipProgress.value = 0;
+    cardX.value = 0;
+    cardOpacity.value = 1;
+    setPhase('practice');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 3-D flip (Y-axis rotation) ─────────────────────────────────────────────
   const doFlip = useCallback(() => {
@@ -195,6 +228,7 @@ export default function FlashcardsScreen() {
     setFilter(key);
     setIndex(0);
     setFlipped(false);
+    setPhase('practice');
     if (animationsEnabled) {
       cardOpacity.value = withDelay(40, withTiming(1, { duration: 260 }));
     }
@@ -324,8 +358,8 @@ export default function FlashcardsScreen() {
         <View style={{ width: 72 }} />
       </View>
 
-      {/* ── Top controls (not in a ScrollView so card area gets flex: 1) ── */}
-      <View style={s.topControls}>
+      {/* ── Top controls — hidden during review/complete ── */}
+      {phase === 'practice' && <View style={s.topControls}>
         <Text style={[s.subtitle, { color: colors.textSecondary }]}>
           Swipe left / right to navigate · tap to flip.
         </Text>
@@ -363,147 +397,210 @@ export default function FlashcardsScreen() {
             )}
           </View>
         </View>
-      </View>
+      </View>}
 
-      {/* ── Card area ── */}
-      <View style={s.cardArea}>
-        {/* Swipe-direction hints */}
-        <Animated.View style={[s.hintLeft, prevHintStyle]} pointerEvents="none">
-          <View style={[s.hintPill, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Feather name="chevron-left" size={18} color={colors.textSecondary} />
-            <Text style={[s.hintText, { color: colors.textSecondary }]}>Prev</Text>
-          </View>
-        </Animated.View>
-        <Animated.View style={[s.hintRight, nextHintStyle]} pointerEvents="none">
-          <View style={[s.hintPill, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[s.hintText, { color: colors.textSecondary }]}>Next</Text>
-            <Feather name="chevron-right" size={18} color={colors.textSecondary} />
-          </View>
-        </Animated.View>
-
-        {active ? (
-          <Animated.View style={[s.cardWrapper, wrapperStyle]} {...pan.panHandlers}>
-
-            {/* ── Front face ── */}
-            <Animated.View
-              style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }, frontFaceStyle]}
-              pointerEvents="none"
-            >
-              <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
-              <View style={s.cardHeader}>
-                <Text style={[s.cardLabel, { color: colors.textSecondary }]}>QUESTION</Text>
-                <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
-                  <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
-                </View>
+      {/* ══════════════════ PRACTICE phase ══════════════════ */}
+      {phase === 'practice' && (
+        <>
+          {/* ── Card area ── */}
+          <View style={s.cardArea}>
+            <Animated.View style={[s.hintLeft, prevHintStyle]} pointerEvents="none">
+              <View style={[s.hintPill, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Feather name="chevron-left" size={18} color={colors.textSecondary} />
+                <Text style={[s.hintText, { color: colors.textSecondary }]}>Prev</Text>
               </View>
-              <View style={s.cardBody}>
-                {AWS_SERVICE_ICONS[active.front] ? (
-                  <>
-                    <View style={[s.serviceIconWrap, { backgroundColor: (AWS_SERVICE_ACCENT[active.front] ?? colors.primary) + '18' }]}>
-                      <Image source={AWS_SERVICE_ICONS[active.front]!} style={s.serviceIcon} />
+            </Animated.View>
+            <Animated.View style={[s.hintRight, nextHintStyle]} pointerEvents="none">
+              <View style={[s.hintPill, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[s.hintText, { color: colors.textSecondary }]}>Next</Text>
+                <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+              </View>
+            </Animated.View>
+
+            {active ? (
+              <Animated.View style={[s.cardWrapper, wrapperStyle]} {...pan.panHandlers}>
+                {/* Front face */}
+                <Animated.View style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }, frontFaceStyle]} pointerEvents="none">
+                  <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
+                  <View style={s.cardHeader}>
+                    <Text style={[s.cardLabel, { color: colors.textSecondary }]}>QUESTION</Text>
+                    <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+                      <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
                     </View>
-                    <Text style={[s.cardMain, { color: colors.text, fontSize: 24 }]}>{active.front}</Text>
-                  </>
-                ) : (
-                  <Text style={[s.cardMain, { color: colors.text, fontSize: 24 }]}>{active.front}</Text>
-                )}
+                  </View>
+                  <View style={s.cardBody}>
+                    {AWS_SERVICE_ICONS[active.front] ? (
+                      <>
+                        <View style={[s.serviceIconWrap, { backgroundColor: (AWS_SERVICE_ACCENT[active.front] ?? colors.primary) + '18' }]}>
+                          <Image source={AWS_SERVICE_ICONS[active.front]!} style={s.serviceIcon} />
+                        </View>
+                        <Text style={[s.cardMain, { color: colors.text, fontSize: 24 }]}>{active.front}</Text>
+                      </>
+                    ) : (
+                      <Text style={[s.cardMain, { color: colors.text, fontSize: 24 }]}>{active.front}</Text>
+                    )}
+                  </View>
+                  <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
+                    <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
+                    <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to reveal the answer</Text>
+                  </View>
+                </Animated.View>
+                {/* Back face */}
+                <Animated.View style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.primary }, backFaceStyle]} pointerEvents="none">
+                  <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
+                  <View style={s.cardHeader}>
+                    <Text style={[s.cardLabel, { color: colors.primary }]}>ANSWER</Text>
+                    <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
+                      <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
+                    </View>
+                  </View>
+                  <View style={s.cardBody}>
+                    <Text style={[s.cardMain, { color: colors.text, fontSize: 18 }]}>{active.back}</Text>
+                  </View>
+                  <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
+                    <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
+                    <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to see the question again</Text>
+                  </View>
+                </Animated.View>
+              </Animated.View>
+            ) : (
+              <View style={[s.emptyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                <Text style={[s.emptyText, { color: colors.textSecondary }]}>No flashcards in this pack.</Text>
               </View>
-              <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
-                <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
-                <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to reveal the answer</Text>
-              </View>
-            </Animated.View>
-
-            {/* ── Back face ── */}
-            <Animated.View
-              style={[s.cardFace, { backgroundColor: colors.surface, borderColor: colors.primary }, backFaceStyle]}
-              pointerEvents="none"
-            >
-              <View style={[s.cardStrip, { backgroundColor: colors.primary }]} />
-              <View style={s.cardHeader}>
-                <Text style={[s.cardLabel, { color: colors.primary }]}>ANSWER</Text>
-                <View style={[s.tagPill, { backgroundColor: colors.backgroundAlt, borderColor: colors.surfaceBorder }]}>
-                  <Text style={[s.tagPillText, { color: colors.text }]}>{active.tag ?? 'Concept'}</Text>
-                </View>
-              </View>
-              <View style={s.cardBody}>
-                <Text style={[s.cardMain, { color: colors.text, fontSize: 18 }]}>{active.back}</Text>
-              </View>
-              <View style={[s.cardFooter, { borderTopColor: colors.surfaceBorder }]}>
-                <Feather name="rotate-cw" size={14} color={colors.textSecondary} />
-                <Text style={[s.cardFooterText, { color: colors.textSecondary }]}>Tap to see the question again</Text>
-              </View>
-            </Animated.View>
-
-          </Animated.View>
-        ) : (
-          <View style={[s.emptyCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-            <Text style={[s.emptyText, { color: colors.textSecondary }]}>No flashcards in this pack.</Text>
+            )}
           </View>
-        )}
-      </View>
 
-      {/* ── Bottom nav ── */}
-      {allKnown ? (
-        /* Completion state */
-        <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder, flexDirection: 'column', gap: 10 }]}>
-          <Text style={[s.navBtnText, { color: colors.textSecondary, textAlign: 'center' }]}>
-            🎉 You've mastered all {allItems.length} cards!
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
-            <Pressable onPress={resetKnown} style={[s.navBtn, { flex: 1, justifyContent: 'center', backgroundColor: colors.primary, borderColor: colors.primary }]}>
-              <Feather name="refresh-cw" size={16} color="#fff" />
-              <Text style={[s.navBtnText, { color: '#fff' }]}>Practice Again</Text>
-            </Pressable>
-            <Pressable onPress={() => router.back()} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: colors.surfaceBorder }]}>
-              <Text style={[s.navBtnText, { color: colors.text }]}>Done</Text>
-            </Pressable>
+          {/* ── Bottom nav ── */}
+          {flipped ? (
+            <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+              <Pressable onPress={markStillLearning} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#FF9F43', backgroundColor: '#FF9F4318' }]}>
+                <Feather name="refresh-cw" size={16} color="#FF9F43" />
+                <Text style={[s.navBtnText, { color: '#FF9F43' }]}>Still learning</Text>
+              </Pressable>
+              <Pressable onPress={markKnown} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}>
+                <Feather name="check-circle" size={16} color="#28C76F" />
+                <Text style={[s.navBtnText, { color: '#28C76F' }]}>I knew it</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+              <Pressable onPress={goPrev} disabled={index === 0} style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: index === 0 ? 0.35 : 1 }]}>
+                <Feather name="chevrons-left" size={18} color={colors.text} />
+                <Text style={[s.navBtnText, { color: colors.text }]}>Previous</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => index < items.length - 1 ? goNext() : setPhase('review')}
+                style={[s.navBtn, { borderColor: index < items.length - 1 ? colors.surfaceBorder : colors.primary }]}
+              >
+                <Text style={[s.navBtnText, { color: index < items.length - 1 ? colors.text : colors.primary }]}>
+                  {index < items.length - 1 ? 'Next' : 'Finish'}
+                </Text>
+                <Feather name={index < items.length - 1 ? 'chevrons-right' : 'flag'} size={18} color={index < items.length - 1 ? colors.text : colors.primary} />
+              </Pressable>
+            </View>
+          )}
+        </>
+      )}
+
+      {/* ══════════════════ REVIEW phase ══════════════════ */}
+      {phase === 'review' && (
+        <>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={s.reviewList} showsVerticalScrollIndicator={false}>
+            {/* Summary pills */}
+            <View style={s.reviewStats}>
+              <View style={[s.reviewStatPill, { backgroundColor: '#28C76F14', borderColor: '#28C76F44' }]}>
+                <Feather name="check-circle" size={14} color="#28C76F" />
+                <Text style={[s.reviewStatText, { color: '#28C76F' }]}>{knewItCards.length} knew it</Text>
+              </View>
+              <View style={[s.reviewStatPill, { backgroundColor: '#FF9F4314', borderColor: '#FF9F4344' }]}>
+                <Feather name="refresh-cw" size={14} color="#FF9F43" />
+                <Text style={[s.reviewStatText, { color: '#FF9F43' }]}>{stillLearning.length} still learning</Text>
+              </View>
+            </View>
+
+            {/* Still learning */}
+            {stillLearning.length > 0 && (
+              <>
+                <Text style={[s.reviewSectionTitle, { color: '#FF9F43' }]}>↻  Still Learning</Text>
+                {stillLearning.map((card) => (
+                  <View key={card.id} style={[s.reviewRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Text style={[s.reviewRowFront, { color: colors.text }]} numberOfLines={2}>{card.front}</Text>
+                      <Text style={[s.reviewRowBack, { color: colors.textSecondary }]} numberOfLines={1}>{card.back}</Text>
+                    </View>
+                    <Pressable onPress={() => markKnownById(card.id)} style={[s.reviewMarkBtn, { borderColor: '#28C76F', backgroundColor: '#28C76F14' }]}>
+                      <Feather name="check" size={15} color="#28C76F" />
+                    </Pressable>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {/* I knew it */}
+            {knewItCards.length > 0 && (
+              <>
+                <Text style={[s.reviewSectionTitle, { color: '#28C76F', marginTop: stillLearning.length > 0 ? 20 : 0 }]}>✓  I Knew It</Text>
+                {knewItCards.map((card) => (
+                  <View key={card.id} style={[s.reviewRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: 0.55 }]}>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Text style={[s.reviewRowFront, { color: colors.text }]} numberOfLines={2}>{card.front}</Text>
+                      <Text style={[s.reviewRowBack, { color: colors.textSecondary }]} numberOfLines={1}>{card.back}</Text>
+                    </View>
+                    <View style={[s.reviewMarkBtn, { borderColor: '#28C76F55', backgroundColor: '#28C76F10' }]}>
+                      <Feather name="check" size={15} color="#28C76F" />
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+          </ScrollView>
+
+          {/* Review footer */}
+          <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+            {stillLearning.length > 0 ? (
+              <>
+                <Pressable onPress={practiceStillLearning} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: colors.primary, backgroundColor: colors.primaryLight }]}>
+                  <Feather name="refresh-cw" size={15} color={colors.primary} />
+                  <Text style={[s.navBtnText, { color: colors.primary }]}>Practice Again</Text>
+                </Pressable>
+                <Pressable onPress={markAllKnown} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}>
+                  <Feather name="check-circle" size={15} color="#28C76F" />
+                  <Text style={[s.navBtnText, { color: '#28C76F' }]}>Mark All Known</Text>
+                </Pressable>
+              </>
+            ) : (
+              <Pressable onPress={() => setPhase('complete')} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}>
+                <Feather name="award" size={15} color="#28C76F" />
+                <Text style={[s.navBtnText, { color: '#28C76F' }]}>All Done!</Text>
+              </Pressable>
+            )}
           </View>
-        </View>
-      ) : flipped ? (
-        /* Flipped — show memory buttons */
-        <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
-          <Pressable
-            onPress={markStillLearning}
-            style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#FF9F43', backgroundColor: '#FF9F4318' }]}
-          >
-            <Feather name="refresh-cw" size={16} color="#FF9F43" />
-            <Text style={[s.navBtnText, { color: '#FF9F43' }]}>Still learning</Text>
-          </Pressable>
-          <Pressable
-            onPress={markKnown}
-            style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}
-          >
-            <Feather name="check-circle" size={16} color="#28C76F" />
-            <Text style={[s.navBtnText, { color: '#28C76F' }]}>I knew it</Text>
-          </Pressable>
-        </View>
-      ) : (
-        /* Normal — prev / next */
-        <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
-          <Pressable
-            onPress={goPrev}
-            disabled={index === 0}
-            style={[s.navBtn, { borderColor: colors.surfaceBorder, opacity: index === 0 ? 0.35 : 1 }]}
-          >
-            <Feather name="chevrons-left" size={18} color={colors.text} />
-            <Text style={[s.navBtnText, { color: colors.text }]}>Previous</Text>
-          </Pressable>
+        </>
+      )}
 
-          <Pressable
-            onPress={() => index < items.length - 1 ? goNext() : router.back()}
-            style={[s.navBtn, { borderColor: colors.surfaceBorder }]}
-          >
-            <Text style={[s.navBtnText, { color: colors.text }]}>
-              {index < items.length - 1 ? 'Next' : 'Done'}
+      {/* ══════════════════ COMPLETE phase ══════════════════ */}
+      {phase === 'complete' && (
+        <>
+          <View style={[s.cardArea, { justifyContent: 'center', alignItems: 'center', gap: 18 }]}>
+            <View style={[s.completeIcon, { backgroundColor: '#28C76F18' }]}>
+              <Feather name="award" size={52} color="#28C76F" />
+            </View>
+            <Text style={[s.completeTitle, { color: colors.text }]}>Pack Complete!</Text>
+            <Text style={[s.completeSubtitle, { color: colors.textSecondary }]}>
+              You've mastered all {allItems.length} cards in this pack.{'\n'}Great work! 🎉
             </Text>
-            <Feather
-              name={index < items.length - 1 ? 'chevrons-right' : 'check'}
-              size={18}
-              color={colors.text}
-            />
-          </Pressable>
-        </View>
+          </View>
+          <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+            <Pressable onPress={resetKnown} style={[s.navBtn, { borderColor: colors.surfaceBorder }]}>
+              <Feather name="refresh-cw" size={16} color={colors.text} />
+              <Text style={[s.navBtnText, { color: colors.text }]}>Start Over</Text>
+            </Pressable>
+            <Pressable onPress={() => router.back()} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}>
+              <Feather name="check" size={16} color="#28C76F" />
+              <Text style={[s.navBtnText, { color: '#28C76F' }]}>Done</Text>
+            </Pressable>
+          </View>
+        </>
       )}
 
     </SafeAreaView>
@@ -567,7 +664,23 @@ const s = StyleSheet.create({
   emptyText:  { fontFamily: F.medium, fontSize: 15, textAlign: 'center' },
 
   // Bottom nav
-  bottomNav:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 28 },
+  bottomNav:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 28 },
   navBtn:       { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 },
   navBtnText:   { fontFamily: F.semiBold, fontSize: 15 },
+
+  // Review screen
+  reviewList:        { padding: 16, paddingBottom: 24, gap: 10 },
+  reviewStats:       { flexDirection: 'row', gap: 10, marginBottom: 4 },
+  reviewStatPill:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingVertical: 10 },
+  reviewStatText:    { fontFamily: F.bold, fontSize: 13 },
+  reviewSectionTitle:{ fontFamily: F.bold, fontSize: 13, letterSpacing: 0.4, paddingHorizontal: 2 },
+  reviewRow:         { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  reviewRowFront:    { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
+  reviewRowBack:     { fontFamily: F.regular, fontSize: 12 },
+  reviewMarkBtn:     { width: 34, height: 34, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+
+  // Complete screen
+  completeIcon:    { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center' },
+  completeTitle:   { fontFamily: F.bold, fontSize: 26, textAlign: 'center' },
+  completeSubtitle:{ fontFamily: F.regular, fontSize: 15, textAlign: 'center', lineHeight: 24 },
 });
