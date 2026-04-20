@@ -14,126 +14,110 @@ export default function ForgotPasswordScreen() {
   const forgotPassword     = useAuthStore((s) => s.forgotPassword);
   const confirmNewPassword = useAuthStore((s) => s.confirmNewPassword);
 
-  const [stage, setStage]           = useState<'request' | 'reset'>('request');
-  const [email, setEmail]           = useState('');
-  const [code, setCode]             = useState('');
+  const [stage,       setStage]       = useState<'request' | 'reset'>('request');
+  const [email,       setEmail]       = useState('');
+  const [code,        setCode]        = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState('');
-  const heroShadowColor = colors.gradientFrom;
-  const heroPanelColor = colors.primary;
-  const heroIconBg = colors.surface + '33';
-  const heroText = colors.surface;
-  const heroSubtext = colors.surface + 'CC';
-  const formShadowColor = colors.surfaceBorder;
-  const errorBackground = colors.error + '20';
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState('');
 
   const handleRequest = async () => {
     if (!email) { setError('Please enter your email'); return; }
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       await forgotPassword(email.trim().toLowerCase());
       setStage('reset');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send reset code');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleReset = async () => {
     if (!code || !newPassword) { setError('Please fill in all fields'); return; }
     if (newPassword.length < 8) { setError('Password must be at least 8 characters'); return; }
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       await confirmNewPassword(email.trim().toLowerCase(), code.trim(), newPassword);
       router.replace('/(auth)/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Password reset failed');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={[s.root, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.root}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          {/* ── Header ── */}
-          <View style={[styles.logoCard, { backgroundColor: heroPanelColor, shadowColor: heroShadowColor }]}>
-            <View style={[styles.iconWrap, { backgroundColor: heroIconBg }]}>
-              <Feather name={stage === 'request' ? 'lock' : 'key'} size={38} color={heroText} />
+          {/* ── Icon + heading ── */}
+          <View style={s.brand}>
+            <View style={[s.iconCircle, { backgroundColor: colors.primaryLight }]}>
+              <Feather name={stage === 'request' ? 'lock' : 'key'} size={28} color={colors.primary} />
             </View>
-            <Text style={[styles.logoTitle, { color: heroText }]}>
-              {stage === 'request' ? 'Forgot Password?' : 'Reset Password'}
+            <Text style={[s.heading, { color: colors.text }]}>
+              {stage === 'request' ? 'Forgot password?' : 'Reset password'}
             </Text>
-            <Text style={[styles.logoSubtitle, { color: heroSubtext }]}>
+            <Text style={[s.subheading, { color: colors.textSecondary }]}>
               {stage === 'request'
-                ? 'Enter your email and we\'ll send a reset code'
-                : `Enter the code sent to ${email}`}
+                ? "Enter your email and we'll send a reset code"
+                : `Check your inbox for the code sent to ${email}`}
             </Text>
           </View>
 
           {/* ── Form ── */}
-          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, shadowColor: formShadowColor }]}>
-
+          <View style={s.form}>
             {stage === 'request' ? (
-              <>
-                <Text style={[styles.formHeading, { color: colors.text }]}>Reset Password</Text>
-                <Text style={[styles.formSubheading, { color: colors.textSecondary }]}>
-                  We'll send a 6-digit code to your inbox
-                </Text>
-                <Input
-                  label="Email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                />
-                {error ? <ErrorBox msg={error} backgroundColor={errorBackground} color={colors.error} /> : null}
-                <Button title="Send Reset Code" onPress={handleRequest} loading={loading} size="lg" style={styles.btn} />
-              </>
+              <Input
+                label="Email"
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+              />
             ) : (
               <>
-                <Text style={[styles.formHeading, { color: colors.text }]}>Enter New Password</Text>
-                <Text style={[styles.formSubheading, { color: colors.textSecondary }]}>
-                  Check your email for the 6-digit code
-                </Text>
-                <View style={styles.fields}>
-                  <Input
-                    label="Verification Code"
-                    placeholder="123456"
-                    value={code}
-                    onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
-                    keyboardType="number-pad"
-                  />
-                  <Input
-                    label="New Password"
-                    placeholder="Min 8 characters"
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    secureTextEntry
-                    autoComplete="new-password"
-                  />
-                </View>
-                {error ? <ErrorBox msg={error} backgroundColor={errorBackground} color={colors.error} /> : null}
-                <Button title="Reset Password" onPress={handleReset} loading={loading} size="lg" style={styles.btn} />
+                <Input
+                  label="Verification Code"
+                  placeholder="6-digit code"
+                  value={code}
+                  onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
+                  keyboardType="number-pad"
+                />
+                <Input
+                  label="New Password"
+                  placeholder="Min 8 characters"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                  autoComplete="new-password"
+                />
               </>
             )}
 
-            <View style={styles.backRow}>
-              <Pressable onPress={() => router.back()}>
-                <Text style={[styles.backLink, { color: colors.primary }]}>
-                  {stage === 'request' ? '← Back to Sign In' : '← Back'}
-                </Text>
-              </Pressable>
-            </View>
+            {error ? (
+              <View style={[s.errorWrap, { backgroundColor: colors.error + '18', borderColor: colors.error + '40' }]}>
+                <Feather name="alert-circle" size={15} color={colors.error} />
+                <Text style={[s.errorText, { color: colors.error }]}>{error}</Text>
+              </View>
+            ) : null}
+
+            <Button
+              title={stage === 'request' ? 'Send Reset Code' : 'Reset Password'}
+              onPress={stage === 'request' ? handleRequest : handleReset}
+              loading={loading}
+              size="lg"
+            />
           </View>
+
+          {/* ── Back link ── */}
+          <Pressable onPress={() => router.back()} style={s.backRow} hitSlop={8}>
+            <Feather name="arrow-left" size={15} color={colors.textSecondary} />
+            <Text style={[s.backText, { color: colors.textSecondary }]}>
+              {stage === 'request' ? 'Back to Log In' : 'Back'}
+            </Text>
+          </Pressable>
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -141,50 +125,16 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-function ErrorBox({ msg, backgroundColor, color }: { msg: string; backgroundColor: string; color: string }) {
-  return (
-    <View style={[styles.errorWrap, { backgroundColor }]}>
-      <Feather name="alert-circle" size={14} color={color} />
-      <Text style={[styles.errorText, { color }]}>{msg}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  root:  { flex: 1 },
-  flex:  { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingVertical: 32, justifyContent: 'center' },
-  logoCard: {
-    borderRadius: 20,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  iconWrap: {
-    width: 72, height: 72, borderRadius: 20,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
-  },
-  logoTitle:     { fontFamily: F.bold, fontSize: 24, letterSpacing: 0.3 },
-  logoSubtitle:  { fontFamily: F.regular, fontSize: 13, marginTop: 6, textAlign: 'center', lineHeight: 20 },
-  formCard: {
-    borderRadius: 20, padding: 24, borderWidth: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
-  },
-  formHeading:    { fontFamily: F.bold,    fontSize: 20, marginBottom: 2 },
-  formSubheading: { fontFamily: F.regular, fontSize: 14, marginBottom: 20 },
-  fields: { gap: 14 },
-  btn:    { marginTop: 20 },
-  errorWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12,
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
-  },
-  errorText: { fontFamily: F.regular, fontSize: 13, flex: 1 },
-  backRow:   { marginTop: 16, alignItems: 'center' },
-  backLink:  { fontFamily: F.medium, fontSize: 14 },
+const s = StyleSheet.create({
+  root:       { flex: 1 },
+  scroll:     { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 32, gap: 28 },
+  brand:      { alignItems: 'center', gap: 12 },
+  iconCircle: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  heading:    { fontFamily: F.bold, fontSize: 24, textAlign: 'center' },
+  subheading: { fontFamily: F.regular, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  form:       { gap: 14 },
+  errorWrap:  { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  errorText:  { fontFamily: F.medium, fontSize: 13, flex: 1 },
+  backRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  backText:   { fontFamily: F.medium, fontSize: 14 },
 });
