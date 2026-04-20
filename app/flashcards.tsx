@@ -506,22 +506,37 @@ export default function FlashcardsScreen() {
       {phase === 'review' && (
         <>
           <ScrollView style={{ flex: 1 }} contentContainerStyle={s.reviewList} showsVerticalScrollIndicator={false}>
-            {/* Summary pills */}
-            <View style={s.reviewStats}>
-              <View style={[s.reviewStatPill, { backgroundColor: '#28C76F14', borderColor: '#28C76F44' }]}>
-                <Feather name="check-circle" size={14} color="#28C76F" />
-                <Text style={[s.reviewStatText, { color: '#28C76F' }]}>{knewItCards.length} knew it</Text>
+
+            {/* ── Stats banner ── */}
+            <View style={[s.statsBanner, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={s.statItem}>
+                <Text style={[s.statNumber, { color: colors.text }]}>{allItems.length}</Text>
+                <Text style={[s.statLabel, { color: colors.textSecondary }]}>Total</Text>
               </View>
-              <View style={[s.reviewStatPill, { backgroundColor: '#FF9F4314', borderColor: '#FF9F4344' }]}>
-                <Feather name="refresh-cw" size={14} color="#FF9F43" />
-                <Text style={[s.reviewStatText, { color: '#FF9F43' }]}>{stillLearning.length} still learning</Text>
+              <View style={[s.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={s.statItem}>
+                <Text style={[s.statNumber, { color: '#28C76F' }]}>{knewItCards.length}</Text>
+                <Text style={[s.statLabel, { color: colors.textSecondary }]}>You know</Text>
               </View>
+              <View style={[s.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={s.statItem}>
+                <Text style={[s.statNumber, { color: '#FF9F43' }]}>{stillLearning.length}</Text>
+                <Text style={[s.statLabel, { color: colors.textSecondary }]}>To learn</Text>
+              </View>
+            </View>
+
+            {/* ── Progress bar ── */}
+            <View style={{ gap: 6 }}>
+              <ProgressBar progress={allItems.length ? knewItCards.length / allItems.length : 0} height={8} />
+              <Text style={[s.reviewStatText, { color: colors.textSecondary, textAlign: 'center' }]}>
+                {allItems.length ? Math.round((knewItCards.length / allItems.length) * 100) : 0}% mastered
+              </Text>
             </View>
 
             {/* Still learning */}
             {stillLearning.length > 0 && (
               <>
-                <Text style={[s.reviewSectionTitle, { color: '#FF9F43' }]}>↻  Still Learning</Text>
+                <Text style={[s.reviewSectionTitle, { color: '#FF9F43', marginTop: 8 }]}>↻  Still Learning</Text>
                 {stillLearning.map((card) => (
                   <View key={card.id} style={[s.reviewRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
                     <View style={{ flex: 1, gap: 3 }}>
@@ -539,7 +554,7 @@ export default function FlashcardsScreen() {
             {/* I knew it */}
             {knewItCards.length > 0 && (
               <>
-                <Text style={[s.reviewSectionTitle, { color: '#28C76F', marginTop: stillLearning.length > 0 ? 20 : 0 }]}>✓  I Knew It</Text>
+                <Text style={[s.reviewSectionTitle, { color: '#28C76F', marginTop: stillLearning.length > 0 ? 20 : 8 }]}>✓  I Knew It</Text>
                 {knewItCards.map((card) => (
                   <View key={card.id} style={[s.reviewRow, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: 0.55 }]}>
                     <View style={{ flex: 1, gap: 3 }}>
@@ -556,24 +571,30 @@ export default function FlashcardsScreen() {
           </ScrollView>
 
           {/* Review footer */}
-          <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+          <View style={[s.reviewFooter, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
             {stillLearning.length > 0 ? (
               <>
-                <Pressable onPress={practiceStillLearning} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: colors.primary, backgroundColor: colors.primaryLight }]}>
-                  <Feather name="refresh-cw" size={15} color={colors.primary} />
-                  <Text style={[s.navBtnText, { color: colors.primary }]}>Practice Again</Text>
+                <Pressable onPress={practiceStillLearning} style={[s.footerBtn, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]}>
+                  <Feather name="refresh-cw" size={16} color={colors.primary} />
+                  <Text style={[s.footerBtnText, { color: colors.primary }]}>Restart Flashcards</Text>
+                  <Text style={[s.footerBtnSub, { color: colors.textSecondary }]}>{stillLearning.length} cards to learn</Text>
                 </Pressable>
-                <Pressable onPress={markAllKnown} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}>
-                  <Feather name="check-circle" size={15} color="#28C76F" />
-                  <Text style={[s.navBtnText, { color: '#28C76F' }]}>Mark All Known</Text>
+                <Pressable onPress={markAllKnown} style={[s.footerBtn, { borderColor: '#28C76F', backgroundColor: '#28C76F14' }]}>
+                  <Feather name="check-circle" size={16} color="#28C76F" />
+                  <Text style={[s.footerBtnText, { color: '#28C76F' }]}>Mark All Known</Text>
+                  <Text style={[s.footerBtnSub, { color: colors.textSecondary }]}>Complete this pack</Text>
                 </Pressable>
               </>
             ) : (
-              <Pressable onPress={() => setPhase('complete')} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}>
-                <Feather name="award" size={15} color="#28C76F" />
-                <Text style={[s.navBtnText, { color: '#28C76F' }]}>All Done!</Text>
+              <Pressable onPress={() => setPhase('complete')} style={[s.footerBtn, { flex: 1, alignItems: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F14' }]}>
+                <Feather name="award" size={20} color="#28C76F" />
+                <Text style={[s.footerBtnText, { color: '#28C76F' }]}>All Done!</Text>
               </Pressable>
             )}
+            <Pressable onPress={() => router.replace('/(tabs)')} style={[s.footerBtnOutline, { borderColor: colors.surfaceBorder }]}>
+              <Feather name="home" size={16} color={colors.textSecondary} />
+              <Text style={[s.footerBtnOutlineText, { color: colors.textSecondary }]}>Go to Home</Text>
+            </Pressable>
           </View>
         </>
       )}
@@ -581,23 +602,49 @@ export default function FlashcardsScreen() {
       {/* ══════════════════ COMPLETE phase ══════════════════ */}
       {phase === 'complete' && (
         <>
-          <View style={[s.cardArea, { justifyContent: 'center', alignItems: 'center', gap: 18 }]}>
-            <View style={[s.completeIcon, { backgroundColor: '#28C76F18' }]}>
-              <Feather name="award" size={52} color="#28C76F" />
+          {/* Stats banner reused */}
+          <View style={[s.cardArea, { justifyContent: 'center', gap: 20 }]}>
+            <View style={{ alignItems: 'center', gap: 12 }}>
+              <View style={[s.completeIcon, { backgroundColor: '#28C76F18' }]}>
+                <Feather name="award" size={52} color="#28C76F" />
+              </View>
+              <Text style={[s.completeTitle, { color: colors.text }]}>Pack Complete!</Text>
             </View>
-            <Text style={[s.completeTitle, { color: colors.text }]}>Pack Complete!</Text>
-            <Text style={[s.completeSubtitle, { color: colors.textSecondary }]}>
-              You've mastered all {allItems.length} cards in this pack.{'\n'}Great work! 🎉
-            </Text>
+
+            <View style={[s.statsBanner, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+              <View style={s.statItem}>
+                <Text style={[s.statNumber, { color: colors.text }]}>{allItems.length}</Text>
+                <Text style={[s.statLabel, { color: colors.textSecondary }]}>Total</Text>
+              </View>
+              <View style={[s.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={s.statItem}>
+                <Text style={[s.statNumber, { color: '#28C76F' }]}>{knewItCards.length}</Text>
+                <Text style={[s.statLabel, { color: colors.textSecondary }]}>You know</Text>
+              </View>
+              <View style={[s.statDivider, { backgroundColor: colors.surfaceBorder }]} />
+              <View style={s.statItem}>
+                <Text style={[s.statNumber, { color: stillLearning.length > 0 ? '#FF9F43' : '#28C76F' }]}>{stillLearning.length}</Text>
+                <Text style={[s.statLabel, { color: colors.textSecondary }]}>To learn</Text>
+              </View>
+            </View>
+
+            <View style={{ gap: 6 }}>
+              <ProgressBar progress={allItems.length ? knewItCards.length / allItems.length : 0} height={10} />
+              <Text style={[s.completeSubtitle, { color: colors.textSecondary }]}>
+                {Math.round((knewItCards.length / allItems.length) * 100)}% mastered · Great work! 🎉
+              </Text>
+            </View>
           </View>
-          <View style={[s.bottomNav, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
-            <Pressable onPress={resetKnown} style={[s.navBtn, { borderColor: colors.surfaceBorder }]}>
-              <Feather name="refresh-cw" size={16} color={colors.text} />
-              <Text style={[s.navBtnText, { color: colors.text }]}>Start Over</Text>
+
+          <View style={[s.reviewFooter, { backgroundColor: colors.background, borderTopColor: colors.surfaceBorder }]}>
+            <Pressable onPress={resetKnown} style={[s.footerBtn, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]}>
+              <Feather name="refresh-cw" size={16} color={colors.primary} />
+              <Text style={[s.footerBtnText, { color: colors.primary }]}>Restart Flashcards</Text>
+              <Text style={[s.footerBtnSub, { color: colors.textSecondary }]}>Start fresh from the top</Text>
             </Pressable>
-            <Pressable onPress={() => router.back()} style={[s.navBtn, { flex: 1, justifyContent: 'center', borderColor: '#28C76F', backgroundColor: '#28C76F18' }]}>
-              <Feather name="check" size={16} color="#28C76F" />
-              <Text style={[s.navBtnText, { color: '#28C76F' }]}>Done</Text>
+            <Pressable onPress={() => router.replace('/(tabs)')} style={[s.footerBtnOutline, { borderColor: colors.surfaceBorder }]}>
+              <Feather name="home" size={16} color={colors.textSecondary} />
+              <Text style={[s.footerBtnOutlineText, { color: colors.textSecondary }]}>Go to Home</Text>
             </Pressable>
           </View>
         </>
@@ -668,19 +715,32 @@ const s = StyleSheet.create({
   navBtn:       { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 },
   navBtnText:   { fontFamily: F.semiBold, fontSize: 15 },
 
-  // Review screen
-  reviewList:        { padding: 16, paddingBottom: 24, gap: 10 },
-  reviewStats:       { flexDirection: 'row', gap: 10, marginBottom: 4 },
-  reviewStatPill:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingVertical: 10 },
-  reviewStatText:    { fontFamily: F.bold, fontSize: 13 },
-  reviewSectionTitle:{ fontFamily: F.bold, fontSize: 13, letterSpacing: 0.4, paddingHorizontal: 2 },
-  reviewRow:         { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
-  reviewRowFront:    { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
-  reviewRowBack:     { fontFamily: F.regular, fontSize: 12 },
-  reviewMarkBtn:     { width: 34, height: 34, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  // Review / Stats screen
+  reviewList:         { padding: 16, paddingBottom: 24, gap: 12 },
+  reviewStatText:     { fontFamily: F.semiBold, fontSize: 13 },
+  reviewSectionTitle: { fontFamily: F.bold, fontSize: 13, letterSpacing: 0.4, paddingHorizontal: 2 },
+  reviewRow:          { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  reviewRowFront:     { fontFamily: F.semiBold, fontSize: 14, lineHeight: 20 },
+  reviewRowBack:      { fontFamily: F.regular, fontSize: 12 },
+  reviewMarkBtn:      { width: 34, height: 34, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+
+  // Stats banner (used in both review + complete)
+  statsBanner:  { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 8 },
+  statItem:     { flex: 1, alignItems: 'center', gap: 4 },
+  statNumber:   { fontFamily: F.bold, fontSize: 28, lineHeight: 32 },
+  statLabel:    { fontFamily: F.medium, fontSize: 12 },
+  statDivider:  { width: 1, height: 36 },
+
+  // Footer (review + complete)
+  reviewFooter:       { gap: 10, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 28 },
+  footerBtn:          { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14 },
+  footerBtnText:      { fontFamily: F.bold, fontSize: 15, flex: 1 },
+  footerBtnSub:       { fontFamily: F.regular, fontSize: 12 },
+  footerBtnOutline:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderRadius: 14, paddingVertical: 13 },
+  footerBtnOutlineText: { fontFamily: F.semiBold, fontSize: 15 },
 
   // Complete screen
   completeIcon:    { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center' },
   completeTitle:   { fontFamily: F.bold, fontSize: 26, textAlign: 'center' },
-  completeSubtitle:{ fontFamily: F.regular, fontSize: 15, textAlign: 'center', lineHeight: 24 },
+  completeSubtitle:{ fontFamily: F.medium, fontSize: 14, textAlign: 'center', lineHeight: 22 },
 });
