@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ForgotPasswordScreen() {
   const colors             = useThemeColors();
@@ -20,6 +19,7 @@ export default function ForgotPasswordScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState('');
+  const [showPwd,     setShowPwd]     = useState(false);
 
   const handleRequest = async () => {
     if (!email) { setError('Please enter your email'); return; }
@@ -44,6 +44,9 @@ export default function ForgotPasswordScreen() {
     } finally { setLoading(false); }
   };
 
+  const inputBg = colors.backgroundAlt;
+  const iconCol = colors.textSecondary;
+
   return (
     <SafeAreaView style={[s.root, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.root}>
@@ -67,48 +70,68 @@ export default function ForgotPasswordScreen() {
           {/* ── Form ── */}
           <View style={s.form}>
             {stage === 'request' ? (
-              <Input
-                label="Email"
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
+              <View style={[s.inputWrap, { backgroundColor: inputBg }]}>
+                <Feather name="mail" size={17} color={iconCol} style={s.inputIcon} />
+                <TextInput
+                  style={[s.textInput, { color: colors.text }]}
+                  placeholder="Email address"
+                  placeholderTextColor={colors.textSecondary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
+              </View>
             ) : (
               <>
-                <Input
-                  label="Verification Code"
-                  placeholder="6-digit code"
-                  value={code}
-                  onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
-                  keyboardType="number-pad"
-                />
-                <Input
-                  label="New Password"
-                  placeholder="Min 8 characters"
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  secureTextEntry
-                  autoComplete="new-password"
-                />
+                <View style={[s.inputWrap, { backgroundColor: inputBg }]}>
+                  <Feather name="hash" size={17} color={iconCol} style={s.inputIcon} />
+                  <TextInput
+                    style={[s.textInput, { color: colors.text }]}
+                    placeholder="6-digit code"
+                    placeholderTextColor={colors.textSecondary}
+                    value={code}
+                    onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
+                    keyboardType="number-pad"
+                  />
+                </View>
+                <View style={[s.inputWrap, { backgroundColor: inputBg }]}>
+                  <Feather name="lock" size={17} color={iconCol} style={s.inputIcon} />
+                  <TextInput
+                    style={[s.textInput, { color: colors.text }]}
+                    placeholder="New password (min 8 characters)"
+                    placeholderTextColor={colors.textSecondary}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry={!showPwd}
+                    autoComplete="new-password"
+                  />
+                  <Pressable onPress={() => setShowPwd(!showPwd)} hitSlop={10} style={s.eyeBtn}>
+                    <Feather name={showPwd ? 'eye-off' : 'eye'} size={17} color={iconCol} />
+                  </Pressable>
+                </View>
               </>
             )}
 
             {error ? (
-              <View style={[s.errorWrap, { backgroundColor: colors.error + '18', borderColor: colors.error + '40' }]}>
-                <Feather name="alert-circle" size={15} color={colors.error} />
+              <View style={[s.errorWrap, { backgroundColor: colors.error + '15', borderColor: colors.error + '35' }]}>
+                <Feather name="alert-circle" size={14} color={colors.error} />
                 <Text style={[s.errorText, { color: colors.error }]}>{error}</Text>
               </View>
             ) : null}
 
-            <Button
-              title={stage === 'request' ? 'Send Reset Code' : 'Reset Password'}
+            <Pressable
               onPress={stage === 'request' ? handleRequest : handleReset}
-              loading={loading}
-              size="lg"
-            />
+              disabled={loading}
+              style={({ pressed }) => [s.ctaWrap, { opacity: pressed || loading ? 0.88 : 1 }]}
+            >
+              <LinearGradient colors={[colors.gradientFrom, colors.gradientTo]} style={s.ctaGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                {loading
+                  ? <Feather name="loader" size={18} color="#fff" />
+                  : <Text style={s.ctaText}>{stage === 'request' ? 'Send Reset Code' : 'Reset Password'}</Text>}
+              </LinearGradient>
+            </Pressable>
           </View>
 
           {/* ── Back link ── */}
@@ -127,14 +150,21 @@ export default function ForgotPasswordScreen() {
 
 const s = StyleSheet.create({
   root:       { flex: 1 },
-  scroll:     { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 32, gap: 28 },
+  scroll:     { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 36, gap: 28 },
   brand:      { alignItems: 'center', gap: 12 },
   iconCircle: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  heading:    { fontFamily: F.bold, fontSize: 24, textAlign: 'center' },
+  heading:    { fontFamily: F.bold,    fontSize: 24, textAlign: 'center' },
   subheading: { fontFamily: F.regular, fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  form:       { gap: 14 },
+  form:       { gap: 12 },
+  inputWrap:  { flexDirection: 'row', alignItems: 'center', borderRadius: 16, minHeight: 54, paddingHorizontal: 14, gap: 10 },
+  inputIcon:  { opacity: 0.7 },
+  textInput:  { flex: 1, fontFamily: F.regular, fontSize: 15, paddingVertical: 0 },
+  eyeBtn:     { padding: 4 },
   errorWrap:  { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
   errorText:  { fontFamily: F.medium, fontSize: 13, flex: 1 },
+  ctaWrap:    { borderRadius: 16, overflow: 'hidden', marginTop: 4 },
+  ctaGradient:{ minHeight: 54, alignItems: 'center', justifyContent: 'center' },
+  ctaText:    { fontFamily: F.bold, fontSize: 16, color: '#fff', letterSpacing: 0.2 },
   backRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   backText:   { fontFamily: F.medium, fontSize: 14 },
 });

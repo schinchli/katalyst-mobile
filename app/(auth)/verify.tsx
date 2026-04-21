@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
@@ -43,6 +42,9 @@ export default function VerifyScreen() {
     } finally { setResending(false); }
   };
 
+  const inputBg = colors.backgroundAlt;
+  const iconCol = colors.textSecondary;
+
   return (
     <SafeAreaView style={[s.root, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.root}>
@@ -62,30 +64,45 @@ export default function VerifyScreen() {
 
           {/* ── Form ── */}
           <View style={s.form}>
-            <Input
-              label="Verification Code"
-              placeholder="6-digit code"
-              value={code}
-              onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
-              keyboardType="number-pad"
-              autoComplete="one-time-code"
-            />
+
+            <View style={[s.inputWrap, { backgroundColor: inputBg }]}>
+              <Feather name="hash" size={17} color={iconCol} style={s.inputIcon} />
+              <TextInput
+                style={[s.textInput, { color: colors.text }]}
+                placeholder="6-digit verification code"
+                placeholderTextColor={colors.textSecondary}
+                value={code}
+                onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
+                keyboardType="number-pad"
+                autoComplete="one-time-code"
+              />
+            </View>
 
             {error ? (
-              <View style={[s.banner, { backgroundColor: colors.error + '18', borderColor: colors.error + '40' }]}>
-                <Feather name="alert-circle" size={15} color={colors.error} />
+              <View style={[s.banner, { backgroundColor: colors.error + '15', borderColor: colors.error + '35' }]}>
+                <Feather name="alert-circle" size={14} color={colors.error} />
                 <Text style={[s.bannerText, { color: colors.error }]}>{error}</Text>
               </View>
             ) : null}
 
             {success ? (
-              <View style={[s.banner, { backgroundColor: colors.success + '18', borderColor: colors.success + '40' }]}>
-                <Feather name="check-circle" size={15} color={colors.success} />
+              <View style={[s.banner, { backgroundColor: colors.success + '15', borderColor: colors.success + '35' }]}>
+                <Feather name="check-circle" size={14} color={colors.success} />
                 <Text style={[s.bannerText, { color: colors.success }]}>{success}</Text>
               </View>
             ) : null}
 
-            <Button title="Verify Email" onPress={handleVerify} loading={loading} size="lg" />
+            <Pressable
+              onPress={handleVerify}
+              disabled={loading}
+              style={({ pressed }) => [s.ctaWrap, { opacity: pressed || loading ? 0.88 : 1 }]}
+            >
+              <LinearGradient colors={[colors.gradientFrom, colors.gradientTo]} style={s.ctaGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                {loading
+                  ? <Feather name="loader" size={18} color="#fff" />
+                  : <Text style={s.ctaText}>Verify Email</Text>}
+              </LinearGradient>
+            </Pressable>
 
             <View style={s.resendRow}>
               <Text style={[s.resendPrompt, { color: colors.textSecondary }]}>Didn&apos;t receive it?</Text>
@@ -111,17 +128,23 @@ export default function VerifyScreen() {
 
 const s = StyleSheet.create({
   root:       { flex: 1 },
-  scroll:     { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 32, gap: 28 },
+  scroll:     { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 36, gap: 28 },
   brand:      { alignItems: 'center', gap: 12 },
   iconCircle: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  heading:    { fontFamily: F.bold, fontSize: 24, textAlign: 'center' },
+  heading:    { fontFamily: F.bold,    fontSize: 24, textAlign: 'center' },
   subheading: { fontFamily: F.regular, fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  form:       { gap: 14 },
+  form:       { gap: 12 },
+  inputWrap:  { flexDirection: 'row', alignItems: 'center', borderRadius: 16, minHeight: 54, paddingHorizontal: 14, gap: 10 },
+  inputIcon:  { opacity: 0.7 },
+  textInput:  { flex: 1, fontFamily: F.regular, fontSize: 15, paddingVertical: 0 },
   banner:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
   bannerText: { fontFamily: F.medium, fontSize: 13, flex: 1 },
-  resendRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  resendPrompt: { fontFamily: F.regular,  fontSize: 14 },
-  resendLink:   { fontFamily: F.semiBold, fontSize: 14 },
+  ctaWrap:    { borderRadius: 16, overflow: 'hidden', marginTop: 4 },
+  ctaGradient:{ minHeight: 54, alignItems: 'center', justifyContent: 'center' },
+  ctaText:    { fontFamily: F.bold, fontSize: 16, color: '#fff', letterSpacing: 0.2 },
+  resendRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  resendPrompt:{ fontFamily: F.regular,  fontSize: 14 },
+  resendLink:  { fontFamily: F.semiBold, fontSize: 14 },
   backRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   backText:   { fontFamily: F.medium, fontSize: 14 },
 });
