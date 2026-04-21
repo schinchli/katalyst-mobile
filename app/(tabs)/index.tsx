@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Linking, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -326,6 +326,8 @@ function isSameLocalDay(isoDate: string, reference = new Date()) {
 export default function HomeScreen() {
   const colors = useThemeColors();
   const t = useTypography();
+  const { width } = useWindowDimensions();
+  const hPad = width < 380 ? 16 : width < 430 ? 20 : 24;
   const user = useAuthStore((s) => s.user);
   const step = useAuthStore((s) => s.step);
   const progress = useProgressStore((s) => s.progress);
@@ -350,7 +352,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['bottom']}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingHorizontal: hPad }]} showsVerticalScrollIndicator={false}>
         <View style={styles.homeHeader}>
           <Text style={[styles.heroEyebrow, { color: colors.primary, fontSize: t.micro }]}>
             {EXPERIENCE_COPY.home.heroEyebrow}
@@ -450,7 +452,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 36, gap: 12 },
+  scroll: { paddingTop: 20, paddingBottom: 48, gap: 18 },
   homeHeader: { gap: 4 },
   topStats: { flexDirection: 'row', gap: 10, marginBottom: 2 },
   statPill: { flex: 1, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },

@@ -140,11 +140,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const user = await buildUserFromSession();
-        if (user) {
+        try {
+          const user = await buildUserFromSession();
           const { data: pRow } = await supabase.from('user_profiles').select('ads_removed').eq('id', session.user.id).maybeSingle();
           const adsRemoved = (pRow as { ads_removed?: boolean } | null)?.ads_removed ?? false;
-          set({ user, isAuthenticated: true, step: 'authenticated', isLoading: false, adsRemoved });
+          set({
+            user: user ?? { id: session.user.id, email: session.user.email ?? '', name: session.user.email?.split('@')[0] ?? 'User', subscription: 'free', createdAt: new Date().toISOString() },
+            isAuthenticated: true,
+            step: 'authenticated',
+            isLoading: false,
+            adsRemoved,
+          });
+        } catch {
+          // Profile fetch failed but session IS valid — still mark authenticated
+          set({ isAuthenticated: true, step: 'authenticated', isLoading: false });
         }
       } else {
         const guest = await SecureStore.getItemAsync('auth_guest').catch(() => null);
@@ -179,8 +188,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     if (data.user) {
-      const user = await buildUserFromSession();
-      if (user) set({ user, isAuthenticated: true, step: 'authenticated' });
+      try {
+        const user = await buildUserFromSession();
+        set({
+          user: user ?? { id: data.user.id, email: data.user.email ?? '', name: data.user.email?.split('@')[0] ?? 'User', subscription: 'free', createdAt: new Date().toISOString() },
+          isAuthenticated: true,
+          step: 'authenticated',
+        });
+      } catch {
+        // Profile fetch failed but sign-in succeeded — still mark authenticated
+        set({ isAuthenticated: true, step: 'authenticated' });
+      }
     }
   },
 
