@@ -157,7 +157,7 @@ export default function LoginScreen() {
                 <Text style={[s.footerLink, { color: colors.primary }]}>Create account</Text>
               </Pressable>
             </View>
-            <Pressable onPress={() => setGuestUser()} hitSlop={8}>
+            <Pressable onPress={() => { setGuestUser(); router.replace('/(tabs)'); }} hitSlop={8}>
               <Text style={[s.guestText, { color: colors.textSecondary }]}>Continue as guest</Text>
             </Pressable>
           </View>
