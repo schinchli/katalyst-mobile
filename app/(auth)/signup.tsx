@@ -8,6 +8,28 @@ import { useAuthStore } from '@/stores/authStore';
 import { useThemeColors } from '@/hooks/useThemeColor';
 import { F } from '@/constants/Typography';
 
+// Common disposable / throwaway email domains blocked to prevent spam sign-ups
+const DISPOSABLE_DOMAINS = new Set([
+  'mailinator.com','guerrillamail.com','10minutemail.com','tempmail.com',
+  'throwam.com','yopmail.com','sharklasers.com','guerrillamailblock.com',
+  'grr.la','guerrillamail.info','guerrillamail.biz','guerrillamail.de',
+  'guerrillamail.net','guerrillamail.org','spam4.me','trashmail.com',
+  'trashmail.me','trashmail.net','trashmail.at','trashmail.io',
+  'fakeinbox.com','mailnull.com','maildrop.cc','dispostable.com',
+  'temp-mail.org','tempmail.net','throwaway.email','getnada.com',
+  'mailnesia.com','spamgourmet.com','discard.email','filzmail.com',
+  'owlpic.com','mintemail.com','moakt.com','mohmal.com','zetmail.com',
+]);
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function isDisposableEmail(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase() ?? '';
+  return DISPOSABLE_DOMAINS.has(domain);
+}
+
 export default function SignupScreen() {
   const colors      = useThemeColors();
   const signUpUser  = useAuthStore((s) => s.signUpUser);
@@ -22,6 +44,8 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     if (!name || !email || !password) { setError('Please fill in all fields'); return; }
+    if (!isValidEmail(email.trim()))  { setError('Please enter a valid email address'); return; }
+    if (isDisposableEmail(email.trim())) { setError('Disposable email addresses are not allowed'); return; }
     if (password.length < 8)          { setError('Password must be at least 8 characters'); return; }
     if (!/[A-Z]/.test(password))      { setError('Password must contain at least one uppercase letter'); return; }
     if (!/[0-9]/.test(password))      { setError('Password must contain at least one number'); return; }
